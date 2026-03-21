@@ -3,7 +3,7 @@ import os
 import json
 import re
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 SYSTEM_PROMPT = """Sei un assistente specializzato per agenti di commercio italiani.
 Devi generare documenti professionali in italiano perfetto, formale ma umano.
@@ -54,7 +54,7 @@ IMPORTANTE:
 - Le date vanno in formato italiano (es. 21 marzo 2026)
 - Se mancano informazioni usa [da completare] per i campi obbligatori"""
 
-    message = client.messages.create(
+    message = await client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         system=SYSTEM_PROMPT,
@@ -109,7 +109,7 @@ Istruzione di modifica: "{istruzione}"
 
 Rigenera SOLO il {tipo_labels[tipo]} applicando la modifica richiesta. Mantieni il formato e la struttura originale. Restituisci solo il testo del documento, senza commenti o spiegazioni."""
 
-    message = client.messages.create(
+    message = await client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
         system=SYSTEM_PROMPT,

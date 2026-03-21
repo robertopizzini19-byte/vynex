@@ -70,6 +70,31 @@ async def prezzi(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse("prezzi.html", {"request": request, "user": user})
 
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy(request: Request):
+    return HTMLResponse("""<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<title>Privacy Policy — AgentIA</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/style.css">
+</head><body style="max-width:720px;margin:60px auto;padding:0 24px;font-family:Inter,sans-serif;line-height:1.7;color:#1a1a2e">
+<a href="/" style="color:#4f46e5;text-decoration:none">← AgentIA</a>
+<h1 style="margin-top:32px">Privacy Policy</h1>
+<p>Ultimo aggiornamento: 21 marzo 2026</p>
+<h2>Titolare del trattamento</h2>
+<p>AgentIA — contatto: <a href="mailto:ciao@agentia.it">ciao@agentia.it</a></p>
+<h2>Dati raccolti</h2>
+<p>Raccogliamo: nome, email, descrizioni delle visite commerciali inserite dall'utente. I dati sono utilizzati esclusivamente per fornire il servizio.</p>
+<h2>Finalità del trattamento</h2>
+<p>I dati sono trattati per: erogazione del servizio, fatturazione, comunicazioni relative all'account.</p>
+<h2>Conservazione</h2>
+<p>I dati sono conservati per la durata del contratto e per gli obblighi di legge successivi alla cancellazione dell'account.</p>
+<h2>Diritti dell'utente</h2>
+<p>Hai diritto di accesso, rettifica, cancellazione e portabilità dei dati. Scrivici a <a href="mailto:ciao@agentia.it">ciao@agentia.it</a>.</p>
+<h2>Terze parti</h2>
+<p>Utilizziamo: Anthropic (elaborazione AI), Stripe (pagamenti), Railway (hosting). Ognuno ha proprie politiche sulla privacy conformi al GDPR.</p>
+</body></html>""")
+
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)

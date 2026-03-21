@@ -17,7 +17,7 @@ async def create_checkout_session(user: User, plan: str) -> str:
 
     # Crea o recupera il customer Stripe
     if not user.stripe_customer_id:
-        customer = stripe.Customer.create(
+        customer = await stripe.Customer.create_async(
             email=user.email,
             name=user.full_name,
             metadata={"user_id": str(user.id)}
@@ -26,7 +26,7 @@ async def create_checkout_session(user: User, plan: str) -> str:
     else:
         customer_id = user.stripe_customer_id
 
-    session = stripe.checkout.Session.create(
+    session = await stripe.checkout.Session.create_async(
         customer=customer_id,
         payment_method_types=["card"],
         line_items=[{"price": price_id, "quantity": 1}],
@@ -44,7 +44,7 @@ async def create_checkout_session(user: User, plan: str) -> str:
 
 async def create_portal_session(user: User) -> str:
     """Crea un Stripe Customer Portal per gestire/cancellare abbonamento."""
-    session = stripe.billing_portal.Session.create(
+    session = await stripe.billing_portal.Session.create_async(
         customer=user.stripe_customer_id,
         return_url=f"{BASE_URL}/dashboard",
     )
