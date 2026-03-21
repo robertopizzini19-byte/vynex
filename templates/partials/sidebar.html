@@ -1,0 +1,28 @@
+<aside class="sidebar">
+    <a href="/" class="logo sidebar-logo">Agent<span>IA</span></a>
+    <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}">
+            <span class="nav-icon">🏠</span> Dashboard
+        </a>
+        <a href="/genera" class="nav-item {% if request.url.path == '/genera' %}active{% endif %}">
+            <span class="nav-icon">✨</span> Genera documenti
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <div class="user-info">
+            <div class="user-avatar">{{ user.full_name[0].upper() }}</div>
+            <div class="user-details">
+                <div class="user-name">{{ user.full_name }}</div>
+                <div class="user-plan plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
+            </div>
+        </div>
+        {% if user.plan == "free" %}
+        <a href="/checkout/pro" class="btn-upgrade">⬆ Passa a Pro</a>
+        {% else %}
+        <a href="/portale-fatturazione" class="btn-manage">Gestisci piano</a>
+        {% endif %}
+        <a href="/logout" class="nav-item nav-logout">
+            <span class="nav-icon">🚪</span> Esci
+        </a>
+    </div>
+</aside>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AgentIA{% endblock %}
+{% block body %}
+<div class="app-layout">
+    {% include "partials/sidebar.html" %}
+
+    <main class="app-main">
+        {% if upgrade_msg == "success" %}
+        <div class="alert-success">Abbonamento attivato con successo! Ora hai documenti illimitati.</div>
+        {% endif %}
+
+        <div class="page-header">
+            <h1>Ciao, {{ user.full_name.split()[0] }} 👋</h1>
+            <a href="/genera" class="btn-primary">+ Nuovo documento</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ usage }}</div>
+                <div class="stat-label">Documenti questo mese</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">
+                    {% if user.plan == "free" %}{{ limit - usage }}{% else %}∞{% endif %}
+                </div>
+                <div class="stat-label">Documenti rimanenti</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
+                <div class="stat-label">Piano attivo</div>
+            </div>
+        </div>
+
+        <!-- Upgrade banner per free users -->
+        {% if user.plan == "free" %}
+        <div class="upgrade-banner">
+            <div>
+                <strong>Hai {{ limit - usage }} documenti rimasti questo mese.</strong>
+                Passa a Pro per documenti illimitati a €39/mese.
+            </div>
+            <a href="/checkout/pro" class="btn-primary btn-sm">Passa a Pro</a>
+        </div>
+        {% endif %}
+
+        <!-- Ultimi documenti -->
+        <div class="section-title">Ultimi documenti</div>
+        {% if documenti %}
+        <div class="doc-list">
+            {% for doc in documenti %}
+            <a href="/documento/{{ doc.id }}" class="doc-card">
+                <div class="doc-card-header">
+                    <div class="doc-cliente">
+                        <strong>{{ doc.azienda_cliente or "Cliente" }}</strong>
+                        {% if doc.cliente_nome %} · {{ doc.cliente_nome }}{% endif %}
+                    </div>
+                    <div class="doc-date">{{ doc.created_at.strftime("%d/%m/%Y %H:%M") }}</div>
+                </div>
+                <div class="doc-preview">{{ doc.input_text[:120] }}...</div>
+                <div class="doc-tags">
+                    <span class="tag">Report</span>
+                    <span class="tag">Email</span>
+                    <span class="tag">Offerta</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <h3>Nessun documento ancora</h3>
+            <p>Descrivi la tua prima visita e genera i tuoi documenti in 30 secondi.</p>
+            <a href="/genera" class="btn-primary">Genera il primo documento</a>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

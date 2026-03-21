@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Registrati gratis — AgentIA{% endblock %}
+{% block body %}
+<div class="auth-page">
+    <div class="auth-box auth-box-wide">
+        <a href="/" class="logo auth-logo">Agent<span>IA</span></a>
+        <h1>Inizia gratis</h1>
+        <p class="auth-sub">10 documenti/mese gratis. Nessuna carta di credito.</p>
+
+        {% if error %}
+        <div class="alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form action="/api/registrati" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="full_name">Nome e cognome</label>
+                <input type="text" id="full_name" name="full_name" required placeholder="Mario Rossi" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="company_name">Azienda / Mandante <span class="optional">(opzionale)</span></label>
+                <input type="text" id="company_name" name="company_name" placeholder="es. Ferramenta Italia SpA">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Minimo 8 caratteri" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn-primary btn-full">Crea account gratis</button>
+        </form>
+
+        <p class="auth-terms">Registrandoti accetti i <a href="/privacy">Termini di servizio</a>.</p>
+        <p class="auth-switch">Hai già un account? <a href="/login">Accedi</a></p>
+    </div>
+</div>
+{% endblock %}

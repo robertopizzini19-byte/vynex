@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Prezzi — AgentIA{% endblock %}
+{% block body %}
+<nav class="nav-public">
+    <div class="nav-inner">
+        <a href="/" class="logo">Agent<span>IA</span></a>
+        <div class="nav-links">
+            <a href="/prezzi">Prezzi</a>
+            {% if user %}
+            <a href="/dashboard" class="btn-primary">Dashboard</a>
+            {% else %}
+            <a href="/login" class="btn-ghost">Accedi</a>
+            <a href="/registrati" class="btn-primary">Inizia gratis</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<section class="pricing-page">
+    <div class="container">
+        <h1>Prezzi semplici e trasparenti</h1>
+        <p class="pricing-sub">Inizia gratis. Passa a Pro quando sei pronto. Disdici quando vuoi.</p>
+
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="plan-name">Free</div>
+                <div class="plan-price">€0<span>/mese</span></div>
+                <div class="plan-desc">Per provare AgentIA</div>
+                <ul class="plan-features">
+                    <li>✓ 10 documenti al mese</li>
+                    <li>✓ Report di visita</li>
+                    <li>✓ Email di follow-up</li>
+                    <li>✓ Offerta commerciale</li>
+                    <li>✓ Storico documenti</li>
+                    <li class="no">✗ Rigenera con istruzioni</li>
+                    <li class="no">✗ Template personalizzati</li>
+                </ul>
+                <a href="/registrati" class="btn-ghost-dark btn-full">Inizia gratis</a>
+            </div>
+
+            <div class="pricing-card pricing-card-featured">
+                <div class="plan-badge">Più scelto</div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">€39<span>/mese</span></div>
+                <div class="plan-desc">Per agenti professionisti</div>
+                <ul class="plan-features">
+                    <li>✓ <strong>Documenti illimitati</strong></li>
+                    <li>✓ Report di visita</li>
+                    <li>✓ Email di follow-up</li>
+                    <li>✓ Offerta commerciale</li>
+                    <li>✓ Storico documenti</li>
+                    <li>✓ <strong>Rigenera con istruzioni</strong></li>
+                    <li>✓ Export PDF</li>
+                    <li class="no">✗ Multi-utente</li>
+                </ul>
+                {% if user and user.plan != "free" %}
+                <div class="btn-primary btn-full" style="text-align:center;padding:12px">Piano attivo ✓</div>
+                {% else %}
+                <a href="{% if user %}/checkout/pro{% else %}/registrati{% endif %}" class="btn-primary btn-full">
+                    {% if user %}Attiva Pro{% else %}Inizia gratis{% endif %}
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="pricing-card">
+                <div class="plan-name">Team</div>
+                <div class="plan-price">€89<span>/mese</span></div>
+                <div class="plan-desc">Per agenzie e reti vendita</div>
+                <ul class="plan-features">
+                    <li>✓ <strong>5 agenti inclusi</strong></li>
+                    <li>✓ Tutto il piano Pro</li>
+                    <li>✓ Logo aziendale personalizzato</li>
+                    <li>✓ Report unificato mandante</li>
+                    <li>✓ Gestione team centralizzata</li>
+                    <li>✓ Supporto prioritario via email</li>
+                </ul>
+                {% if user and user.plan == "team" %}
+                <div class="btn-primary btn-full" style="text-align:center;padding:12px">Piano attivo ✓</div>
+                {% else %}
+                <a href="{% if user %}/checkout/team{% else %}/registrati{% endif %}" class="btn-ghost-dark btn-full">
+                    {% if user %}Attiva Team{% else %}Inizia gratis{% endif %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="faq">
+            <h2>Domande frequenti</h2>
+            <div class="faq-item">
+                <h3>Devo inserire la carta di credito per il piano Free?</h3>
+                <p>No. Il piano Free è gratuito per sempre, senza carta di credito.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Posso cancellare in qualsiasi momento?</h3>
+                <p>Sì. Nessun vincolo. Puoi disdire quando vuoi dal portale di fatturazione.</p>
+            </div>
+            <div class="faq-item">
+                <h3>I documenti sembrano davvero scritti da un professionista?</h3>
+                <p>Sì. L'AI usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Cosa succede se supero i 10 documenti del piano Free?</h3>
+                <p>Ti verrà mostrato un avviso e potrai passare subito al piano Pro con un click.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-inner">
+            <a href="/" class="logo">Agent<span>IA</span></a>
+            <div class="footer-links">
+                <a href="mailto:ciao@agentia.it">Contatti</a>
+                <a href="/privacy">Privacy</a>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Accedi — AgentIA{% endblock %}
+{% block body %}
+<div class="auth-page">
+    <div class="auth-box">
+        <a href="/" class="logo auth-logo">Agent<span>IA</span></a>
+        <h1>Bentornato</h1>
+        <p class="auth-sub">Accedi al tuo account</p>
+
+        {% if error %}
+        <div class="alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form action="/api/login" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-primary btn-full">Accedi</button>
+        </form>
+
+        <p class="auth-switch">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
+    </div>
+</div>
+{% endblock %}
