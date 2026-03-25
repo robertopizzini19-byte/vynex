@@ -376,6 +376,13 @@ async def health():
     return {"status": "ok", "service": "agentia"}
 
 
+@app.get("/graph", response_class=HTMLResponse)
+async def graph():
+    import pathlib
+    f = pathlib.Path("static/graph3d.html")
+    return HTMLResponse(f.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
