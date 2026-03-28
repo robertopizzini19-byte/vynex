@@ -2,16 +2,16 @@
     <a href="/" class="logo sidebar-logo">Visit<span class="logo-ai">AI</span></a>
     <nav class="sidebar-nav">
         <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}">
-            <span class="nav-icon">⬡</span> Dashboard
+            <span class="nav-icon">▦</span> Dashboard
         </a>
         <a href="/genera" class="nav-item {% if request.url.path == '/genera' %}active{% endif %}">
             <span class="nav-icon">✦</span> Genera documenti
         </a>
     </nav>
     <div class="sidebar-bottom">
-        <div class="user-info">
+        <div class="user-card">
             <div class="user-avatar">{{ user.full_name[0].upper() }}</div>
-            <div class="user-details">
+            <div style="min-width:0">
                 <div class="user-name">{{ user.full_name }}</div>
                 <div class="user-plan plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
             </div>
@@ -21,7 +21,7 @@
         {% else %}
         <a href="/portale-fatturazione" class="btn-manage">Gestisci piano</a>
         {% endif %}
-        <a href="/logout" class="nav-item nav-logout">
+        <a href="/logout" class="nav-item nav-logout" style="justify-content:center">
             <span class="nav-icon">→</span> Esci
         </a>
     </div>

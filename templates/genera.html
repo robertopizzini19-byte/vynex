@@ -9,7 +9,7 @@
         <div class="page-header">
             <div>
                 <h1>Genera documenti</h1>
-                <p class="page-sub">Descrivi la visita · 3 documenti pronti in 30 secondi</p>
+                <p class="page-sub">Descrivi la visita · 3 documenti in 30 secondi</p>
             </div>
             <div class="usage-badge">{{ usage }}/{% if user.plan == "free" %}{{ limit }}{% else %}∞{% endif %} questo mese</div>
         </div>
@@ -18,17 +18,17 @@
         <div class="limit-reached">
             <div class="empty-icon">⏸</div>
             <h2>Limite mensile raggiunto</h2>
-            <p>Hai usato tutti i {{ limit }} documenti gratuiti di questo mese.<br>Passa a Pro per documenti illimitati — 10 giorni gratis.</p>
+            <p>Hai usato tutti i {{ limit }} documenti gratuiti di questo mese.<br>Passa a Pro per documenti illimitati — 10 giorni gratis, nessuna carta richiesta subito.</p>
             <a href="/checkout/pro" class="btn-primary btn-lg">Prova Pro gratis — €49/mese</a>
         </div>
         {% else %}
 
         <div class="genera-layout">
             <!-- INPUT -->
-            <div class="genera-input-panel">
+            <div class="genera-panel">
                 <div>
                     <h2 class="panel-title">Descrivi la visita</h2>
-                    <p class="panel-sub">Scrivi come parleresti a un collega. Includi: nome cliente, azienda, cosa è stato discusso, accordi e next steps.</p>
+                    <p class="panel-sub">Scrivi come parleresti a un collega. Includi: nome cliente, azienda, discussione, accordi e next steps.</p>
                 </div>
 
                 <div class="form-group">
@@ -38,7 +38,7 @@
 
                 <div class="form-group">
                     <label for="input_testo">Descrizione visita</label>
-                    <textarea id="input_testo" rows="9" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Gli ho detto che verifico. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
+                    <textarea id="input_testo" rows="9" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
                     <div class="char-count"><span id="char-count">0</span>/2000</div>
                 </div>
 
@@ -51,7 +51,7 @@
             </div>
 
             <!-- OUTPUT -->
-            <div id="output-panel" class="genera-output-panel" style="display:none">
+            <div id="output-panel" class="genera-panel" style="display:none">
                 <div class="output-header">
                     <div>
                         <h2 class="panel-title">Documenti generati</h2>
@@ -60,12 +60,11 @@
                 </div>
 
                 <div class="doc-tabs">
-                    <button class="tab-btn active" onclick="showTab('report')">📋 Report visita</button>
-                    <button class="tab-btn" onclick="showTab('email')">✉️ Email follow-up</button>
+                    <button class="tab-btn active" onclick="showTab('report')">📋 Report</button>
+                    <button class="tab-btn" onclick="showTab('email')">✉️ Email</button>
                     <button class="tab-btn" onclick="showTab('offerta')">📄 Offerta</button>
                 </div>
 
-                <!-- Report -->
                 <div id="tab-report" class="tab-content active">
                     <div class="doc-actions">
                         <button onclick="copyDoc('report_visita')" class="btn-ghost-sm">📋 Copia</button>
@@ -73,12 +72,11 @@
                     </div>
                     <pre id="doc-report" class="doc-text"></pre>
                     <div id="rigenera-report" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-report" placeholder="es. Rendi più formale, aggiungi lo sconto del 15%…">
+                        <input type="text" id="istr-report" placeholder="es. Rendi più formale, aggiungi sconto 15%…">
                         <button onclick="rigeneraDoc('report_visita')" class="btn-primary btn-sm">Rigenera</button>
                     </div>
                 </div>
 
-                <!-- Email -->
                 <div id="tab-email" class="tab-content">
                     <div class="doc-actions">
                         <button onclick="copyDoc('email_followup')" class="btn-ghost-sm">📋 Copia</button>
@@ -86,12 +84,11 @@
                     </div>
                     <pre id="doc-email" class="doc-text"></pre>
                     <div id="rigenera-email" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-email" placeholder="es. Tono più informale, aggiungi PS con scadenza offerta…">
+                        <input type="text" id="istr-email" placeholder="es. Tono più informale, aggiungi PS con scadenza…">
                         <button onclick="rigeneraDoc('email_followup')" class="btn-primary btn-sm">Rigenera</button>
                     </div>
                 </div>
 
-                <!-- Offerta -->
                 <div id="tab-offerta" class="tab-content">
                     <div class="doc-actions">
                         <button onclick="copyDoc('offerta_commerciale')" class="btn-ghost-sm">📋 Copia</button>
@@ -122,69 +119,40 @@ let currentDocs = {};
 
 const textarea = document.getElementById('input_testo');
 const charCount = document.getElementById('char-count');
-if (textarea) {
-    textarea.addEventListener('input', () => {
-        charCount.textContent = textarea.value.length;
-    });
-}
+if (textarea) textarea.addEventListener('input', () => { charCount.textContent = textarea.value.length; });
 
 async function generaDocumenti() {
     const input = document.getElementById('input_testo').value.trim();
     const mandante = document.getElementById('azienda_mandante').value.trim();
-
-    if (!input || input.length < 20) {
-        showError('Aggiungi più dettagli sulla visita (almeno 20 caratteri).');
-        return;
-    }
-
-    setLoading(true);
-    hideError();
-
+    if (!input || input.length < 20) { showError('Aggiungi più dettagli sulla visita (almeno 20 caratteri).'); return; }
+    setLoading(true); hideError();
     try {
         const res = await fetch('/api/genera', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({input_testo: input, azienda_mandante: mandante})
         });
         const data = await res.json();
-
-        if (!res.ok) {
-            showError(data.error || 'Errore durante la generazione.');
-            return;
-        }
-
+        if (!res.ok) { showError(data.error || 'Errore durante la generazione.'); return; }
         currentDocId = data.doc_id;
-        currentDocs = {
-            report_visita: data.report_visita,
-            email_followup: data.email_followup,
-            offerta_commerciale: data.offerta_commerciale
-        };
-
+        currentDocs = { report_visita: data.report_visita, email_followup: data.email_followup, offerta_commerciale: data.offerta_commerciale };
         document.getElementById('doc-report').textContent = data.report_visita;
         document.getElementById('doc-email').textContent = data.email_followup;
         document.getElementById('doc-offerta').textContent = data.offerta_commerciale;
-
         if (data.cliente_nome || data.azienda_cliente) {
-            document.getElementById('cliente-info').textContent =
-                [data.azienda_cliente, data.cliente_nome].filter(Boolean).join(' · ');
+            document.getElementById('cliente-info').textContent = [data.azienda_cliente, data.cliente_nome].filter(Boolean).join(' · ');
         }
-
-        const outputPanel = document.getElementById('output-panel');
-        outputPanel.style.display = 'flex';
-        outputPanel.scrollIntoView({behavior: 'smooth', block: 'start'});
-
-    } catch (e) {
-        showError('Errore di connessione. Riprova.');
-    } finally {
-        setLoading(false);
-    }
+        const op = document.getElementById('output-panel');
+        op.style.display = 'flex';
+        op.scrollIntoView({behavior: 'smooth', block: 'start'});
+    } catch(e) { showError('Errore di connessione. Riprova.'); }
+    finally { setLoading(false); }
 }
 
 function showTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    const tabMap = {report: 0, email: 1, offerta: 2};
-    document.querySelectorAll('.tab-btn')[tabMap[tab]].classList.add('active');
+    const m = {report:0, email:1, offerta:2};
+    document.querySelectorAll('.tab-btn')[m[tab]].classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
@@ -192,86 +160,55 @@ async function copyDoc(tipo) {
     const text = currentDocs[tipo] || '';
     try {
         await navigator.clipboard.writeText(text);
-        const btn = event.target;
-        const orig = btn.textContent;
+        const btn = event.target; const orig = btn.textContent;
         btn.textContent = '✓ Copiato';
-        setTimeout(() => { btn.textContent = orig; }, 1500);
-    } catch(e) {
-        alert('Copia manualmente il testo.');
-    }
+        setTimeout(() => { btn.textContent = orig; }, 1600);
+    } catch(e) { alert('Copia manualmente.'); }
 }
 
 function showRigenera(tipo) {
-    const tipoMap = {report_visita: 'report', email_followup: 'email', offerta_commerciale: 'offerta'};
-    const panelId = `rigenera-${tipoMap[tipo]}`;
-    const panel = document.getElementById(panelId);
-    panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
-    if (panel.style.display === 'flex') {
-        panel.querySelector('input').focus();
-    }
+    const m = {report_visita:'report', email_followup:'email', offerta_commerciale:'offerta'};
+    const p = document.getElementById(`rigenera-${m[tipo]}`);
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+    if (p.style.display === 'flex') p.querySelector('input').focus();
 }
 
 async function rigeneraDoc(tipo) {
-    const tipoMap = {report_visita: 'report', email_followup: 'email', offerta_commerciale: 'offerta'};
-    const shortTipo = tipoMap[tipo];
-    const istruzione = document.getElementById(`istr-${shortTipo}`).value.trim();
-
-    if (!istruzione) {
-        document.getElementById(`istr-${shortTipo}`).focus();
-        return;
-    }
-
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = '…';
-
+    const m = {report_visita:'report', email_followup:'email', offerta_commerciale:'offerta'};
+    const s = m[tipo];
+    const istruzione = document.getElementById(`istr-${s}`).value.trim();
+    if (!istruzione) { document.getElementById(`istr-${s}`).focus(); return; }
+    const btn = event.target; btn.disabled = true; btn.textContent = '…';
     try {
         const res = await fetch('/api/rigenera', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({doc_id: currentDocId, tipo: tipo, istruzione: istruzione})
         });
         const data = await res.json();
-
         if (res.ok) {
             currentDocs[tipo] = data.testo;
-            document.getElementById(`doc-${shortTipo}`).textContent = data.testo;
-            document.getElementById(`rigenera-${shortTipo}`).style.display = 'none';
-            document.getElementById(`istr-${shortTipo}`).value = '';
-        } else {
-            alert(data.error || 'Errore durante la rigenerazione.');
-        }
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Rigenera';
-    }
+            document.getElementById(`doc-${s}`).textContent = data.testo;
+            document.getElementById(`rigenera-${s}`).style.display = 'none';
+            document.getElementById(`istr-${s}`).value = '';
+        } else { alert(data.error || 'Errore.'); }
+    } finally { btn.disabled = false; btn.textContent = 'Rigenera'; }
 }
 
 function resetForm() {
     document.getElementById('output-panel').style.display = 'none';
     document.getElementById('input_testo').value = '';
     if (charCount) charCount.textContent = '0';
-    currentDocId = null;
-    currentDocs = {};
+    currentDocId = null; currentDocs = {};
     document.getElementById('input_testo').focus();
     window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-function setLoading(loading) {
-    const btn = document.getElementById('btn-genera');
-    btn.disabled = loading;
-    document.getElementById('btn-text').style.display = loading ? 'none' : 'inline';
-    document.getElementById('btn-loading').style.display = loading ? 'inline' : 'none';
+function setLoading(l) {
+    document.getElementById('btn-genera').disabled = l;
+    document.getElementById('btn-text').style.display = l ? 'none' : 'inline';
+    document.getElementById('btn-loading').style.display = l ? 'inline' : 'none';
 }
-
-function showError(msg) {
-    const el = document.getElementById('error-msg');
-    el.textContent = msg;
-    el.style.display = 'block';
-}
-
-function hideError() {
-    document.getElementById('error-msg').style.display = 'none';
-}
+function showError(msg) { const e = document.getElementById('error-msg'); e.textContent = msg; e.style.display = 'block'; }
+function hideError() { document.getElementById('error-msg').style.display = 'none'; }
 </script>
 {% endblock %}

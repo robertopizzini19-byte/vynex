@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}VisitAI — Documenti commerciali in 30 secondi{% endblock %}
+{% block title %}VisitAI — 3 documenti professionali in 30 secondi{% endblock %}
+{% block description %}L'AI per agenti commerciali italiani. Descrivi la visita, ottieni report, email e offerta pronti all'uso. Prova gratis.{% endblock %}
 
 {% block body %}
 <nav class="nav-public">
@@ -7,128 +8,191 @@
         <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
         <div class="nav-links">
             <a href="/prezzi">Prezzi</a>
-            <a href="/login" class="btn-ghost">Accedi</a>
-            <a href="/registrati" class="btn-primary">Inizia gratis</a>
+            <a href="/login" class="btn-ghost" style="padding:8px 18px;font-size:13px">Accedi</a>
+            <a href="/registrati" class="btn-primary" style="padding:8px 18px;font-size:13px">Inizia gratis</a>
         </div>
     </div>
 </nav>
 
-<!-- HERO -->
+<!-- ═══ HERO ═══ -->
 <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
     <div class="container">
-        <div class="badge"><span class="badge-dot"></span>AI per agenti commerciali italiani</div>
-        <h1>Smetti di perdere <span class="highlight">2 ore al giorno</span> a scrivere report e offerte</h1>
-        <p class="hero-sub">Descrivi la visita in 2 minuti. VisitAI genera report professionale, email di follow-up e offerta commerciale in 30 secondi. Sempre in italiano perfetto.</p>
-        <div class="hero-cta">
-            <a href="/registrati" class="btn-primary btn-lg">Inizia gratis — 5 documenti/mese</a>
-            <span class="no-card">Nessuna carta di credito richiesta</span>
-        </div>
+        <div class="hero-inner">
 
-        <div class="hero-demo">
-            <div class="demo-input">
-                <div class="demo-label">Descrivi la visita</div>
-                <div class="demo-text">"Ho visto Rossi della Ferramenta Bianchi a Bergamo. Interessato al catalogo primavera, vuole uno sconto del 10% sull'ordine minimo. Richiamarlo il 5 aprile per conferma."</div>
+            <!-- LEFT -->
+            <div class="hero-left">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    AI per agenti commerciali italiani
+                </div>
+                <h1>
+                    Ogni visita diventa<br>
+                    <span class="accent">3 documenti</span><br>
+                    in 30 secondi
+                </h1>
+                <p class="hero-sub">
+                    Descrivi la visita come parleresti a un collega. VisitAI genera report professionale, email di follow-up e offerta commerciale — pronti da inviare.
+                </p>
+                <div class="hero-actions">
+                    <a href="/registrati" class="btn-primary btn-lg">Prova gratis 10 giorni</a>
+                    <a href="/prezzi" class="btn-ghost">Vedi i prezzi</a>
+                </div>
+                <p class="hero-note" style="margin-top:14px">Nessuna carta di credito · 5 documenti gratuiti al mese per sempre</p>
+
+                <div class="hero-stats">
+                    <div>
+                        <div class="hero-stat-value">~20h</div>
+                        <div class="hero-stat-label">risparmiate al mese</div>
+                    </div>
+                    <div>
+                        <div class="hero-stat-value">30s</div>
+                        <div class="hero-stat-label">per 3 documenti</div>
+                    </div>
+                    <div>
+                        <div class="hero-stat-value">200K+</div>
+                        <div class="hero-stat-label">agenti in Italia</div>
+                    </div>
+                </div>
             </div>
-            <div class="demo-arrow">→</div>
-            <div class="demo-outputs">
-                <div class="demo-output">
-                    <div class="demo-output-icon">📋</div>
-                    <div class="demo-output-label">Report di visita</div>
+
+            <!-- RIGHT — Product mockup -->
+            <div class="hero-right">
+                <div class="hero-mockup">
+                    <div class="mockup-bar">
+                        <span class="mockup-dot"></span>
+                        <span class="mockup-dot"></span>
+                        <span class="mockup-dot"></span>
+                        <span class="mockup-url">visitai.it/genera</span>
+                    </div>
+                    <div class="mockup-body">
+                        <div class="mockup-label">Descrivi la visita</div>
+                        <div class="mockup-input">
+                            Ho visto Rossi della Ferramenta Bianchi a Bergamo. Catalogo primavera, sconto 10%, richiamare il 5 aprile
+                        </div>
+                        <div class="mockup-btn">✦ Genera documenti</div>
+                        <div class="mockup-tabs">
+                            <div class="mockup-tab active">📋 Report</div>
+                            <div class="mockup-tab">✉️ Email</div>
+                            <div class="mockup-tab">📄 Offerta</div>
+                        </div>
+                        <div class="mockup-doc">
+                            <div class="mockup-line"></div>
+                            <div class="mockup-line med"></div>
+                            <div class="mockup-line"></div>
+                            <div class="mockup-line short"></div>
+                            <div class="mockup-line med"></div>
+                            <div class="mockup-line"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="demo-output">
-                    <div class="demo-output-icon">✉️</div>
-                    <div class="demo-output-label">Email follow-up</div>
-                </div>
-                <div class="demo-output">
-                    <div class="demo-output-icon">📄</div>
-                    <div class="demo-output-label">Offerta commerciale</div>
+                <div class="mockup-float">
+                    <div class="mockup-float-icon">✓</div>
+                    <div>
+                        <div class="mockup-float-text">Documenti generati</div>
+                        <div class="mockup-float-sub">Pronti in 28 secondi</div>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 </section>
 
-<!-- PAIN POINTS -->
+<!-- ═══ PAIN POINTS ═══ -->
 <section class="section-pain">
     <div class="container">
-        <h2>Quante ore perdi ogni settimana?</h2>
+        <div class="center" style="margin-bottom:48px">
+            <div class="section-label">Il problema</div>
+            <h2 class="section-title">Quante ore perdi ogni settimana?</h2>
+        </div>
         <div class="pain-grid">
             <div class="pain-card">
-                <div class="pain-icon">😩</div>
+                <span class="pain-icon">😩</span>
                 <div class="pain-text">Arrivi a casa alle 20 e devi ancora scrivere 5 report di visita del pomeriggio</div>
             </div>
             <div class="pain-card">
-                <div class="pain-icon">📧</div>
+                <span class="pain-icon">📧</span>
                 <div class="pain-text">Scrivi ogni email di follow-up da zero, anche quando il contenuto è sempre lo stesso</div>
             </div>
             <div class="pain-card">
-                <div class="pain-icon">📊</div>
-                <div class="pain-text">Il tuo mandante chiede report dettagliati ma non hai tempo per farli bene</div>
+                <span class="pain-icon">📊</span>
+                <div class="pain-text">Il tuo mandante chiede report dettagliati ma non hai tempo di farli bene ogni volta</div>
             </div>
             <div class="pain-card">
-                <div class="pain-icon">⏰</div>
-                <div class="pain-text">Perdi ore ogni settimana in amministrazione invece di fare quello che sai fare: vendere</div>
+                <span class="pain-icon">⏰</span>
+                <div class="pain-text">Perdi ore in amministrazione invece di fare quello che sai fare davvero: vendere</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- PER CHI È -->
+<!-- ═══ TARGET ═══ -->
 <section class="section-target">
     <div class="container">
-        <h2>Costruito per chi vive sul campo</h2>
+        <div class="center" style="margin-bottom:48px">
+            <div class="section-label">Per chi è</div>
+            <h2 class="section-title">Costruito per chi vive sul campo</h2>
+        </div>
         <div class="target-grid">
             <div class="target-card">
-                <div class="target-icon">🧑‍💼</div>
+                <span class="target-emoji">🧑‍💼</span>
                 <h3>Agenti commerciali con P.IVA</h3>
-                <p>Plurimandatari, monomandatari, rappresentanti di commercio. Il tuo tempo vale più dei tuoi soldi — ogni ora in meno di admin è un'ora in più sul campo. VisitAI elimina il lavoro ripetitivo.</p>
-                <span class="target-tag">Individuale · Pro €49/mese</span>
+                <p>Plurimandatari, monomandatari, rappresentanti. Il tuo tempo vale più dei tuoi soldi — ogni ora risparmiata in admin è un'ora in più sul campo a chiudere contratti.</p>
+                <span class="target-chip">Pro · €49/mese · 10 giorni gratis</span>
             </div>
             <div class="target-card">
-                <div class="target-icon">🏢</div>
+                <span class="target-emoji">🏢</span>
                 <h3>Aziende con reti vendita</h3>
-                <p>Hai 3, 10, 50 agenti? Ogni agente risparmia ~20 ore al mese. VisitAI standardizza la qualità dei documenti, riduce l'overhead di supervisione e scala con la tua rete commerciale.</p>
-                <span class="target-tag">Enterprise · €89/agente/mese</span>
+                <p>Hai 3, 10, 50 agenti? Ogni agente risparmia ~20 ore al mese. VisitAI standardizza la qualità dei documenti e scala con la tua rete commerciale.</p>
+                <span class="target-chip">Enterprise · €89/agente/mese · 10 giorni gratis</span>
             </div>
         </div>
     </div>
 </section>
 
-<!-- COME FUNZIONA -->
+<!-- ═══ HOW IT WORKS ═══ -->
 <section class="section-how">
     <div class="container">
-        <h2>Come funziona</h2>
+        <div class="center" style="margin-bottom:48px">
+            <div class="section-label">Come funziona</div>
+            <h2 class="section-title">Da visita a documenti in 3 passi</h2>
+        </div>
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
                 <h3>Descrivi la visita</h3>
-                <p>Scrivi come parleresti a un collega. Informale, veloce, in 2 minuti. Includi cliente, discussione, accordi, next steps.</p>
+                <p>Scrivi come parleresti a un collega. Informale, veloce, in 2 minuti. Includi cliente, discussione e next steps.</p>
             </div>
-            <div class="step-connector"><div class="step-connector-line"></div></div>
+            <div class="step-conn">→</div>
             <div class="step">
                 <div class="step-num">2</div>
                 <h3>L'AI genera i documenti</h3>
-                <p>In 30 secondi hai report di visita, email di follow-up e offerta commerciale pronti all'uso.</p>
+                <p>In 30 secondi hai report di visita, email follow-up e offerta commerciale pronti all'uso.</p>
             </div>
-            <div class="step-connector"><div class="step-connector-line"></div></div>
+            <div class="step-conn">→</div>
             <div class="step">
                 <div class="step-num">3</div>
                 <h3>Copia, affina, invia</h3>
-                <p>Ritocca con un'istruzione all'AI oppure copia direttamente. Ogni documento sembra scritto da te.</p>
+                <p>Ritocca con un'istruzione testuale all'AI oppure copia direttamente. Sembra scritto da te.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- FEATURES -->
+<!-- ═══ FEATURES ═══ -->
 <section class="section-features">
     <div class="container">
-        <h2>Tutto quello che ti serve</h2>
+        <div class="center" style="margin-bottom:48px">
+            <div class="section-label">Funzionalità</div>
+            <h2 class="section-title">Tutto quello che ti serve</h2>
+        </div>
         <div class="features-grid">
             <div class="feature">
                 <div class="feature-icon">📋</div>
                 <h3>Report di visita</h3>
-                <p>Professionale e strutturato, con obiettivi, svolgimento e next steps. Pronto per il tuo mandante.</p>
+                <p>Professionale e strutturato con obiettivi, svolgimento e next steps. Pronto per il tuo mandante.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">✉️</div>
@@ -138,80 +202,103 @@
             <div class="feature">
                 <div class="feature-icon">📄</div>
                 <h3>Offerta commerciale</h3>
-                <p>Con condizioni discusse, sconti, termini. Pronta da firmare o da adattare.</p>
+                <p>Con condizioni discusse, sconti e termini. Pronta da firmare o da adattare.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">✏️</div>
                 <h3>Affina con l'AI</h3>
-                <p>"Rendi più formale", "aggiungi sconto 15%", "togli il paragrafo sui tempi". L'AI obbedisce.</p>
+                <p>"Rendi più formale", "aggiungi sconto 15%", "togli il paragrafo sui tempi". Istruzioni in linguaggio naturale.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">📁</div>
                 <h3>Storico completo</h3>
-                <p>Tutti i tuoi documenti salvati. Trova la visita di 3 settimane fa in 2 secondi.</p>
+                <p>Tutti i documenti salvati. Trova la visita di 3 settimane fa in 2 secondi.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">🇮🇹</div>
                 <h3>Italiano professionale</h3>
-                <p>Terminologia commerciale italiana corretta. Non una traduzione. Scritto come un professionista.</p>
+                <p>Terminologia commerciale italiana corretta. Non una traduzione — scritto come un professionista.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- PREZZI PREVIEW -->
-<section class="section-pricing-preview">
+<!-- ═══ PRICING ═══ -->
+<section class="section-pricing">
     <div class="container">
-        <h2>Prezzi trasparenti</h2>
-        <div class="pricing-preview-grid">
+        <div class="center" style="margin-bottom:52px">
+            <div class="section-label">Prezzi</div>
+            <h2 class="section-title">Semplice e trasparente</h2>
+            <p class="section-sub">Inizia gratis. 10 giorni di prova su ogni piano. Disdici quando vuoi.</p>
+        </div>
+        <div class="pricing-grid">
+            <!-- FREE -->
             <div class="pricing-card">
                 <div class="plan-name">Free</div>
-                <div class="plan-price">€0<span>/mese</span></div>
-                <div class="plan-desc">Per iniziare senza impegno</div>
+                <div class="plan-price-wrap">
+                    <span class="plan-price"><sup>€</sup>0</span>
+                </div>
+                <div class="plan-price-detail">Per sempre, senza carta di credito</div>
+                <div class="plan-desc">Per scoprire VisitAI senza impegno</div>
                 <ul class="plan-features">
                     <li>5 documenti al mese</li>
                     <li>Report + Email + Offerta</li>
                     <li>Storico documenti</li>
+                    <li class="dim">Documenti illimitati</li>
+                    <li class="dim">Affina con AI</li>
                 </ul>
-                <a href="/registrati" class="btn-ghost btn-full" style="display:flex">Inizia gratis</a>
+                <a href="/registrati" class="btn-ghost btn-full">Inizia gratis</a>
             </div>
+
+            <!-- PRO -->
             <div class="pricing-card pricing-card-featured">
-                <div class="plan-badge">Più scelto</div>
+                <div class="plan-popular">Più scelto</div>
                 <div class="plan-name">Pro</div>
-                <div class="plan-price">€49<span>/mese</span></div>
-                <div class="plan-trial">✓ 10 giorni gratis</div>
-                <div class="plan-desc">Per agenti P.IVA professionisti</div>
+                <div class="plan-price-wrap">
+                    <span class="plan-price"><sup>€</sup>49<sub>/mese</sub></span>
+                </div>
+                <div class="plan-price-detail">Per agenti con P.IVA</div>
+                <div class="plan-trial-badge">✓ 10 giorni gratis inclusi</div>
+                <div class="plan-desc">Documenti illimitati per il professionista che non si può permettere di perdere tempo</div>
                 <ul class="plan-features">
                     <li><strong>Documenti illimitati</strong></li>
-                    <li>Affina con istruzioni AI</li>
+                    <li>Report + Email + Offerta</li>
                     <li>Storico completo</li>
+                    <li><strong>Affina con istruzioni AI</strong></li>
                     <li>Nessun vincolo — disdici quando vuoi</li>
                 </ul>
                 <a href="/registrati" class="btn-primary btn-full">Prova 10 giorni gratis</a>
             </div>
+
+            <!-- ENTERPRISE -->
             <div class="pricing-card">
                 <div class="plan-name">Enterprise</div>
-                <div class="plan-price">€89<span>/agente/mese</span></div>
-                <div class="plan-trial">✓ 10 giorni gratis</div>
-                <div class="plan-desc">Per aziende con reti vendita</div>
+                <div class="plan-price-wrap">
+                    <span class="plan-price"><sup>€</sup>89<sub>/agente</sub></span>
+                </div>
+                <div class="plan-price-detail">Min. 3 agenti · €267/mese</div>
+                <div class="plan-trial-badge">✓ 10 giorni gratis inclusi</div>
+                <div class="plan-desc">Per aziende con reti vendita che vogliono standardizzare la qualità dei documenti</div>
                 <ul class="plan-features">
-                    <li><strong>Min. 3 agenti</strong></li>
+                    <li><strong>Min. 3 agenti inclusi</strong></li>
                     <li>Tutto il piano Pro</li>
                     <li>Dashboard team centralizzata</li>
-                    <li>Supporto prioritario</li>
+                    <li>Brandizzazione aziendale</li>
+                    <li>Supporto prioritario email</li>
                 </ul>
-                <a href="/prezzi" class="btn-ghost btn-full" style="display:flex">Scopri Enterprise</a>
+                <a href="/prezzi" class="btn-ghost btn-full">Scopri Enterprise</a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- FINAL CTA -->
+<!-- ═══ CTA ═══ -->
 <section class="section-cta">
     <div class="container">
-        <h2>Inizia oggi. Gratis.</h2>
-        <p>5 documenti al mese senza carta di credito. Piano Pro con 10 giorni di prova inclusi.</p>
-        <a href="/registrati" class="btn-primary btn-lg">Crea il tuo account gratis</a>
+        <div class="section-label center">Inizia oggi</div>
+        <h2 class="section-title" style="font-size:2.6rem;margin-bottom:18px">Smetti di sprecare tempo.<br>Inizia gratis.</h2>
+        <p class="section-sub">5 documenti gratuiti al mese per sempre. Piano Pro con 10 giorni di prova inclusi.</p>
+        <a href="/registrati" class="btn-primary btn-lg">Crea il tuo account — è gratis</a>
     </div>
 </section>
 
@@ -225,7 +312,7 @@
                 <a href="/privacy">Privacy</a>
             </div>
         </div>
-        <p class="footer-copy">© 2026 VisitAI. Strumento AI per agenti commerciali italiani.</p>
+        <p class="footer-copy">© 2026 VisitAI — Strumento AI per agenti commerciali italiani</p>
     </div>
 </footer>
 {% endblock %}
