@@ -2,29 +2,52 @@
 {% block title %}Accedi — VisitAI{% endblock %}
 
 {% block body %}
-<div class="auth-page">
-    <div class="auth-box">
-        <a href="/" class="logo auth-logo">Visit<span class="logo-ai">AI</span></a>
-        <h1>Bentornato</h1>
-        <p class="auth-sub">Accedi al tuo account</p>
+<div class="auth-split">
+    <!-- LEFT PANEL -->
+    <div class="auth-left">
+        <a href="/" class="logo auth-split-logo">Visit<span class="logo-ai">AI</span></a>
+        <div class="auth-left-content">
+            <h2>Risparmia 20 ore<br>ogni mese</h2>
+            <p>Ogni visita diventa report, email e offerta in 30 secondi. Sempre in italiano professionale.</p>
+            <ul class="auth-benefits">
+                <li><i data-lucide="check-circle"></i> Report di visita professionale</li>
+                <li><i data-lucide="check-circle"></i> Email follow-up personalizzata</li>
+                <li><i data-lucide="check-circle"></i> Offerta commerciale pronta</li>
+                <li><i data-lucide="check-circle"></i> Affina con istruzioni AI</li>
+            </ul>
+        </div>
+        <div class="auth-left-quote">
+            <p>"Prima impiegavo 2 ore al giorno a scrivere report. Con VisitAI sono 10 minuti."</p>
+            <div class="auth-quote-author">Marco B. · Agente commerciale, Milano</div>
+        </div>
+    </div>
 
-        {% if error %}
-        <div class="alert-error">{{ error }}</div>
-        {% endif %}
-
-        <form action="/api/login" method="post" class="auth-form">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
+    <!-- RIGHT PANEL -->
+    <div class="auth-right">
+        <div class="auth-form-wrap">
+            <div class="auth-form-header">
+                <h1>Bentornato</h1>
+                <p class="auth-sub">Accedi al tuo account VisitAI</p>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
-            </div>
-            <button type="submit" class="btn-primary btn-full">Accedi</button>
-        </form>
 
-        <p class="auth-switch">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
+            {% if error %}
+            <div class="alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form action="/api/login" method="post" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary btn-full btn-lg">Accedi</button>
+            </form>
+
+            <p class="auth-switch">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
+        </div>
     </div>
 </div>
 {% endblock %}

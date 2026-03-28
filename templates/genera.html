@@ -4,71 +4,105 @@
 {% block body %}
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
-
     <main class="app-main">
         <div class="page-header">
             <div>
                 <h1>Genera documenti</h1>
-                <p class="page-sub">Descrivi la visita · 3 documenti in 30 secondi</p>
+                <p class="page-sub">Descrivi la visita — 3 documenti pronti in 30 secondi</p>
             </div>
-            <div class="usage-badge">{{ usage }}/{% if user.plan == "free" %}{{ limit }}{% else %}∞{% endif %} questo mese</div>
+            <div class="usage-badge">
+                <i data-lucide="file-text" style="width:13px;height:13px"></i>
+                {{ usage }}/{% if user.plan == "free" %}{{ limit }}{% else %}∞{% endif %} questo mese
+            </div>
         </div>
 
         {% if not can_generate %}
         <div class="limit-reached">
-            <div class="empty-icon">⏸</div>
+            <div class="limit-icon"><i data-lucide="pause-circle"></i></div>
             <h2>Limite mensile raggiunto</h2>
-            <p>Hai usato tutti i {{ limit }} documenti gratuiti di questo mese.<br>Passa a Pro per documenti illimitati — 10 giorni gratis, nessuna carta richiesta subito.</p>
-            <a href="/checkout/pro" class="btn-primary btn-lg">Prova Pro gratis — €49/mese</a>
+            <p>Hai usato tutti i {{ limit }} documenti gratuiti di questo mese.<br>Passa a Pro per documenti illimitati — 10 giorni gratis.</p>
+            <a href="/checkout/pro" class="btn-primary btn-lg">
+                <i data-lucide="zap" style="width:18px;height:18px"></i>
+                Prova Pro gratis — €49/mese
+            </a>
         </div>
         {% else %}
 
         <div class="genera-layout">
-            <!-- INPUT -->
-            <div class="genera-panel">
-                <div>
+            <!-- INPUT PANEL -->
+            <div class="genera-panel" id="input-panel">
+                <div class="panel-header">
                     <h2 class="panel-title">Descrivi la visita</h2>
-                    <p class="panel-sub">Scrivi come parleresti a un collega. Includi: nome cliente, azienda, discussione, accordi e next steps.</p>
+                    <p class="panel-sub">Scrivi come parleresti a un collega. Includi cliente, discussione, accordi e next steps.</p>
                 </div>
 
                 <div class="form-group">
-                    <label for="azienda_mandante">Per quale mandante? <span class="optional">(opzionale)</span></label>
+                    <label for="azienda_mandante">
+                        <i data-lucide="building-2" style="width:14px;height:14px"></i>
+                        Per quale mandante?
+                        <span class="optional">opzionale</span>
+                    </label>
                     <input type="text" id="azienda_mandante" placeholder="es. Ferramenta Italia SpA" value="{{ user.company_name or '' }}">
                 </div>
 
                 <div class="form-group">
-                    <label for="input_testo">Descrizione visita</label>
-                    <textarea id="input_testo" rows="9" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
-                    <div class="char-count"><span id="char-count">0</span>/2000</div>
+                    <label for="input_testo">
+                        <i data-lucide="message-square" style="width:14px;height:14px"></i>
+                        Descrizione visita
+                    </label>
+                    <textarea id="input_testo" rows="10" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
+                    <div class="char-count"><span id="char-count">0</span> / 2000</div>
                 </div>
 
                 <button id="btn-genera" class="btn-primary btn-full btn-lg" onclick="generaDocumenti()">
-                    <span id="btn-text">✦ Genera documenti</span>
-                    <span id="btn-loading" style="display:none">Generazione in corso…</span>
+                    <span id="btn-text" style="display:flex;align-items:center;gap:8px;justify-content:center">
+                        <i data-lucide="sparkles" style="width:17px;height:17px"></i>
+                        Genera 3 documenti
+                    </span>
+                    <span id="btn-loading" style="display:none" class="loading-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        Generazione in corso
+                    </span>
                 </button>
 
                 <div id="error-msg" class="alert-error" style="display:none"></div>
             </div>
 
-            <!-- OUTPUT -->
-            <div id="output-panel" class="genera-panel" style="display:none">
-                <div class="output-header">
+            <!-- OUTPUT PANEL -->
+            <div id="output-panel" class="genera-panel output-panel" style="display:none">
+                <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Documenti generati</h2>
-                        <div id="cliente-info" class="cliente-info"></div>
+                        <div id="cliente-info" class="cliente-chip"></div>
                     </div>
+                    <button onclick="resetForm()" class="btn-ghost-sm" title="Nuovo documento">
+                        <i data-lucide="rotate-ccw" style="width:13px;height:13px"></i>
+                        Nuovo
+                    </button>
                 </div>
 
-                <div class="doc-tabs">
-                    <button class="tab-btn active" onclick="showTab('report')">📋 Report</button>
-                    <button class="tab-btn" onclick="showTab('email')">✉️ Email</button>
-                    <button class="tab-btn" onclick="showTab('offerta')">📄 Offerta</button>
+                <div class="doc-tabs-pill">
+                    <button class="tab-pill active" onclick="showTab('report')" data-tab="report">
+                        <span>📋</span> Report
+                    </button>
+                    <button class="tab-pill" onclick="showTab('email')" data-tab="email">
+                        <span>✉️</span> Email
+                    </button>
+                    <button class="tab-pill" onclick="showTab('offerta')" data-tab="offerta">
+                        <span>📄</span> Offerta
+                    </button>
                 </div>
 
                 <div id="tab-report" class="tab-content active">
                     <div class="doc-actions">
-                        <button onclick="copyDoc('report_visita')" class="btn-ghost-sm">📋 Copia</button>
-                        <button onclick="showRigenera('report_visita')" class="btn-ghost-sm">✏️ Affina con AI</button>
+                        <button onclick="copyDoc('report_visita')" class="btn-ghost-sm">
+                            <i data-lucide="copy" style="width:13px;height:13px"></i> Copia
+                        </button>
+                        <button onclick="showRigenera('report_visita')" class="btn-ghost-sm">
+                            <i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI
+                        </button>
                     </div>
                     <pre id="doc-report" class="doc-text"></pre>
                     <div id="rigenera-report" class="rigenera-panel" style="display:none">
@@ -79,8 +113,12 @@
 
                 <div id="tab-email" class="tab-content">
                     <div class="doc-actions">
-                        <button onclick="copyDoc('email_followup')" class="btn-ghost-sm">📋 Copia</button>
-                        <button onclick="showRigenera('email_followup')" class="btn-ghost-sm">✏️ Affina con AI</button>
+                        <button onclick="copyDoc('email_followup')" class="btn-ghost-sm">
+                            <i data-lucide="copy" style="width:13px;height:13px"></i> Copia
+                        </button>
+                        <button onclick="showRigenera('email_followup')" class="btn-ghost-sm">
+                            <i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI
+                        </button>
                     </div>
                     <pre id="doc-email" class="doc-text"></pre>
                     <div id="rigenera-email" class="rigenera-panel" style="display:none">
@@ -91,8 +129,12 @@
 
                 <div id="tab-offerta" class="tab-content">
                     <div class="doc-actions">
-                        <button onclick="copyDoc('offerta_commerciale')" class="btn-ghost-sm">📋 Copia</button>
-                        <button onclick="showRigenera('offerta_commerciale')" class="btn-ghost-sm">✏️ Affina con AI</button>
+                        <button onclick="copyDoc('offerta_commerciale')" class="btn-ghost-sm">
+                            <i data-lucide="copy" style="width:13px;height:13px"></i> Copia
+                        </button>
+                        <button onclick="showRigenera('offerta_commerciale')" class="btn-ghost-sm">
+                            <i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI
+                        </button>
                     </div>
                     <pre id="doc-offerta" class="doc-text"></pre>
                     <div id="rigenera-offerta" class="rigenera-panel" style="display:none">
@@ -102,8 +144,13 @@
                 </div>
 
                 <div class="output-footer">
-                    <a href="/dashboard" class="btn-ghost-sm">← Dashboard</a>
-                    <button onclick="resetForm()" class="btn-ghost-sm">+ Nuovo documento</button>
+                    <a href="/dashboard" class="btn-ghost-sm">
+                        <i data-lucide="arrow-left" style="width:13px;height:13px"></i> Dashboard
+                    </a>
+                    <span class="output-saved">
+                        <i data-lucide="check-circle" style="width:13px;height:13px;color:var(--green)"></i>
+                        Salvato automaticamente
+                    </span>
                 </div>
             </div>
         </div>
@@ -140,19 +187,21 @@ async function generaDocumenti() {
         document.getElementById('doc-offerta').textContent = data.offerta_commerciale;
         if (data.cliente_nome || data.azienda_cliente) {
             document.getElementById('cliente-info').textContent = [data.azienda_cliente, data.cliente_nome].filter(Boolean).join(' · ');
+            document.getElementById('cliente-info').style.display = 'inline-block';
         }
         const op = document.getElementById('output-panel');
         op.style.display = 'flex';
-        op.scrollIntoView({behavior: 'smooth', block: 'start'});
+        op.classList.add('fade-in');
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => op.scrollIntoView({behavior: 'smooth', block: 'nearest'}), 100);
     } catch(e) { showError('Errore di connessione. Riprova.'); }
     finally { setLoading(false); }
 }
 
 function showTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    const m = {report:0, email:1, offerta:2};
-    document.querySelectorAll('.tab-btn')[m[tab]].classList.add('active');
+    document.querySelector(`.tab-pill[data-tab="${tab}"]`).classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
@@ -160,9 +209,11 @@ async function copyDoc(tipo) {
     const text = currentDocs[tipo] || '';
     try {
         await navigator.clipboard.writeText(text);
-        const btn = event.target; const orig = btn.textContent;
-        btn.textContent = '✓ Copiato';
-        setTimeout(() => { btn.textContent = orig; }, 1600);
+        const btn = event.target.closest('button');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="check" style="width:13px;height:13px"></i> Copiato';
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => { btn.innerHTML = orig; if(window.lucide) lucide.createIcons(); }, 1800);
     } catch(e) { alert('Copia manualmente.'); }
 }
 
@@ -196,6 +247,7 @@ async function rigeneraDoc(tipo) {
 
 function resetForm() {
     document.getElementById('output-panel').style.display = 'none';
+    document.getElementById('output-panel').classList.remove('fade-in');
     document.getElementById('input_testo').value = '';
     if (charCount) charCount.textContent = '0';
     currentDocId = null; currentDocs = {};
@@ -205,8 +257,8 @@ function resetForm() {
 
 function setLoading(l) {
     document.getElementById('btn-genera').disabled = l;
-    document.getElementById('btn-text').style.display = l ? 'none' : 'inline';
-    document.getElementById('btn-loading').style.display = l ? 'inline' : 'none';
+    document.getElementById('btn-text').style.display = l ? 'none' : 'flex';
+    document.getElementById('btn-loading').style.display = l ? 'flex' : 'none';
 }
 function showError(msg) { const e = document.getElementById('error-msg'); e.textContent = msg; e.style.display = 'block'; }
 function hideError() { document.getElementById('error-msg').style.display = 'none'; }

@@ -4,33 +4,35 @@
 {% block body %}
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
-
     <main class="app-main">
         {% if upgrade_msg == "success" %}
-        <div class="alert-success">Abbonamento attivato. Documenti illimitati da ora.</div>
+        <div class="alert-success">Abbonamento attivato. Documenti illimitati da ora. ✓</div>
         {% endif %}
 
         <div class="page-header">
             <div>
-                <h1>Ciao, {{ user.full_name.split()[0] }}</h1>
-                <p class="page-sub">
-                    {% if user.plan != "free" %}Documenti illimitati attivi
-                    {% else %}{{ limit - usage }} documenti rimanenti questo mese{% endif %}
-                </p>
+                <h1>Ciao, {{ user.full_name.split()[0] }} 👋</h1>
+                <p class="page-sub">{% if user.plan != "free" %}Documenti illimitati attivi{% else %}{{ limit - usage }} documenti rimanenti questo mese{% endif %}</p>
             </div>
-            <a href="/genera" class="btn-primary">+ Nuovo documento</a>
+            <a href="/genera" class="btn-primary">
+                <i data-lucide="plus" style="width:16px;height:16px"></i>
+                Nuovo documento
+            </a>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="file-text"></i></div>
                 <div class="stat-value">{{ usage }}</div>
                 <div class="stat-label">Documenti questo mese</div>
             </div>
             <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="infinity"></i></div>
                 <div class="stat-value">{% if user.plan == "free" %}{{ limit - usage }}{% else %}∞{% endif %}</div>
-                <div class="stat-label">Documenti disponibili</div>
+                <div class="stat-label">Disponibili</div>
             </div>
             <div class="stat-card">
+                <div class="stat-icon stat-icon-plan"><i data-lucide="zap"></i></div>
                 <div class="stat-value stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
                 <div class="stat-label">Piano attivo</div>
             </div>
@@ -38,11 +40,14 @@
 
         {% if user.plan == "free" %}
         <div class="upgrade-banner">
-            <div>
-                <strong>{{ limit - usage }} documenti rimanenti questo mese.</strong>
-                <span> Passa a Pro — documenti illimitati con 10 giorni gratis.</span>
+            <div class="upgrade-banner-left">
+                <div class="upgrade-banner-icon"><i data-lucide="zap"></i></div>
+                <div>
+                    <div class="upgrade-banner-title">Passa a Pro — documenti illimitati</div>
+                    <div class="upgrade-banner-sub">{{ limit - usage }} rimanenti · 10 giorni gratis · nessuna carta subito</div>
+                </div>
             </div>
-            <a href="/checkout/pro" class="btn-primary btn-sm">Prova Pro gratis</a>
+            <a href="/checkout/pro" class="btn-primary btn-sm">Prova gratis</a>
         </div>
         {% endif %}
 
@@ -53,24 +58,30 @@
             {% for doc in documenti %}
             <a href="/documento/{{ doc.id }}" class="doc-card">
                 <div class="doc-card-header">
-                    <div class="doc-cliente">{{ doc.azienda_cliente or "Cliente" }}{% if doc.cliente_nome %} · {{ doc.cliente_nome }}{% endif %}</div>
-                    <div class="doc-date">{{ doc.created_at.strftime("%d/%m/%Y %H:%M") }}</div>
+                    <div class="doc-card-left">
+                        <div class="doc-cliente">{{ doc.azienda_cliente or "Cliente" }}{% if doc.cliente_nome %} · {{ doc.cliente_nome }}{% endif %}</div>
+                        <div class="doc-date">{{ doc.created_at.strftime("%d/%m/%Y %H:%M") }}</div>
+                    </div>
+                    <i data-lucide="chevron-right" class="doc-card-arrow"></i>
                 </div>
-                <div class="doc-preview">{{ doc.input_text[:130] }}{% if doc.input_text|length > 130 %}…{% endif %}</div>
+                <div class="doc-preview">{{ doc.input_text[:120] }}{% if doc.input_text|length > 120 %}…{% endif %}</div>
                 <div class="doc-tags">
-                    <span class="tag">Report</span>
-                    <span class="tag">Email</span>
-                    <span class="tag">Offerta</span>
+                    <span class="tag">📋 Report</span>
+                    <span class="tag">✉️ Email</span>
+                    <span class="tag">📄 Offerta</span>
                 </div>
             </a>
             {% endfor %}
         </div>
         {% else %}
         <div class="empty-state">
-            <div class="empty-icon">✦</div>
+            <div class="empty-icon-wrap"><i data-lucide="file-plus-2"></i></div>
             <h3>Nessun documento ancora</h3>
             <p>Descrivi la tua prima visita e ottieni 3 documenti professionali in 30 secondi.</p>
-            <a href="/genera" class="btn-primary">Genera il primo documento</a>
+            <a href="/genera" class="btn-primary">
+                <i data-lucide="sparkles" style="width:16px;height:16px"></i>
+                Genera il primo documento
+            </a>
         </div>
         {% endif %}
     </main>

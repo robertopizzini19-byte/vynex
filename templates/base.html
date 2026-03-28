@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}VisitAI — Documenti commerciali in 30 secondi{% endblock %}</title>
     <meta name="description" content="{% block description %}Descrivi la visita in 2 minuti. VisitAI genera report professionale, email di follow-up e offerta commerciale in 30 secondi. Per agenti commerciali italiani.{% endblock %}">
-    <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     {% block body %}{% endblock %}
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="/static/app.js"></script>
     {% block scripts %}{% endblock %}
+    <script>if(window.lucide) lucide.createIcons();</script>
 </body>
 </html>

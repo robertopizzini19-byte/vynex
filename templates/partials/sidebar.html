@@ -1,28 +1,33 @@
 <aside class="sidebar">
-    <a href="/" class="logo sidebar-logo">Visit<span class="logo-ai">AI</span></a>
+    <div class="sidebar-top">
+        <a href="/" class="logo sidebar-logo">Visit<span class="logo-ai">AI</span></a>
+    </div>
     <nav class="sidebar-nav">
         <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}">
-            <span class="nav-icon">▦</span> Dashboard
+            <i data-lucide="layout-dashboard" class="nav-icon"></i>
+            <span>Dashboard</span>
         </a>
         <a href="/genera" class="nav-item {% if request.url.path == '/genera' %}active{% endif %}">
-            <span class="nav-icon">✦</span> Genera documenti
+            <i data-lucide="sparkles" class="nav-icon"></i>
+            <span>Genera documenti</span>
         </a>
     </nav>
     <div class="sidebar-bottom">
         <div class="user-card">
             <div class="user-avatar">{{ user.full_name[0].upper() }}</div>
-            <div style="min-width:0">
+            <div class="user-info">
                 <div class="user-name">{{ user.full_name }}</div>
                 <div class="user-plan plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
             </div>
         </div>
         {% if user.plan == "free" %}
-        <a href="/checkout/pro" class="btn-upgrade">↑ Prova Pro gratis</a>
+        <a href="/checkout/pro" class="btn-upgrade">Passa a Pro</a>
         {% else %}
         <a href="/portale-fatturazione" class="btn-manage">Gestisci piano</a>
         {% endif %}
-        <a href="/logout" class="nav-item nav-logout" style="justify-content:center">
-            <span class="nav-icon">→</span> Esci
+        <a href="/logout" class="nav-item nav-logout">
+            <i data-lucide="log-out" class="nav-icon"></i>
+            <span>Esci</span>
         </a>
     </div>
 </aside>
