@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Prezzi — AgentIA{% endblock %}
+{% block title %}Prezzi — VisitAI{% endblock %}
+
 {% block body %}
 <nav class="nav-public">
     <div class="nav-inner">
-        <a href="/" class="logo">Agent<span>IA</span></a>
+        <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
         <div class="nav-links">
             <a href="/prezzi">Prezzi</a>
             {% if user %}
@@ -19,66 +20,72 @@
 <section class="pricing-page">
     <div class="container">
         <h1>Prezzi semplici e trasparenti</h1>
-        <p class="pricing-sub">Inizia gratis. Passa a Pro quando sei pronto. Disdici quando vuoi.</p>
+        <p class="pricing-sub">Inizia gratis. 10 giorni di prova su ogni piano a pagamento. Disdici quando vuoi.</p>
 
         <div class="pricing-grid">
+            <!-- FREE -->
             <div class="pricing-card">
                 <div class="plan-name">Free</div>
                 <div class="plan-price">€0<span>/mese</span></div>
-                <div class="plan-desc">Per provare AgentIA</div>
+                <div class="plan-desc">Per scoprire VisitAI senza impegno</div>
                 <ul class="plan-features">
-                    <li>✓ 10 documenti al mese</li>
-                    <li>✓ Report di visita</li>
-                    <li>✓ Email di follow-up</li>
-                    <li>✓ Offerta commerciale</li>
-                    <li>✓ Storico documenti</li>
-                    <li class="no">✗ Rigenera con istruzioni</li>
-                    <li class="no">✗ Template personalizzati</li>
+                    <li>5 documenti al mese</li>
+                    <li>Report di visita professionale</li>
+                    <li>Email di follow-up</li>
+                    <li>Offerta commerciale</li>
+                    <li>Storico documenti</li>
+                    <li class="no">Documenti illimitati</li>
+                    <li class="no">Affina con istruzioni AI</li>
                 </ul>
-                <a href="/registrati" class="btn-ghost-dark btn-full">Inizia gratis</a>
+                <a href="/registrati" class="btn-ghost btn-full" style="display:flex">Inizia gratis</a>
             </div>
 
+            <!-- PRO -->
             <div class="pricing-card pricing-card-featured">
                 <div class="plan-badge">Più scelto</div>
                 <div class="plan-name">Pro</div>
-                <div class="plan-price">€39<span>/mese</span></div>
-                <div class="plan-desc">Per agenti professionisti</div>
+                <div class="plan-price">€49<span>/mese</span></div>
+                <div class="plan-trial">✓ 10 giorni gratis inclusi</div>
+                <div class="plan-desc">Per agenti commerciali con P.IVA</div>
                 <ul class="plan-features">
-                    <li>✓ <strong>Documenti illimitati</strong></li>
-                    <li>✓ Report di visita</li>
-                    <li>✓ Email di follow-up</li>
-                    <li>✓ Offerta commerciale</li>
-                    <li>✓ Storico documenti</li>
-                    <li>✓ <strong>Rigenera con istruzioni</strong></li>
-                    <li>✓ Export PDF</li>
-                    <li class="no">✗ Multi-utente</li>
+                    <li><strong>Documenti illimitati</strong></li>
+                    <li>Report di visita professionale</li>
+                    <li>Email di follow-up</li>
+                    <li>Offerta commerciale</li>
+                    <li>Storico completo</li>
+                    <li><strong>Affina con istruzioni AI</strong></li>
+                    <li class="no">Dashboard team</li>
                 </ul>
                 {% if user and user.plan != "free" %}
-                <div class="btn-primary btn-full" style="text-align:center;padding:12px">Piano attivo ✓</div>
+                <div class="btn-primary btn-full" style="display:flex;justify-content:center;cursor:default">Piano attivo ✓</div>
                 {% else %}
                 <a href="{% if user %}/checkout/pro{% else %}/registrati{% endif %}" class="btn-primary btn-full">
-                    {% if user %}Attiva Pro{% else %}Inizia gratis{% endif %}
+                    {% if user %}Attiva Pro — 10 giorni gratis{% else %}Prova gratis 10 giorni{% endif %}
                 </a>
                 {% endif %}
             </div>
 
+            <!-- ENTERPRISE -->
             <div class="pricing-card">
-                <div class="plan-name">Team</div>
-                <div class="plan-price">€89<span>/mese</span></div>
-                <div class="plan-desc">Per agenzie e reti vendita</div>
+                <div class="plan-name">Enterprise</div>
+                <div class="plan-price">€89<span>/agente/mese</span></div>
+                <div class="plan-price-sub">Min. 3 agenti · €267/mese</div>
+                <div class="plan-trial">✓ 10 giorni gratis inclusi</div>
+                <div class="plan-desc">Per aziende con reti vendita</div>
                 <ul class="plan-features">
-                    <li>✓ <strong>5 agenti inclusi</strong></li>
-                    <li>✓ Tutto il piano Pro</li>
-                    <li>✓ Logo aziendale personalizzato</li>
-                    <li>✓ Report unificato mandante</li>
-                    <li>✓ Gestione team centralizzata</li>
-                    <li>✓ Supporto prioritario via email</li>
+                    <li><strong>Min. 3 agenti inclusi</strong></li>
+                    <li>Tutto il piano Pro</li>
+                    <li>Dashboard team centralizzata</li>
+                    <li>Brandizzazione aziendale</li>
+                    <li>Report unificato per mandante</li>
+                    <li>Supporto prioritario via email</li>
+                    <li>Fatturazione mensile o annuale</li>
                 </ul>
-                {% if user and user.plan == "team" %}
-                <div class="btn-primary btn-full" style="text-align:center;padding:12px">Piano attivo ✓</div>
+                {% if user and user.plan == "enterprise" %}
+                <div class="btn-primary btn-full" style="display:flex;justify-content:center;cursor:default">Piano attivo ✓</div>
                 {% else %}
-                <a href="{% if user %}/checkout/team{% else %}/registrati{% endif %}" class="btn-ghost-dark btn-full">
-                    {% if user %}Attiva Team{% else %}Inizia gratis{% endif %}
+                <a href="{% if user %}/checkout/team{% else %}/registrati{% endif %}" class="btn-ghost btn-full" style="display:flex">
+                    {% if user %}Attiva Enterprise{% else %}Prova gratis 10 giorni{% endif %}
                 </a>
                 {% endif %}
             </div>
@@ -88,19 +95,23 @@
             <h2>Domande frequenti</h2>
             <div class="faq-item">
                 <h3>Devo inserire la carta di credito per il piano Free?</h3>
-                <p>No. Il piano Free è gratuito per sempre, senza carta di credito.</p>
+                <p>No. Il piano Free è completamente gratuito, senza carta di credito e senza scadenza.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Come funziona la prova di 10 giorni?</h3>
+                <p>Attivi il piano Pro o Enterprise, hai 10 giorni per testarlo senza limiti. Se non è per te, disdici prima della scadenza e non ti addebitiamo nulla.</p>
             </div>
             <div class="faq-item">
                 <h3>Posso cancellare in qualsiasi momento?</h3>
-                <p>Sì. Nessun vincolo. Puoi disdire quando vuoi dal portale di fatturazione.</p>
+                <p>Sì. Nessun vincolo minimo. Disdici dal portale di fatturazione in qualsiasi momento.</p>
             </div>
             <div class="faq-item">
                 <h3>I documenti sembrano davvero scritti da un professionista?</h3>
-                <p>Sì. L'AI usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI.</p>
+                <p>Sì. VisitAI usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI — e puoi affinarli con istruzioni testuali.</p>
             </div>
             <div class="faq-item">
-                <h3>Cosa succede se supero i 10 documenti del piano Free?</h3>
-                <p>Ti verrà mostrato un avviso e potrai passare subito al piano Pro con un click.</p>
+                <h3>Come funziona il piano Enterprise per le aziende?</h3>
+                <p>Il piano Enterprise è per seat: ogni agente della tua rete ha il proprio accesso. Il minimo è 3 agenti (€267/mese). Per team più grandi contattaci per un preventivo personalizzato.</p>
             </div>
         </div>
     </div>
@@ -109,12 +120,13 @@
 <footer class="footer">
     <div class="container">
         <div class="footer-inner">
-            <a href="/" class="logo">Agent<span>IA</span></a>
+            <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
             <div class="footer-links">
-                <a href="mailto:ciao@agentia.it">Contatti</a>
+                <a href="mailto:ciao@visitai.it">Contatti</a>
                 <a href="/privacy">Privacy</a>
             </div>
         </div>
+        <p class="footer-copy">© 2026 VisitAI. Strumento AI per agenti commerciali italiani.</p>
     </div>
 </footer>
 {% endblock %}

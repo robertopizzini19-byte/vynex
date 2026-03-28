@@ -1,43 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Genera documenti — AgentIA{% endblock %}
+{% block title %}Genera documenti — VisitAI{% endblock %}
+
 {% block body %}
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
 
     <main class="app-main">
         <div class="page-header">
-            <h1>Genera documenti</h1>
+            <div>
+                <h1>Genera documenti</h1>
+                <p class="page-sub">Descrivi la visita · 3 documenti pronti in 30 secondi</p>
+            </div>
             <div class="usage-badge">{{ usage }}/{% if user.plan == "free" %}{{ limit }}{% else %}∞{% endif %} questo mese</div>
         </div>
 
         {% if not can_generate %}
         <div class="limit-reached">
-            <h2>Hai raggiunto il limite mensile</h2>
-            <p>Passa al piano Pro per documenti illimitati.</p>
-            <a href="/checkout/pro" class="btn-primary">Passa a Pro — €39/mese</a>
+            <div class="empty-icon">⏸</div>
+            <h2>Limite mensile raggiunto</h2>
+            <p>Hai usato tutti i {{ limit }} documenti gratuiti di questo mese.<br>Passa a Pro per documenti illimitati — 10 giorni gratis.</p>
+            <a href="/checkout/pro" class="btn-primary btn-lg">Prova Pro gratis — €49/mese</a>
         </div>
         {% else %}
 
         <div class="genera-layout">
             <!-- INPUT -->
             <div class="genera-input-panel">
-                <h2 class="panel-title">Descrivi la visita</h2>
-                <p class="panel-sub">Scrivi come parleresti a un collega. Informale va benissimo. Includi: nome cliente, azienda, cosa è stato discusso, accordi, next steps.</p>
+                <div>
+                    <h2 class="panel-title">Descrivi la visita</h2>
+                    <p class="panel-sub">Scrivi come parleresti a un collega. Includi: nome cliente, azienda, cosa è stato discusso, accordi e next steps.</p>
+                </div>
 
                 <div class="form-group">
-                    <label for="azienda_mandante">Per quale azienda/mandante lavori? <span class="optional">(opzionale)</span></label>
+                    <label for="azienda_mandante">Per quale mandante? <span class="optional">(opzionale)</span></label>
                     <input type="text" id="azienda_mandante" placeholder="es. Ferramenta Italia SpA" value="{{ user.company_name or '' }}">
                 </div>
 
                 <div class="form-group">
-                    <label for="input_testo">Descrizione visita *</label>
-                    <textarea id="input_testo" rows="8" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Gli ho detto che verifico. Da richiamare entro il 5 aprile per conferma ordine. Azienda seria, paga puntuale."></textarea>
+                    <label for="input_testo">Descrizione visita</label>
+                    <textarea id="input_testo" rows="9" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Gli ho detto che verifico. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
                     <div class="char-count"><span id="char-count">0</span>/2000</div>
                 </div>
 
                 <button id="btn-genera" class="btn-primary btn-full btn-lg" onclick="generaDocumenti()">
-                    <span id="btn-text">✨ Genera documenti</span>
-                    <span id="btn-loading" style="display:none">⏳ Generazione in corso...</span>
+                    <span id="btn-text">✦ Genera documenti</span>
+                    <span id="btn-loading" style="display:none">Generazione in corso…</span>
                 </button>
 
                 <div id="error-msg" class="alert-error" style="display:none"></div>
@@ -46,25 +53,27 @@
             <!-- OUTPUT -->
             <div id="output-panel" class="genera-output-panel" style="display:none">
                 <div class="output-header">
-                    <h2 class="panel-title">Documenti generati</h2>
-                    <div id="cliente-info" class="cliente-info"></div>
+                    <div>
+                        <h2 class="panel-title">Documenti generati</h2>
+                        <div id="cliente-info" class="cliente-info"></div>
+                    </div>
                 </div>
 
                 <div class="doc-tabs">
                     <button class="tab-btn active" onclick="showTab('report')">📋 Report visita</button>
                     <button class="tab-btn" onclick="showTab('email')">✉️ Email follow-up</button>
-                    <button class="tab-btn" onclick="showTab('offerta')">📄 Offerta commerciale</button>
+                    <button class="tab-btn" onclick="showTab('offerta')">📄 Offerta</button>
                 </div>
 
                 <!-- Report -->
                 <div id="tab-report" class="tab-content active">
                     <div class="doc-actions">
                         <button onclick="copyDoc('report_visita')" class="btn-ghost-sm">📋 Copia</button>
-                        <button onclick="showRigenera('report_visita')" class="btn-ghost-sm">✏️ Modifica con AI</button>
+                        <button onclick="showRigenera('report_visita')" class="btn-ghost-sm">✏️ Affina con AI</button>
                     </div>
                     <pre id="doc-report" class="doc-text"></pre>
                     <div id="rigenera-report" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-report" placeholder="es. Rendi più formale, aggiungi lo sconto del 15%...">
+                        <input type="text" id="istr-report" placeholder="es. Rendi più formale, aggiungi lo sconto del 15%…">
                         <button onclick="rigeneraDoc('report_visita')" class="btn-primary btn-sm">Rigenera</button>
                     </div>
                 </div>
@@ -73,11 +82,11 @@
                 <div id="tab-email" class="tab-content">
                     <div class="doc-actions">
                         <button onclick="copyDoc('email_followup')" class="btn-ghost-sm">📋 Copia</button>
-                        <button onclick="showRigenera('email_followup')" class="btn-ghost-sm">✏️ Modifica con AI</button>
+                        <button onclick="showRigenera('email_followup')" class="btn-ghost-sm">✏️ Affina con AI</button>
                     </div>
                     <pre id="doc-email" class="doc-text"></pre>
                     <div id="rigenera-email" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-email" placeholder="es. Tono più informale, aggiungi PS con scadenza offerta...">
+                        <input type="text" id="istr-email" placeholder="es. Tono più informale, aggiungi PS con scadenza offerta…">
                         <button onclick="rigeneraDoc('email_followup')" class="btn-primary btn-sm">Rigenera</button>
                     </div>
                 </div>
@@ -86,17 +95,17 @@
                 <div id="tab-offerta" class="tab-content">
                     <div class="doc-actions">
                         <button onclick="copyDoc('offerta_commerciale')" class="btn-ghost-sm">📋 Copia</button>
-                        <button onclick="showRigenera('offerta_commerciale')" class="btn-ghost-sm">✏️ Modifica con AI</button>
+                        <button onclick="showRigenera('offerta_commerciale')" class="btn-ghost-sm">✏️ Affina con AI</button>
                     </div>
                     <pre id="doc-offerta" class="doc-text"></pre>
                     <div id="rigenera-offerta" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-offerta" placeholder="es. Aggiungi sconto 10% per ordini > 500 pz...">
+                        <input type="text" id="istr-offerta" placeholder="es. Aggiungi sconto 10% per ordini > 500 pz…">
                         <button onclick="rigeneraDoc('offerta_commerciale')" class="btn-primary btn-sm">Rigenera</button>
                     </div>
                 </div>
 
                 <div class="output-footer">
-                    <a href="/dashboard" class="btn-ghost-sm">← Torna alla dashboard</a>
+                    <a href="/dashboard" class="btn-ghost-sm">← Dashboard</a>
                     <button onclick="resetForm()" class="btn-ghost-sm">+ Nuovo documento</button>
                 </div>
             </div>
@@ -160,8 +169,9 @@ async function generaDocumenti() {
                 [data.azienda_cliente, data.cliente_nome].filter(Boolean).join(' · ');
         }
 
-        document.getElementById('output-panel').style.display = 'flex';
-        document.getElementById('output-panel').scrollIntoView({behavior: 'smooth'});
+        const outputPanel = document.getElementById('output-panel');
+        outputPanel.style.display = 'flex';
+        outputPanel.scrollIntoView({behavior: 'smooth', block: 'start'});
 
     } catch (e) {
         showError('Errore di connessione. Riprova.');
@@ -178,11 +188,17 @@ function showTab(tab) {
     document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
-function copyDoc(tipo) {
+async function copyDoc(tipo) {
     const text = currentDocs[tipo] || '';
-    navigator.clipboard.writeText(text).then(() => {
-        alert('Copiato negli appunti!');
-    });
+    try {
+        await navigator.clipboard.writeText(text);
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copiato';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+    } catch(e) {
+        alert('Copia manualmente il testo.');
+    }
 }
 
 function showRigenera(tipo) {
@@ -190,6 +206,9 @@ function showRigenera(tipo) {
     const panelId = `rigenera-${tipoMap[tipo]}`;
     const panel = document.getElementById(panelId);
     panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    if (panel.style.display === 'flex') {
+        panel.querySelector('input').focus();
+    }
 }
 
 async function rigeneraDoc(tipo) {
@@ -198,30 +217,40 @@ async function rigeneraDoc(tipo) {
     const istruzione = document.getElementById(`istr-${shortTipo}`).value.trim();
 
     if (!istruzione) {
-        alert('Specifica cosa vuoi modificare.');
+        document.getElementById(`istr-${shortTipo}`).focus();
         return;
     }
 
-    const res = await fetch('/api/rigenera', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({doc_id: currentDocId, tipo: tipo, istruzione: istruzione})
-    });
-    const data = await res.json();
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '…';
 
-    if (res.ok) {
-        currentDocs[tipo] = data.testo;
-        document.getElementById(`doc-${shortTipo}`).textContent = data.testo;
-        document.getElementById(`rigenera-${shortTipo}`).style.display = 'none';
-    } else {
-        alert(data.error || 'Errore durante la rigenerazione.');
+    try {
+        const res = await fetch('/api/rigenera', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({doc_id: currentDocId, tipo: tipo, istruzione: istruzione})
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            currentDocs[tipo] = data.testo;
+            document.getElementById(`doc-${shortTipo}`).textContent = data.testo;
+            document.getElementById(`rigenera-${shortTipo}`).style.display = 'none';
+            document.getElementById(`istr-${shortTipo}`).value = '';
+        } else {
+            alert(data.error || 'Errore durante la rigenerazione.');
+        }
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Rigenera';
     }
 }
 
 function resetForm() {
     document.getElementById('output-panel').style.display = 'none';
     document.getElementById('input_testo').value = '';
-    charCount.textContent = '0';
+    if (charCount) charCount.textContent = '0';
     currentDocId = null;
     currentDocs = {};
     document.getElementById('input_testo').focus();
@@ -229,7 +258,8 @@ function resetForm() {
 }
 
 function setLoading(loading) {
-    document.getElementById('btn-genera').disabled = loading;
+    const btn = document.getElementById('btn-genera');
+    btn.disabled = loading;
     document.getElementById('btn-text').style.display = loading ? 'none' : 'inline';
     document.getElementById('btn-loading').style.display = loading ? 'inline' : 'none';
 }

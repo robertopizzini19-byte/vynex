@@ -8,7 +8,7 @@ from database import Base
 class PlanType(str, enum.Enum):
     free = "free"
     pro = "pro"
-    team = "team"
+    enterprise = "enterprise"
 
 
 class User(Base):
@@ -24,7 +24,6 @@ class User(Base):
     stripe_subscription_id = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    # team support: parent account
     team_owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     documents = relationship("Document", back_populates="user")
@@ -36,7 +35,7 @@ class User(Base):
 
     @property
     def monthly_limit(self) -> int:
-        return {"free": 10, "pro": 99999, "team": 99999}[self.plan]
+        return {"free": 5, "pro": 99999, "team": 99999, "enterprise": 99999}.get(self.plan, 5)
 
 
 class Document(Base):

@@ -1,16 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — AgentIA{% endblock %}
+{% block title %}Dashboard — VisitAI{% endblock %}
+
 {% block body %}
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
 
     <main class="app-main">
         {% if upgrade_msg == "success" %}
-        <div class="alert-success">Abbonamento attivato con successo! Ora hai documenti illimitati.</div>
+        <div class="alert-success">Abbonamento attivato. Documenti illimitati da ora.</div>
         {% endif %}
 
         <div class="page-header">
-            <h1>Ciao, {{ user.full_name.split()[0] }} 👋</h1>
+            <div>
+                <h1>Ciao, {{ user.full_name.split()[0] }}</h1>
+                <p class="page-sub">{{ "Documenti illimitati attivi" if user.plan != "free" else (limit - usage)|string + " documenti rimanenti questo mese" }}</p>
+            </div>
             <a href="/genera" class="btn-primary">+ Nuovo documento</a>
         </div>
 
@@ -24,7 +28,7 @@
                 <div class="stat-value">
                     {% if user.plan == "free" %}{{ limit - usage }}{% else %}∞{% endif %}
                 </div>
-                <div class="stat-label">Documenti rimanenti</div>
+                <div class="stat-label">Documenti disponibili</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
@@ -36,15 +40,15 @@
         {% if user.plan == "free" %}
         <div class="upgrade-banner">
             <div>
-                <strong>Hai {{ limit - usage }} documenti rimasti questo mese.</strong>
-                Passa a Pro per documenti illimitati a €39/mese.
+                <strong>{{ limit - usage }} documenti rimanenti questo mese.</strong>
+                <span>Passa a Pro per documenti illimitati — 10 giorni gratis.</span>
             </div>
-            <a href="/checkout/pro" class="btn-primary btn-sm">Passa a Pro</a>
+            <a href="/checkout/pro" class="btn-primary btn-sm">Prova Pro gratis</a>
         </div>
         {% endif %}
 
-        <!-- Ultimi documenti -->
-        <div class="section-title">Ultimi documenti</div>
+        <!-- Documenti recenti -->
+        <div class="section-title">Documenti recenti</div>
         {% if documenti %}
         <div class="doc-list">
             {% for doc in documenti %}
@@ -56,7 +60,7 @@
                     </div>
                     <div class="doc-date">{{ doc.created_at.strftime("%d/%m/%Y %H:%M") }}</div>
                 </div>
-                <div class="doc-preview">{{ doc.input_text[:120] }}...</div>
+                <div class="doc-preview">{{ doc.input_text[:130] }}{% if doc.input_text|length > 130 %}…{% endif %}</div>
                 <div class="doc-tags">
                     <span class="tag">Report</span>
                     <span class="tag">Email</span>
@@ -67,9 +71,9 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <div class="empty-icon">📄</div>
+            <div class="empty-icon">✦</div>
             <h3>Nessun documento ancora</h3>
-            <p>Descrivi la tua prima visita e genera i tuoi documenti in 30 secondi.</p>
+            <p>Descrivi la tua prima visita e genera i 3 documenti in 30 secondi.</p>
             <a href="/genera" class="btn-primary">Genera il primo documento</a>
         </div>
         {% endif %}

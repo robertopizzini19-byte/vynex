@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}{{ doc.azienda_cliente or "Documento" }} — AgentIA{% endblock %}
+{% block title %}{{ doc.azienda_cliente or "Documento" }} — VisitAI{% endblock %}
+
 {% block body %}
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
@@ -8,7 +9,10 @@
         <div class="page-header">
             <div>
                 <h1>{{ doc.azienda_cliente or "Documento" }}</h1>
-                <p class="page-sub">{{ doc.cliente_nome }} · {{ doc.created_at.strftime("%d %B %Y ore %H:%M") }}</p>
+                <p class="page-sub">
+                    {% if doc.cliente_nome %}{{ doc.cliente_nome }} · {% endif %}
+                    {{ doc.created_at.strftime("%d %B %Y, %H:%M") }}
+                </p>
             </div>
             <a href="/dashboard" class="btn-ghost">← Dashboard</a>
         </div>
@@ -20,7 +24,7 @@
         <div class="doc-tabs">
             <button class="tab-btn active" onclick="showTab('report')">📋 Report visita</button>
             <button class="tab-btn" onclick="showTab('email')">✉️ Email follow-up</button>
-            <button class="tab-btn" onclick="showTab('offerta')">📄 Offerta commerciale</button>
+            <button class="tab-btn" onclick="showTab('offerta')">📄 Offerta</button>
         </div>
 
         <div id="tab-report" class="tab-content active">
@@ -56,8 +60,17 @@ function showTab(tab) {
     document.querySelectorAll('.tab-btn')[tabMap[tab]].classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
 }
-function copyText(text) {
-    navigator.clipboard.writeText(text).then(() => alert('Copiato!'));
+
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copiato';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+    } catch(e) {
+        alert('Copia manualmente il testo.');
+    }
 }
 </script>
 {% endblock %}

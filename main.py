@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="AgentIA", lifespan=lifespan)
+app = FastAPI(title="VisitAI", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -73,15 +73,15 @@ async def prezzi(request: Request, db: AsyncSession = Depends(get_db)):
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request):
     return HTMLResponse("""<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-<title>Privacy Policy — AgentIA</title>
+<title>Privacy Policy — VisitAI</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="/static/style.css">
 </head><body style="max-width:720px;margin:60px auto;padding:0 24px;font-family:Inter,sans-serif;line-height:1.7;color:#1a1a2e">
-<a href="/" style="color:#4f46e5;text-decoration:none">← AgentIA</a>
+<a href="/" style="color:#3b82f6;text-decoration:none">← VisitAI</a>
 <h1 style="margin-top:32px">Privacy Policy</h1>
-<p>Ultimo aggiornamento: 21 marzo 2026</p>
+<p>Ultimo aggiornamento: 28 marzo 2026</p>
 <h2>Titolare del trattamento</h2>
-<p>AgentIA — contatto: <a href="mailto:ciao@agentia.it">ciao@agentia.it</a></p>
+<p>VisitAI — contatto: <a href="mailto:ciao@visitai.it">ciao@visitai.it</a></p>
 <h2>Dati raccolti</h2>
 <p>Raccogliamo: nome, email, descrizioni delle visite commerciali inserite dall'utente. I dati sono utilizzati esclusivamente per fornire il servizio.</p>
 <h2>Finalità del trattamento</h2>
@@ -92,6 +92,8 @@ async def privacy(request: Request):
 <p>Hai diritto di accesso, rettifica, cancellazione e portabilità dei dati. Scrivici a <a href="mailto:ciao@agentia.it">ciao@agentia.it</a>.</p>
 <h2>Terze parti</h2>
 <p>Utilizziamo: Anthropic (elaborazione AI), Stripe (pagamenti), Railway (hosting). Ognuno ha proprie politiche sulla privacy conformi al GDPR.</p>
+<h2>Diritti degli utenti</h2>
+<p>Hai diritto di accesso, rettifica, cancellazione e portabilità dei dati. Scrivici a <a href="mailto:ciao@visitai.it">ciao@visitai.it</a>.</p>
 </body></html>""")
 
 
@@ -242,7 +244,7 @@ async def api_genera(
     usage = await get_monthly_usage(db, user.id)
     if usage >= user.monthly_limit:
         return JSONResponse(
-            {"error": "Limite mensile raggiunto. Passa al piano Pro per documenti illimitati."},
+            {"error": "Limite mensile raggiunto. Prova Pro gratis per 10 giorni — documenti illimitati."},
             status_code=429
         )
 
