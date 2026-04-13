@@ -34,9 +34,6 @@ async def create_checkout_session(user: User, plan: str) -> str:
         success_url=f"{BASE_URL}/dashboard?upgrade=success",
         cancel_url=f"{BASE_URL}/prezzi?upgrade=cancelled",
         metadata={"user_id": str(user.id), "plan": plan},
-        subscription_data={
-            "trial_period_days": 0,
-        },
         locale="it",
     )
     return session.url
