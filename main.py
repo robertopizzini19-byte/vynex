@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request, Depends, Form, HTTPException, Response
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime
@@ -37,6 +38,31 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="VYNEX", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "img-src 'self' data:; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com; "
+            "connect-src 'self' https://api.stripe.com; "
+            "frame-src https://js.stripe.com https://hooks.stripe.com; "
+            "base-uri 'self'; form-action 'self' https://checkout.stripe.com; "
+            "frame-ancestors 'none'"
+        )
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -456,11 +482,60 @@ async def webhook_stripe(request: Request, db: AsyncSession = Depends(get_db)):
     return {"status": "ok"}
 
 
-# ─── HEALTH ───────────────────────────────────────────────────────────────────
+# ─── SEO & HEALTH ─────────────────────────────────────────────────────────────
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+async def robots():
+    base = os.getenv("BASE_URL", "").rstrip("/")
+    sitemap_line = f"Sitemap: {base}/sitemap.xml\n" if base else ""
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /dashboard\n"
+        "Disallow: /genera\n"
+        "Disallow: /documento/\n"
+        "Disallow: /api/\n"
+        "Disallow: /checkout/\n"
+        "Disallow: /portale-fatturazione\n"
+        "Disallow: /reset-password\n"
+        "Disallow: /recupera-password\n"
+        f"{sitemap_line}"
+    )
+
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+    urls = ["/", "/prezzi", "/login", "/registrati", "/privacy", "/termini", "/cookie"]
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    items = "".join(
+        f"<url><loc>{base}{u}</loc><lastmod>{today}</lastmod>"
+        f"<changefreq>{'weekly' if u == '/' else 'monthly'}</changefreq>"
+        f"<priority>{'1.0' if u == '/' else '0.7'}</priority></url>"
+        for u in urls
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{items}"
+        "</urlset>"
+    )
+    return Response(content=xml, media_type="application/xml")
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "vynex"}
+
+
+@app.exception_handler(404)
+async def not_found(request: Request, exc: HTTPException):
+    accept = request.headers.get("accept", "")
+    if "text/html" not in accept:
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return templates.TemplateResponse(
+        "404.html", {"request": request}, status_code=404
+    )
 
 
 if __name__ == "__main__":

@@ -12,6 +12,8 @@ from database import get_db
 from models import User
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione")
+if os.getenv("BASE_URL", "").startswith("https://") and SECRET_KEY == "dev-secret-key-cambia-in-produzione":
+    raise RuntimeError("SECRET_KEY non impostata in produzione — set SECRET_KEY env var")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 PASSWORD_RESET_EXPIRE_MINUTES = 60
