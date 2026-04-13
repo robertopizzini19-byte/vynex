@@ -3,7 +3,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./agentia.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./vynex.db")
 
 engine_kwargs = {"echo": False}
 if "asyncpg" in DATABASE_URL:

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime
 from contextlib import asynccontextmanager
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -15,10 +16,16 @@ from database import get_db, init_db
 from models import User, Document
 from auth import (
     hash_password, authenticate_user, create_access_token,
-    get_current_user, require_user, get_user_by_email
+    get_current_user, require_user, get_user_by_email,
+    create_password_reset_token, verify_password_reset_token
 )
 from ai_engine import genera_documenti, rigenera_documento
 from stripe_handler import create_checkout_session, create_portal_session, handle_webhook
+from rate_limit import limiter, rate_limit_exceeded_handler, RateLimitExceeded
+from emailer import send_welcome_email, send_password_reset_email
+
+logger = logging.getLogger("vynex")
+logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager
@@ -27,7 +34,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="VisitAI", lifespan=lifespan)
+app = FastAPI(title="VYNEX", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -72,29 +81,17 @@ async def prezzi(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request):
-    return HTMLResponse("""<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-<title>Privacy Policy — VisitAI</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="/static/style.css">
-</head><body style="max-width:720px;margin:60px auto;padding:0 24px;font-family:Inter,sans-serif;line-height:1.7;color:#1a1a2e">
-<a href="/" style="color:#3b82f6;text-decoration:none">← VisitAI</a>
-<h1 style="margin-top:32px">Privacy Policy</h1>
-<p>Ultimo aggiornamento: 28 marzo 2026</p>
-<h2>Titolare del trattamento</h2>
-<p>VisitAI — contatto: <a href="mailto:ciao@visitai.it">ciao@visitai.it</a></p>
-<h2>Dati raccolti</h2>
-<p>Raccogliamo: nome, email, descrizioni delle visite commerciali inserite dall'utente. I dati sono utilizzati esclusivamente per fornire il servizio.</p>
-<h2>Finalità del trattamento</h2>
-<p>I dati sono trattati per: erogazione del servizio, fatturazione, comunicazioni relative all'account.</p>
-<h2>Conservazione</h2>
-<p>I dati sono conservati per la durata del contratto e per gli obblighi di legge successivi alla cancellazione dell'account.</p>
-<h2>Diritti dell'utente</h2>
-<p>Hai diritto di accesso, rettifica, cancellazione e portabilità dei dati. Scrivici a <a href="mailto:ciao@agentia.it">ciao@agentia.it</a>.</p>
-<h2>Terze parti</h2>
-<p>Utilizziamo: Anthropic (elaborazione AI), Stripe (pagamenti), Railway (hosting). Ognuno ha proprie politiche sulla privacy conformi al GDPR.</p>
-<h2>Diritti degli utenti</h2>
-<p>Hai diritto di accesso, rettifica, cancellazione e portabilità dei dati. Scrivici a <a href="mailto:ciao@visitai.it">ciao@visitai.it</a>.</p>
-</body></html>""")
+    return templates.TemplateResponse("privacy.html", {"request": request})
+
+
+@app.get("/termini", response_class=HTMLResponse)
+async def termini(request: Request):
+    return templates.TemplateResponse("termini.html", {"request": request})
+
+
+@app.get("/cookie", response_class=HTMLResponse)
+async def cookie_policy(request: Request):
+    return templates.TemplateResponse("cookie.html", {"request": request})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -115,10 +112,32 @@ async def register_page(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse("register.html", {"request": request, "error": error})
 
 
+@app.get("/recupera-password", response_class=HTMLResponse)
+async def forgot_page(request: Request):
+    message = request.query_params.get("message", "")
+    error = request.query_params.get("error", "")
+    return templates.TemplateResponse("forgot_password.html", {
+        "request": request, "message": message, "error": error
+    })
+
+
+@app.get("/reset-password", response_class=HTMLResponse)
+async def reset_page(request: Request):
+    token = request.query_params.get("token", "")
+    if not token:
+        return RedirectResponse("/recupera-password?error=Link+non+valido", status_code=302)
+    email = verify_password_reset_token(token)
+    if not email:
+        return RedirectResponse("/recupera-password?error=Link+scaduto+o+non+valido", status_code=302)
+    return templates.TemplateResponse("reset_password.html", {"request": request, "token": token})
+
+
 # ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 @app.post("/api/login")
+@limiter.limit("10/minute")
 async def api_login(
+    request: Request,
     email: str = Form(...),
     password: str = Form(...),
     db: AsyncSession = Depends(get_db)
@@ -131,13 +150,19 @@ async def api_login(
 
 
 @app.post("/api/registrati")
+@limiter.limit("5/minute")
 async def api_register(
+    request: Request,
     email: str = Form(...),
     password: str = Form(...),
     full_name: str = Form(...),
     company_name: str = Form(""),
+    accept_terms: str = Form(""),
     db: AsyncSession = Depends(get_db)
 ):
+    if accept_terms != "on":
+        return RedirectResponse("/registrati?error=Devi+accettare+termini+e+privacy", status_code=302)
+
     existing = await get_user_by_email(db, email)
     if existing:
         return RedirectResponse("/registrati?error=Email+già+registrata", status_code=302)
@@ -156,8 +181,56 @@ async def api_register(
     await db.commit()
     await db.refresh(user)
 
+    try:
+        await send_welcome_email(user.email, user.full_name)
+    except Exception:
+        logger.exception("welcome email failed")
+
     token = create_access_token({"sub": user.email})
     return redirect_with_cookie("/dashboard", token)
+
+
+@app.post("/api/recupera-password")
+@limiter.limit("5/minute")
+async def api_forgot(
+    request: Request,
+    email: str = Form(...),
+    db: AsyncSession = Depends(get_db)
+):
+    user = await get_user_by_email(db, email)
+    if user:
+        token = create_password_reset_token(user.email)
+        base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+        reset_link = f"{base_url}/reset-password?token={token}"
+        try:
+            await send_password_reset_email(user.email, user.full_name, reset_link)
+        except Exception:
+            logger.exception("reset email failed")
+    return RedirectResponse(
+        "/recupera-password?message=Se+l%27email+esiste%2C+ti+abbiamo+inviato+il+link+di+reset",
+        status_code=302
+    )
+
+
+@app.post("/api/reset-password")
+@limiter.limit("5/minute")
+async def api_reset(
+    request: Request,
+    token: str = Form(...),
+    password: str = Form(...),
+    db: AsyncSession = Depends(get_db)
+):
+    email = verify_password_reset_token(token)
+    if not email:
+        return RedirectResponse("/recupera-password?error=Link+scaduto+o+non+valido", status_code=302)
+    if len(password) < 8:
+        return RedirectResponse(f"/reset-password?token={token}&error=Password+minimo+8+caratteri", status_code=302)
+    user = await get_user_by_email(db, email)
+    if not user:
+        return RedirectResponse("/recupera-password?error=Utente+non+trovato", status_code=302)
+    user.hashed_password = hash_password(password)
+    await db.commit()
+    return RedirectResponse("/login?error=Password+aggiornata%2C+accedi+con+la+nuova", status_code=302)
 
 
 @app.get("/logout")
@@ -175,7 +248,6 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user)
 ):
-    # Ultimi 10 documenti
     result = await db.execute(
         select(Document)
         .where(Document.user_id == user.id)
@@ -236,6 +308,7 @@ async def documento_detail(
 # ─── API JSON ─────────────────────────────────────────────────────────────────
 
 @app.post("/api/genera")
+@limiter.limit("30/minute")
 async def api_genera(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -264,8 +337,12 @@ async def api_genera(
             nome_agente=user.full_name,
             azienda_mandante=azienda_mandante or (user.company_name or "")
         )
-    except Exception as e:
-        return JSONResponse({"error": f"Errore AI: {str(e)}"}, status_code=500)
+    except Exception:
+        logger.exception("genera_documenti failed")
+        return JSONResponse(
+            {"error": "Errore durante la generazione. Riprova tra qualche secondo."},
+            status_code=500
+        )
 
     doc = Document(
         user_id=user.id,
@@ -291,6 +368,7 @@ async def api_genera(
 
 
 @app.post("/api/rigenera")
+@limiter.limit("30/minute")
 async def api_rigenera(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -323,8 +401,12 @@ async def api_rigenera(
             istruzione=istruzione,
             nome_agente=user.full_name
         )
-    except Exception as e:
-        return JSONResponse({"error": f"Errore AI: {str(e)}"}, status_code=500)
+    except Exception:
+        logger.exception("rigenera_documento failed")
+        return JSONResponse(
+            {"error": "Errore durante la rigenerazione. Riprova tra qualche secondo."},
+            status_code=500
+        )
 
     setattr(doc, tipo, nuovo_testo)
     await db.commit()
@@ -368,6 +450,9 @@ async def webhook_stripe(request: Request, db: AsyncSession = Depends(get_db)):
         await handle_webhook(payload, sig_header, db)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    except Exception:
+        logger.exception("webhook processing failed")
+        raise HTTPException(500, "Webhook processing error")
     return {"status": "ok"}
 
 
@@ -375,7 +460,7 @@ async def webhook_stripe(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "agentia"}
+    return {"status": "ok", "service": "vynex"}
 
 
 @app.get("/graph", response_class=HTMLResponse)

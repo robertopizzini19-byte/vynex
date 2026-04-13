@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from datetime import datetime
 import enum
@@ -8,7 +8,7 @@ from database import Base
 class PlanType(str, enum.Enum):
     free = "free"
     pro = "pro"
-    enterprise = "enterprise"
+    team = "team"
 
 
 class User(Base):
@@ -35,7 +35,7 @@ class User(Base):
 
     @property
     def monthly_limit(self) -> int:
-        return {"free": 5, "pro": 99999, "team": 99999, "enterprise": 99999}.get(self.plan, 5)
+        return {"free": 10, "pro": 99999, "team": 99999}.get(self.plan, 10)
 
 
 class Document(Base):
@@ -52,3 +52,12 @@ class Document(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="documents")
+
+
+class StripeEventLog(Base):
+    __tablename__ = "stripe_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(String(255), unique=True, index=True, nullable=False)
+    event_type = Column(String(100), nullable=False)
+    processed_at = Column(DateTime, default=datetime.utcnow)

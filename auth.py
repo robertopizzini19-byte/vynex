@@ -14,6 +14,7 @@ from models import User
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
+PASSWORD_RESET_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
@@ -30,8 +31,26 @@ def hash_password(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS))
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "purpose": "access"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_password_reset_token(email: str) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
+    return jwt.encode(
+        {"sub": email, "exp": expire, "purpose": "reset"},
+        SECRET_KEY, algorithm=ALGORITHM
+    )
+
+
+def verify_password_reset_token(token: str) -> Optional[str]:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("purpose") != "reset":
+            return None
+        return payload.get("sub")
+    except JWTError:
+        return None
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
@@ -62,6 +81,8 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("purpose") not in (None, "access"):
+            return None
         email: str = payload.get("sub")
         if not email:
             return None
@@ -75,7 +96,6 @@ async def require_user(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> User:
-    """Dependency that requires authentication, raises 401 if not authenticated."""
     user = await get_current_user(request, db)
     if not user:
         raise HTTPException(

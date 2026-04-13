@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="VYNEX logo">
+  <defs>
+    <linearGradient id="vynex-gradient" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="0.55" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+  </defs>
+  <path d="M8 8 L24 33 L40 8" fill="none" stroke="url(#vynex-gradient)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 33 L24 42" fill="none" stroke="url(#vynex-gradient)" stroke-width="5" stroke-linecap="round"/>
+</svg>
