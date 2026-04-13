@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Chi siamo — VYNEX, AI italiana per agenti commerciali{% endblock %}
+{% block description %}VYNEX è un software italiano di intelligenza artificiale fondato nel 2026 da Roberto Pizzini. Genera report di visita, email e offerte commerciali in 30 secondi. Indipendente, bootstrapped, nato per agenti commerciali italiani.{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "Chi siamo — VYNEX",
+  "description": "La storia, la missione e il fondatore di VYNEX, SaaS AI italiano per agenti commerciali.",
+  "mainEntity": {
+    "@type": "Organization",
+    "name": "VYNEX",
+    "foundingDate": "2026",
+    "founder": {"@type": "Person", "name": "Roberto Pizzini"},
+    "areaServed": {"@type": "Country", "name": "Italia"},
+    "inLanguage": "it-IT",
+    "email": "ciao@vynex.it",
+    "url": "https://agentia-production-fb78.up.railway.app",
+    "logo": "https://agentia-production-fb78.up.railway.app/static/logo-wordmark.svg",
+    "slogan": "Ogni visita diventa 3 documenti in 30 secondi",
+    "description": "SaaS italiano che automatizza la generazione di report di visita, email di follow-up e offerte commerciali per agenti e rappresentanti."
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://agentia-production-fb78.up.railway.app/"},
+    {"@type": "ListItem", "position": 2, "name": "Chi siamo", "item": "https://agentia-production-fb78.up.railway.app/chi-siamo"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block body %}
+<nav class="nav-pub">
+    <a href="/" class="logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
+    <div class="nav-pub-links">
+        <a href="/come-funziona">Come funziona</a>
+        <a href="/prezzi">Prezzi</a>
+        <a href="/chi-siamo" class="active">Chi siamo</a>
+    </div>
+    <div class="nav-pub-actions">
+        <a href="/login" class="btn-ghost btn-sm">Accedi</a>
+        <a href="/registrati" class="btn-primary btn-sm">Inizia gratis</a>
+    </div>
+</nav>
+
+<article class="legal-page">
+    <div class="legal-inner">
+        <nav aria-label="Breadcrumb" class="breadcrumb">
+            <a href="/">Home</a> <span>›</span> <span>Chi siamo</span>
+        </nav>
+
+        <header>
+            <h1>Chi siamo</h1>
+            <p class="legal-lead">VYNEX è uno strumento di intelligenza artificiale costruito in Italia, per chi vende in Italia. Nasce da un'osservazione semplice: gli agenti commerciali italiani passano troppo tempo a scrivere documenti invece che a vendere.</p>
+        </header>
+
+        <section>
+            <h2>La missione</h2>
+            <p>Restituire agli agenti commerciali italiani le ore bruciate ogni sera a scrivere report, email di follow-up e offerte commerciali. Trasformare 25 minuti di lavoro amministrativo dopo ogni visita in 30 secondi di AI che scrive al posto tuo — in italiano professionale, non in traduzione maccheronica.</p>
+            <p>VYNEX non è un generatore di testo generico. È calibrato sulla terminologia commerciale italiana, sul modo in cui un agente plurimandatario parla con un cliente a Bergamo o a Palermo, sul formato che un mandante si aspetta di ricevere la sera.</p>
+        </section>
+
+        <section>
+            <h2>Il fondatore</h2>
+            <p><strong>Roberto Pizzini</strong> è il fondatore e sviluppatore di VYNEX. Progetto indipendente, bootstrapped, senza investitori esterni né finanziamenti pubblici. L'obiettivo è semplice: costruire software utile agli italiani che lavorano sul campo, monetizzarlo direttamente, senza intermediari.</p>
+            <p>VYNEX è stato avviato a marzo 2026 e lanciato in produzione ad aprile 2026. Il primo mese di vita del prodotto è interamente documentato nei commit pubblici del repository.</p>
+        </section>
+
+        <section>
+            <h2>Come è costruito</h2>
+            <p>VYNEX è un'applicazione web moderna:</p>
+            <ul>
+                <li><strong>Backend</strong>: FastAPI 0.115 (Python 3.11) con SQLAlchemy 2.0 asincrono</li>
+                <li><strong>Database</strong>: PostgreSQL su Supabase, regione EU (Frankfurt)</li>
+                <li><strong>Intelligenza artificiale</strong>: Claude Haiku 4.5 di Anthropic, via API</li>
+                <li><strong>Pagamenti</strong>: Stripe Checkout + Billing Portal, con webhook idempotenti</li>
+                <li><strong>Email transazionali</strong>: Resend (benvenuto, reset password, pagamenti)</li>
+                <li><strong>Hosting</strong>: Railway, container Docker multi-stage</li>
+                <li><strong>Sicurezza</strong>: HTTPS forzato, HSTS, CSP strict, rate limiting, password bcrypt, JWT con purpose field, cookie HttpOnly + Secure + SameSite lax</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Dati e privacy</h2>
+            <p>Tutti i dati di VYNEX sono ospitati in Unione Europea (Frankfurt, Germania), cifrati in transito (TLS 1.3) e a riposo. Nessun dato viene venduto a terze parti. Nessun cookie di profilazione di terze parti. Nessun tracker pubblicitario.</p>
+            <p>VYNEX è conforme al GDPR:</p>
+            <ul>
+                <li><strong>Art. 15 — Diritto di accesso</strong>: puoi esportare tutti i tuoi dati personali e i documenti generati in formato JSON dalla pagina <a href="/account">Account</a></li>
+                <li><strong>Art. 17 — Diritto all'oblio</strong>: puoi eliminare definitivamente il tuo account e tutti i dati associati con una sola azione</li>
+                <li><strong>Art. 20 — Portabilità</strong>: il JSON esportato è in formato standard riutilizzabile</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Per chi è VYNEX</h2>
+            <p>VYNEX è pensato per tre profili precisi:</p>
+            <ol>
+                <li><strong>Agenti commerciali con P.IVA</strong> — plurimandatari, monomandatari, rappresentanti. Chi vive sul campo e accumula 20-30 minuti di admin dopo ogni visita.</li>
+                <li><strong>Aziende con reti vendita</strong> — da 3 a 100 agenti. Chi vuole standardizzare la qualità dei documenti commerciali generati dalla propria rete.</li>
+                <li><strong>Piccole e medie imprese italiane</strong> — settori ferramenta, edilizia, industriale, HORECA, retail, manifatturiero.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Contatti</h2>
+            <p>Email: <a href="mailto:ciao@vynex.it">ciao@vynex.it</a></p>
+            <p>Tempo di risposta tipico: entro 24 ore lavorative.</p>
+            <p>Lingua del supporto: italiano.</p>
+        </section>
+
+        <div class="legal-cta">
+            <a href="/registrati" class="btn-primary btn-lg">Inizia gratis con VYNEX</a>
+            <p class="legal-cta-sub">10 documenti gratis ogni mese, per sempre. Nessuna carta richiesta.</p>
+        </div>
+    </div>
+</article>
+
+{% include "partials/footer.html" %}
+{% endblock %}

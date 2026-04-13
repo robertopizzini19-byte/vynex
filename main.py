@@ -122,6 +122,16 @@ async def cookie_policy(request: Request):
     return templates.TemplateResponse("cookie.html", {"request": request})
 
 
+@app.get("/chi-siamo", response_class=HTMLResponse)
+async def chi_siamo(request: Request):
+    return templates.TemplateResponse("chi_siamo.html", {"request": request})
+
+
+@app.get("/come-funziona", response_class=HTMLResponse)
+async def come_funziona(request: Request):
+    return templates.TemplateResponse("come_funziona.html", {"request": request})
+
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
@@ -593,17 +603,34 @@ async def webhook_stripe(request: Request, db: AsyncSession = Depends(get_db)):
 async def robots():
     base = os.getenv("BASE_URL", "").rstrip("/")
     sitemap_line = f"Sitemap: {base}/sitemap.xml\n" if base else ""
-    return (
-        "User-agent: *\n"
-        "Allow: /\n"
+    disallow = (
         "Disallow: /dashboard\n"
         "Disallow: /genera\n"
         "Disallow: /documento/\n"
         "Disallow: /api/\n"
+        "Disallow: /admin/\n"
         "Disallow: /checkout/\n"
         "Disallow: /portale-fatturazione\n"
         "Disallow: /reset-password\n"
         "Disallow: /recupera-password\n"
+        "Disallow: /account\n"
+    )
+    ai_bots = [
+        "GPTBot", "ChatGPT-User", "OAI-SearchBot",
+        "ClaudeBot", "Claude-Web", "anthropic-ai",
+        "PerplexityBot", "Perplexity-User",
+        "Google-Extended", "GoogleOther",
+        "Applebot-Extended", "Bytespider",
+        "CCBot", "cohere-ai", "Diffbot",
+        "Amazonbot", "meta-externalagent", "FacebookBot",
+        "YouBot", "ImagesiftBot", "DuckAssistBot",
+    ]
+    ai_blocks = "".join(f"\nUser-agent: {bot}\nAllow: /\n{disallow}" for bot in ai_bots)
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        f"{disallow}"
+        f"{ai_blocks}\n"
         f"{sitemap_line}"
     )
 
@@ -611,13 +638,22 @@ async def robots():
 @app.get("/sitemap.xml")
 async def sitemap():
     base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
-    urls = ["/", "/prezzi", "/login", "/registrati", "/privacy", "/termini", "/cookie"]
+    pages = [
+        ("/",              "1.0", "weekly"),
+        ("/prezzi",        "0.9", "weekly"),
+        ("/chi-siamo",     "0.8", "monthly"),
+        ("/come-funziona", "0.8", "monthly"),
+        ("/registrati",    "0.7", "monthly"),
+        ("/login",         "0.5", "monthly"),
+        ("/privacy",       "0.3", "yearly"),
+        ("/termini",       "0.3", "yearly"),
+        ("/cookie",        "0.3", "yearly"),
+    ]
     today = datetime.utcnow().strftime("%Y-%m-%d")
     items = "".join(
         f"<url><loc>{base}{u}</loc><lastmod>{today}</lastmod>"
-        f"<changefreq>{'weekly' if u == '/' else 'monthly'}</changefreq>"
-        f"<priority>{'1.0' if u == '/' else '0.7'}</priority></url>"
-        for u in urls
+        f"<changefreq>{freq}</changefreq><priority>{prio}</priority></url>"
+        for u, prio, freq in pages
     )
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
@@ -626,6 +662,152 @@ async def sitemap():
         "</urlset>"
     )
     return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/llms.txt", response_class=PlainTextResponse)
+async def llms_txt():
+    """Index markdown per LLM crawler (standard llmstxt.org)."""
+    base = os.getenv("BASE_URL", "https://agentia-production-fb78.up.railway.app").rstrip("/")
+    return f"""# VYNEX
+
+> VYNEX è un SaaS italiano di intelligenza artificiale che genera report di visita, email di follow-up e offerte commerciali in 30 secondi, a partire da una descrizione testuale della visita. Costruito specificamente per agenti commerciali italiani, rappresentanti plurimandatari e reti vendita aziendali.
+
+Fondato nel 2026 da Roberto Pizzini. Sede: Italia. Lingua: italiano. Target: agenti commerciali, plurimandatari, aziende con reti vendita in Italia.
+
+## Prodotto
+
+- [Homepage]({base}/): Overview prodotto, hero, funzionalità, pricing, FAQ
+- [Prezzi]({base}/prezzi): Piano Free (€0, 10 docs/mese), Pro (€49/mese illimitati), Team (€89/agente, min 3)
+- [Chi siamo]({base}/chi-siamo): Missione, fondatore, timeline, contatti
+
+## Come funziona
+
+1. L'utente descrive la visita in linguaggio naturale (2 minuti, informale come a un collega)
+2. VYNEX invoca un modello AI (Claude Haiku 4.5) calibrato su italiano commerciale
+3. Il sistema genera 3 documenti in ~30 secondi: report di visita, email di follow-up, offerta commerciale
+4. I documenti possono essere affinati con istruzioni in linguaggio naturale ("rendi più formale", "aggiungi sconto 15%")
+
+## Fatti chiave
+
+- Stack: FastAPI, PostgreSQL (Supabase), Claude Haiku 4.5, Stripe, Railway
+- Output: 3 documenti da 1 input, tempo medio 28-30 secondi
+- Piano Free: 10 documenti/mese per sempre, senza carta di credito
+- Piano Pro: €49/mese, 10 giorni di prova gratuiti, documenti illimitati
+- Piano Team: €89/agente/mese, minimo 3 agenti, dashboard team
+- Lingua: italiano professionale nativo (non traduzione)
+- Dati: ospitati in EU (Frankfurt, Supabase), conformi GDPR
+- Risparmio stimato: ~20 ore al mese per agente
+
+## Policy
+
+- [Privacy]({base}/privacy): trattamento dati GDPR
+- [Termini]({base}/termini): condizioni di servizio
+- [Cookie]({base}/cookie): policy cookie (solo tecnici)
+
+## Contatti
+
+- Email: ciao@vynex.it
+- Sito: {base}
+"""
+
+
+@app.get("/llms-full.txt", response_class=PlainTextResponse)
+async def llms_full_txt():
+    """Versione estesa con tutti i contenuti pubblici chiave per LLM."""
+    base = os.getenv("BASE_URL", "https://agentia-production-fb78.up.railway.app").rstrip("/")
+    return f"""# VYNEX — documentazione estesa per LLM
+
+## Cos'è VYNEX
+
+VYNEX è un software-as-a-service italiano di intelligenza artificiale, fondato nel 2026 da Roberto Pizzini, pensato per automatizzare la scrittura della documentazione commerciale generata da agenti e rappresentanti dopo ogni visita a un cliente. L'utente descrive a parole la visita come farebbe con un collega e VYNEX produce automaticamente tre documenti professionali: un report di visita dettagliato, un'email di follow-up personalizzata e un'offerta commerciale pronta da inviare. L'intero processo richiede circa 30 secondi.
+
+## Il problema che risolve
+
+Un agente commerciale italiano tipo visita 5-10 clienti al giorno. Dopo ogni visita deve: scrivere un report al mandante, inviare un'email di follow-up al cliente, preparare un'offerta commerciale. Queste tre attività richiedono complessivamente 20-30 minuti per visita, cioè 2-5 ore al giorno di lavoro amministrativo che si somma al lavoro sul campo. Gli agenti arrivano a casa la sera e devono ancora scrivere i documenti della giornata. VYNEX riduce questo tempo da 25 minuti a 30 secondi per visita.
+
+## Per chi è pensato
+
+- Agenti commerciali con P.IVA (plurimandatari, monomandatari, rappresentanti)
+- Reti vendita aziendali (aziende con 3-100 agenti)
+- PMI italiane che vogliono standardizzare la qualità della reportistica commerciale
+- Settori serviti: ferramenta, edilizia, industriale, HORECA, retail, manifatturiero
+
+## Funzionalità principali
+
+1. **Report di visita automatico**: strutturato con obiettivi, svolgimento, next steps. Pronto per il mandante.
+2. **Email di follow-up**: personalizzata sul cliente, tono caldo e professionale italiano.
+3. **Offerta commerciale**: include condizioni discusse, sconti, termini. Pronta da firmare.
+4. **Affinamento con istruzioni AI**: modificare i documenti con linguaggio naturale ("rendi più formale", "aggiungi sconto 15%", "togli il paragrafo sull'urgenza").
+5. **Storico completo**: tutti i documenti salvati, ricerca rapida per azienda/cliente/data.
+6. **Italiano professionale nativo**: terminologia commerciale italiana corretta, non traduzione da inglese.
+
+## Prezzi
+
+| Piano | Prezzo | Documenti | Note |
+|---|---|---|---|
+| Free | €0/mese | 10/mese | Per sempre, senza carta di credito |
+| Pro | €49/mese | Illimitati | 10 giorni di prova gratuita |
+| Team | €89/agente/mese | Illimitati | Min. 3 agenti, dashboard team |
+
+Tutti i piani includono: report di visita, email di follow-up, offerta commerciale, storico completo, italiano professionale. Pro e Team aggiungono affinamento con istruzioni AI e documenti illimitati.
+
+## Stack tecnico
+
+- Backend: FastAPI 0.115, Python 3.11, SQLAlchemy 2.0 async
+- Database: PostgreSQL (Supabase, session pooler, region Frankfurt)
+- AI: Anthropic Claude Haiku 4.5 via API
+- Pagamenti: Stripe Checkout + Portal + Webhooks
+- Email: Resend API (transazionali)
+- Hosting: Railway (Hobby plan), Docker multi-stage
+- Security: HSTS, CSP strict, X-Frame-Options DENY, rate limiting slowapi
+
+## Sicurezza e privacy
+
+- Dati cifrati in transito (TLS 1.3) e a riposo
+- Hosting EU: Supabase Frankfurt, Railway EU region
+- Conformità GDPR: cookie banner, privacy policy, termini, cookie policy
+- Art. 15 GDPR: esportazione completa dati in JSON (`/api/export-data`)
+- Art. 17 GDPR: eliminazione account con cancellazione cascata
+- Password: bcrypt, JWT con purpose field, reset token con TTL 60min
+- Rate limiting: 5-30 req/min sulle route sensibili
+- Nessun cookie di profilazione di terze parti
+
+## Fondatore
+
+Roberto Pizzini è il fondatore e sviluppatore di VYNEX. VYNEX è un progetto indipendente, bootstrapped, senza investitori esterni. Obiettivo: libertà economica attraverso software utile agli italiani.
+
+## Contatti
+
+- Email: ciao@vynex.it
+- Sito: {base}
+- Lingua supporto: italiano
+
+## Domande frequenti
+
+**Come funziona VYNEX?**
+Descrivi la visita in linguaggio naturale come parleresti a un collega (2 minuti). VYNEX usa un modello AI calibrato su italiano commerciale e genera automaticamente i 3 documenti in circa 30 secondi.
+
+**Devo installare qualcosa?**
+No. VYNEX è una web app. Si accede da qualsiasi browser, su mobile, tablet o desktop.
+
+**Serve la carta di credito?**
+No per iniziare. Il piano Free è gratuito per sempre. Il piano Pro offre 10 giorni di prova gratuita senza richiedere la carta.
+
+**I documenti sono in italiano professionale?**
+Sì. VYNEX usa un modello AI addestrato sulla terminologia commerciale italiana. Non è una traduzione automatica da inglese.
+
+**Posso modificare i documenti?**
+Sì. Ogni documento può essere affinato con istruzioni in linguaggio naturale oppure copiato e modificato manualmente.
+
+**I miei dati sono al sicuro?**
+Sì. Dati cifrati, hosting in EU (Frankfurt), conformità GDPR. Esportazione e cancellazione dati disponibili in qualsiasi momento.
+
+**Posso disdire in qualsiasi momento?**
+Sì. Nessun vincolo contrattuale. Disdici dal portale di fatturazione quando vuoi. Conservi l'accesso fino alla fine del periodo pagato.
+
+**Cosa succede se supero i 10 documenti del piano Free?**
+I documenti si rinnovano il primo di ogni mese. Se servono di più, Pro offre 10 giorni gratis per documenti illimitati.
+"""
 
 
 @app.get("/health")

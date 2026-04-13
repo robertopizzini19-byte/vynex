@@ -22,6 +22,8 @@
     <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
 
     <link rel="canonical" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
+    <link rel="alternate" hreflang="it-IT" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
+    <link rel="alternate" hreflang="x-default" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
 
     <script type="application/ld+json">
     {
@@ -30,9 +32,33 @@
       "name": "VYNEX",
       "url": "https://agentia-production-fb78.up.railway.app",
       "logo": "https://agentia-production-fb78.up.railway.app/static/logo-wordmark.svg",
-      "description": "AI per agenti commerciali italiani. Genera report di visita, email di follow-up e offerte commerciali in 30 secondi.",
-      "areaServed": "IT",
-      "inLanguage": "it-IT"
+      "description": "AI italiana per agenti commerciali: genera report di visita, email di follow-up e offerte commerciali in 30 secondi.",
+      "areaServed": {"@type": "Country", "name": "Italia"},
+      "inLanguage": "it-IT",
+      "foundingDate": "2026",
+      "founder": {"@type": "Person", "name": "Roberto Pizzini"},
+      "email": "ciao@vynex.it",
+      "slogan": "Ogni visita diventa 3 documenti in 30 secondi",
+      "knowsLanguage": "it",
+      "knowsAbout": [
+        "agenti commerciali",
+        "rappresentanti plurimandatari",
+        "automazione vendite",
+        "report di visita commerciale",
+        "offerte commerciali",
+        "intelligenza artificiale italiana",
+        "SaaS Italia"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "VYNEX",
+      "url": "https://agentia-production-fb78.up.railway.app",
+      "inLanguage": "it-IT",
+      "publisher": {"@type": "Organization", "name": "VYNEX"}
     }
     </script>
     {% block ld_json %}{% endblock %}
