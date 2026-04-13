@@ -9,3 +9,6 @@ venv/
 dist/
 build/
 *.egg-info/
+server.log
+*.log
+test_carousel.pdf
