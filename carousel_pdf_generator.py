@@ -1,5 +1,5 @@
 """
-Carousel PDF LinkedIn Generator — Trasforma report AgentIA in 5-slide PDF ottimizzato per LinkedIn.
+Carousel PDF LinkedIn Generator — Trasforma report VYNEX in 5-slide PDF ottimizzato per LinkedIn.
 Uso: LinkedInCarouselGenerator(report_visita, email, offerta, nome_agente).generate()
 """
 
@@ -16,7 +16,7 @@ from datetime import datetime
 
 class LinkedInCarouselGenerator:
     """
-    Genera carousel PDF (5 slide) dai 3 documenti di AgentIA.
+    Genera carousel PDF (5 slide) dai 3 documenti di VYNEX.
     Ottimizzato per LinkedIn: layout pulito, CTA chiara, font leggibili.
     """
 

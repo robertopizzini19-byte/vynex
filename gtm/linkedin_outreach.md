@@ -1,4 +1,4 @@
-# AgentIA — LinkedIn Outreach Playbook
+# VYNEX — LinkedIn Outreach Playbook
 
 ## Target ICP
 - Agenti di commercio monomandatari / plurimandatari
@@ -27,7 +27,7 @@ Ciao [Nome],
 
 ho visto che sei agente di commercio — lavori nel settore [settore dal profilo]?
 
-Sto sviluppando AgentIA, uno strumento che ho costruito specificamente per agenti come te: descrivi la visita con voce o testo (2 minuti), e in 30 secondi ottieni report di visita, email di follow-up e offerta commerciale pronti da inviare.
+Sto sviluppando VYNEX, uno strumento che ho costruito specificamente per agenti come te: descrivi la visita con voce o testo (2 minuti), e in 30 secondi ottieni report di visita, email di follow-up e offerta commerciale pronti da inviare.
 
 Niente più serate a scrivere report.
 
@@ -45,7 +45,7 @@ Ciao [Nome],
 
 senza pressione — so che gli agenti non hanno tempo da perdere.
 
-In 30 secondi: provi AgentIA gratis qui → agentia.it
+In 30 secondi: provi VYNEX gratis qui → https://vynex-production-fb78.up.railway.app
 
 Se non fa per te, nessun problema. Se invece ti fa risparmiare anche solo un'ora a settimana, vale la prova.
 
@@ -59,7 +59,7 @@ Se non fa per te, nessun problema. Se invece ti fa risparmiare anche solo un'ora
 ```
 Perfetto [Nome]!
 
-Registrati qui (gratis, no carta): agentia.it/registrati
+Registrati qui (gratis, no carta): https://vynex-production-fb78.up.railway.app/registrati
 
 Come funziona:
 1. Scrivi la visita come la racconteresti a un collega
@@ -76,19 +76,19 @@ Se hai domande o vuoi che ti faccia vedere dal vivo come funziona, sono qui.
 ## Gestione obiezioni comuni
 
 **"Non uso molto LinkedIn / non ho tempo"**
-→ "Capisco perfettamente. Ti mando solo il link: agentia.it — 2 minuti per provare, gratis."
+→ "Capisco perfettamente. Ti mando solo il link: vynex.it — 2 minuti per provare, gratis."
 
 **"Uso già un CRM"**
-→ "AgentIA non è un CRM — si integra con il tuo flusso di lavoro. È il passo PRIMA di inserire dati nel CRM: genera il report, poi lo copi dove vuoi."
+→ "VYNEX non è un CRM — si integra con il tuo flusso di lavoro. È il passo PRIMA di inserire dati nel CRM: genera il report, poi lo copi dove vuoi."
 
 **"Non sono bravo con la tecnologia"**
-→ "È semplicissimo: scrivi come scrivi un SMS, l'AI fa il resto. Se sai usare WhatsApp, sai usare AgentIA."
+→ "È semplicissimo: scrivi come scrivi un SMS, l'AI fa il resto. Se sai usare WhatsApp, sai usare VYNEX."
 
 **"Costa troppo"**
-→ "Parte gratis, 10 documenti/mese. Se ti fa risparmiare 5 ore al mese, il Pro a €39 lo ripaga in meno di un'ora di lavoro."
+→ "Parte gratis, 10 documenti/mese. Se ti fa risparmiare 5 ore al mese, il Pro a €49 lo ripaga in meno di un'ora di lavoro."
 
 **"Non mi fido dei dati"**
-→ "I tuoi testi vengono usati solo per generare i documenti, non vengono conservati per training AI o condivisi. Privacy policy completa su agentia.it/privacy."
+→ "I tuoi testi vengono usati solo per generare i documenti, non vengono conservati per training AI o condivisi. Privacy policy completa su /privacy."
 
 ---
 
@@ -104,8 +104,8 @@ Se hai domande o vuoi che ti faccia vedere dal vivo come funziona, sono qui.
 - Target conversioni free: 5-10% → 8-17 utenti free
 - Target conversioni pro: 10-20% degli utenti free → 1-3 paganti
 
-**Primo MRR target:** €39-117 entro fine mese 1
-**Target mese 3:** 50 Pro = €1.950 MRR
+**Primo MRR target:** €49-147 entro fine mese 1
+**Target mese 3:** 50 Pro = €2.450 MRR
 
 ---
 

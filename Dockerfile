@@ -9,8 +9,8 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
 
-RUN useradd -r -u 1000 agentia && chown -R agentia:agentia /app
-USER agentia
+RUN useradd -r -u 1000 vynex && chown -R vynex:vynex /app
+USER vynex
 
 ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1

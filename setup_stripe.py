@@ -1,5 +1,5 @@
 """
-Setup Stripe products and prices for AgentIA.
+Setup Stripe products and prices for VYNEX.
 Run once with: python setup_stripe.py
 Requires STRIPE_SECRET_KEY in .env
 """
@@ -16,14 +16,14 @@ if not stripe.api_key:
 
 # --- Pro Plan ---
 pro_product = stripe.Product.create(
-    name="AgentIA Pro",
+    name="VYNEX Pro",
     description="Documenti illimitati per agenti di commercio professionisti",
     metadata={"plan": "pro"},
 )
 
 pro_price = stripe.Price.create(
     product=pro_product.id,
-    unit_amount=3900,  # €39.00
+    unit_amount=4900,  # €49.00
     currency="eur",
     recurring={"interval": "month"},
     nickname="Pro Monthly",
@@ -31,17 +31,17 @@ pro_price = stripe.Price.create(
 
 # --- Team Plan ---
 team_product = stripe.Product.create(
-    name="AgentIA Team",
-    description="Fino a 5 agenti per la stessa azienda mandante",
+    name="VYNEX Team",
+    description="Per aziende con rete vendita — minimo 3 agenti",
     metadata={"plan": "team"},
 )
 
 team_price = stripe.Price.create(
     product=team_product.id,
-    unit_amount=8900,  # €89.00
+    unit_amount=8900,  # €89.00 per agente
     currency="eur",
     recurring={"interval": "month"},
-    nickname="Team Monthly",
+    nickname="Team Monthly (per seat)",
 )
 
 print("Stripe setup completato.")

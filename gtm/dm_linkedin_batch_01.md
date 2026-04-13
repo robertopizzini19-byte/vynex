@@ -1,8 +1,8 @@
-# AgentIA — Batch 01 DM LinkedIn (pronto per invio)
+# VYNEX — Batch 01 DM LinkedIn (pronto per invio)
 
 **Obiettivo:** 10 primi DM + tracking, target 1-2 trial attivi entro 7 giorni.
 **Regola personalizzazione:** mai inviare senza aver letto il profilo e scelto il template giusto.
-**Landing page:** https://agentia-production-fb78.up.railway.app (in attesa dominio custom `agentia.it`)
+**Landing page:** https://vynex-production-fb78.up.railway.app (in attesa dominio custom `vynex.it`)
 **Backup:** se il prospect chiede il sito "ufficiale", dire che stiamo finalizzando il dominio e inviare comunque il link Railway.
 
 ---
@@ -36,11 +36,11 @@ Milano · Torino · Bologna · Brescia · Bergamo · Verona · Padova · Vicenza
 ```
 Ciao [Nome],
 
-ho visto che sei agente di commercio — curiosità vera, non vendita: quanti 
+ho visto che sei agente di commercio — curiosità vera, non vendita: quanti
 minuti al giorno passi a scrivere report di visita e email di follow-up?
 
-Ho costruito uno strumento che porta quel tempo da 40 min a 30 secondi per 
-visita. Si chiama AgentIA, è in italiano, funziona anche scrivendo "a voce 
+Ho costruito uno strumento che porta quel tempo da 40 min a 30 secondi per
+visita. Si chiama VYNEX, è in italiano, funziona anche scrivendo "a voce
 alta" come parleresti a un collega.
 
 Gratis fino a 10 documenti al mese, senza carta. Ti mando il link?
@@ -50,11 +50,11 @@ Gratis fino a 10 documenti al mese, senza carta. Ti mando il link?
 ```
 Ciao [Nome],
 
-nel farmaceutico ogni visita = report dettagliato per il mandante + follow-up 
-medico + magari scheda prodotto rivista. È il settore dove gli agenti mi 
+nel farmaceutico ogni visita = report dettagliato per il mandante + follow-up
+medico + magari scheda prodotto rivista. È il settore dove gli agenti mi
 hanno detto di perdere più tempo in assoluto.
 
-Ho costruito AgentIA proprio per questo: descrivi la visita (anche con 
+Ho costruito VYNEX proprio per questo: descrivi la visita (anche con
 termini medici italiani) e in 30 secondi hai i 3 documenti pronti.
 
 Gratis 10 doc/mese. Ti interessa testarlo una settimana?
@@ -64,10 +64,10 @@ Gratis 10 doc/mese. Ti interessa testarlo una settimana?
 ```
 Ciao [Nome],
 
-food è uno dei settori in cui un agente fa 6-8 visite al giorno — e ogni 
+food è uno dei settori in cui un agente fa 6-8 visite al giorno — e ogni
 cliente è un report diverso (HORECA, GDO, retail).
 
-AgentIA adatta il tono del report al tipo di cliente. Scrivi una volta, 
+VYNEX adatta il tono del report al tipo di cliente. Scrivi una volta,
 ottieni il report giusto per ciascuno.
 
 Gratis 10 documenti/mese. Ti lascio il link se vuoi provarlo?
@@ -77,10 +77,10 @@ Gratis 10 documenti/mese. Ti lascio il link se vuoi provarlo?
 ```
 Ciao [Nome],
 
-nell'industriale i report tecnici sono lunghi: quantità, articoli, tempi 
+nell'industriale i report tecnici sono lunghi: quantità, articoli, tempi
 di consegna, eccezioni di prezzo. Ti ruba un'ora la sera.
 
-AgentIA prende il tuo input (anche disordinato) e sputa fuori un report 
+VYNEX prende il tuo input (anche disordinato) e sputa fuori un report
 pulito strutturato + l'email di conferma al mandante.
 
 Gratis fino a 10 doc/mese. Ha senso dartene un'occhiata?
@@ -90,11 +90,11 @@ Gratis fino a 10 doc/mese. Ha senso dartene un'occhiata?
 ```
 Ciao [Nome],
 
-nell'abbigliamento ogni visita di campionario = report con taglie, colori, 
+nell'abbigliamento ogni visita di campionario = report con taglie, colori,
 quantità minime, tempi di riassortimento. Ogni mandante vuole un formato diverso.
 
-AgentIA ti permette di salvare template per ogni mandante — scrivi una volta, 
-ottieni il report nel formato giusto.
+VYNEX ti permette di affinare il report con istruzioni AI — scrivi una volta,
+ottieni il report nel formato giusto con una frase.
 
 Te lo mostro? Gratis 10 doc/mese, senza carta.
 ```
@@ -103,11 +103,11 @@ Te lo mostro? Gratis 10 doc/mese, senza carta.
 ```
 Ciao [Nome],
 
-arredo = visite lunghe, clienti che decidono in 3 riunioni, preventivi 
-articolati. Il report "cosa si è detto oggi" è fondamentale per non perdere 
+arredo = visite lunghe, clienti che decidono in 3 riunioni, preventivi
+articolati. Il report "cosa si è detto oggi" è fondamentale per non perdere
 il filo.
 
-AgentIA lo genera in 30 secondi, da voce o testo libero. Pensato per agenti, 
+VYNEX lo genera in 30 secondi, da voce o testo libero. Pensato per agenti,
 non per manager IT.
 
 Gratis fino a 10 doc/mese, ti mando il link?
@@ -117,14 +117,14 @@ Gratis fino a 10 doc/mese, ti mando il link?
 ```
 Ciao [Nome],
 
-ho letto il tuo post di [giorno] sulla [burocrazia/report/amministrazione] 
+ho letto il tuo post di [giorno] sulla [burocrazia/report/amministrazione]
 — ti capisco al 100%.
 
-Ho costruito AgentIA per risolvere esattamente quello: parli/scrivi di getto 
-quello che è successo in visita, e in 30 secondi hai report, email follow-up 
+Ho costruito VYNEX per risolvere esattamente quello: parli/scrivi di getto
+quello che è successo in visita, e in 30 secondi hai report, email follow-up
 e offerta pronti.
 
-Gratis fino a 10 doc/mese. Se ti va, te lo mando a provare — feedback sincero 
+Gratis fino a 10 doc/mese. Se ti va, te lo mando a provare — feedback sincero
 è tutto quello che chiedo.
 ```
 
@@ -132,13 +132,13 @@ Gratis fino a 10 doc/mese. Se ti va, te lo mando a provare — feedback sincero
 ```
 Ciao [Nome],
 
-ho visto che ti interessi di AI nel lavoro — una cosa buona, perché nel 
+ho visto che ti interessi di AI nel lavoro — una cosa buona, perché nel
 tuo settore l'AI applicata bene fa la differenza.
 
-ChatGPT generico per report di visita non basta: non conosce il formato agenti, 
+ChatGPT generico per report di visita non basta: non conosce il formato agenti,
 non distingue tra mandante/cliente, non sa l'italiano commerciale.
 
-AgentIA è verticale per agenti di commercio italiani. Gratis 10 doc/mese. 
+VYNEX è verticale per agenti di commercio italiani. Gratis 10 doc/mese.
 Ti mando il link per provare?
 ```
 
@@ -146,8 +146,8 @@ Ti mando il link per provare?
 ```
 Ciao [Nome],
 
-un agente del [settore/zona] mi ha detto che dopo 2 settimane con AgentIA 
-ha recuperato 8 ore alla settimana — tempo che ora usa per vedere 2 clienti 
+un agente del [settore/zona] mi ha detto che dopo 2 settimane con VYNEX
+ha recuperato 8 ore alla settimana — tempo che ora usa per vedere 2 clienti
 in più, non per scrivere report.
 
 Penso possa funzionare anche per te. Gratis fino a 10 doc/mese.
@@ -156,16 +156,16 @@ Te lo mando?
 ```
 **Nota:** usare solo quando c'è almeno 1 cliente reale soddisfatto. Mai numero inventato.
 
-### DM #10 — Piccola agenzia / team (Piano Team €89)
+### DM #10 — Piccola agenzia / team (Piano Team €89/agente)
 ```
 Ciao [Nome],
 
-ho visto che guidi un'agenzia di rappresentanza. AgentIA ha un piano Team 
-(fino a 5 agenti) che permette di standardizzare i report: stesso formato, 
+ho visto che guidi un'agenzia di rappresentanza. VYNEX ha un piano Team
+(minimo 3 agenti) che permette di standardizzare i report: stesso formato,
 stesso livello, per tutti i tuoi mandanti.
 
-€89/mese per 5 agenti = €18/agente. L'agente singolo ne recupera 5-10 ore 
-al mese, tu hai visibilità uniforme sulla qualità del reporting.
+€89/agente/mese. L'agente singolo ne recupera 5-10 ore al mese, tu hai
+visibilità uniforme sulla qualità del reporting.
 
 Posso mostrartelo in 15 minuti in call? O preferisci un link per provare?
 ```
@@ -178,11 +178,11 @@ Posso mostrartelo in 15 minuti in call? O preferisci un link per provare?
 Ciao [Nome], follow-up veloce.
 
 So che non hai tempo, quindi sarò ultra breve:
-• AgentIA gratis 10 doc/mese
+• VYNEX gratis 10 doc/mese
 • 2 minuti per provare
-• Link: https://agentia-production-fb78.up.railway.app
+• Link: https://vynex-production-fb78.up.railway.app
 
-Se non fa per te nessun problema, ma se ti fa risparmiare anche solo 
+Se non fa per te nessun problema, ma se ti fa risparmiare anche solo
 un'ora a settimana vale la prova.
 ```
 
@@ -192,10 +192,10 @@ un'ora a settimana vale la prova.
 
 | Obiezione | Risposta |
 |---|---|
-| "Non sono bravo con la tecnologia" | "Se sai usare WhatsApp, sai usare AgentIA. Parli/scrivi, AI fa tutto." |
-| "Uso già un CRM" | "AgentIA non è un CRM — genera i documenti che POI copi nel CRM. Si integra, non sostituisce." |
-| "Costa troppo" | "Free 10 doc/mese per iniziare. Pro €39 = 1 ora del tuo tempo/mese. Ne recuperi 60+." |
-| "I miei mandanti vogliono un formato specifico" | "Puoi salvare un template per ogni mandante. Scrivi una volta, formato giusto automatico." |
+| "Non sono bravo con la tecnologia" | "Se sai usare WhatsApp, sai usare VYNEX. Parli/scrivi, AI fa tutto." |
+| "Uso già un CRM" | "VYNEX non è un CRM — genera i documenti che POI copi nel CRM. Si integra, non sostituisce." |
+| "Costa troppo" | "Free 10 doc/mese per iniziare. Pro €49 = meno di un'ora del tuo tempo/mese. Ne recuperi 60+." |
+| "I miei mandanti vogliono un formato specifico" | "Affina con AI: una frase e adatti il formato al mandante. Scrivi una volta, formato giusto automatico." |
 | "Ci penso" | "Nessuna pressione. Ti lascio il link se cambi idea: [URL]. Un minuto per provare, senza carta." |
 | "Non mi fido della privacy" | "Dati usati solo per generare i tuoi documenti, non per training AI. Privacy policy sul sito." |
 | "Mi fido solo di Excel/Word" | "Va bene, ma prova a farci un report di visita dettato in 30 secondi. Se Excel è più veloce torni lì." |
@@ -231,7 +231,7 @@ Compila durante l'invio. Obiettivo batch: **1-2 trial entro 7 giorni, 1 pagante 
 3. **10 min** — Per ogni accettazione ricevuta dal giorno prima: scegli il DM giusto dal batch (in base a settore/profilo), incolla, personalizza 1 dettaglio (1 minuto per messaggio)
 4. **5 min** — Aggiorna la tracking table qui sotto
 
-**Limite sicurezza:** mai più di 20-25 connection request/giorno (LinkedIn bannare account che superano 100/settimana).
+**Limite sicurezza:** mai più di 20-25 connection request/giorno (LinkedIn banna account che superano 100/settimana).
 
 ---
 

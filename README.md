@@ -1,38 +1,52 @@
-# VisitAI — AI Document Generation for Italian Commercial Agents
+# VYNEX — Documenti commerciali in 30 secondi
 
-SaaS platform that generates visit reports, follow-up emails, and commercial offers from informal voice descriptions in under 30 seconds. Built for Italy's ~200,000 *agenti di commercio*.
+SaaS italiano per agenti di commercio: da una descrizione informale della visita (testo) genera in 30 secondi **report di visita + email di follow-up + offerta commerciale** pronti da inviare. Pensato per i ~220.000 *agenti di commercio* italiani.
+
+> **Nome:** VYNEX (con la Y) — breve, memorizzabile, pronunciabile ovunque.
+> **Posizionamento:** zero concorrenza verticale in Italia. AI commerciale pensata per chi vende, non per chi programma.
 
 ## Stack
-- **Backend:** FastAPI + SQLAlchemy async + SQLite/PostgreSQL
-- **AI:** Claude Haiku via Anthropic SDK
-- **Payments:** Stripe (checkout, portal, webhooks)
-- **Auth:** JWT cookie-based + bcrypt
-- **Deploy:** Railway via Dockerfile
+- **Backend:** FastAPI 0.115 + SQLAlchemy 2.0 async
+- **DB:** Supabase Postgres via asyncpg (session pooler 5432) · fallback SQLite locale
+- **AI:** Claude Haiku 4.5 via Anthropic SDK
+- **Pagamenti:** Stripe (checkout, billing portal, webhooks idempotenti)
+- **Auth:** JWT in cookie HttpOnly + bcrypt · password reset via email
+- **Email:** Resend (transazionali) con fallback no-op se chiave assente
+- **Rate limiting:** slowapi su endpoint pubblici
+- **GDPR:** privacy/termini/cookie policy, cookie banner, accept_terms in registrazione
+- **Deploy:** Railway via Dockerfile multi-stage Python 3.11
 
 ## Pricing
-| Plan | Price | Limit |
-|------|-------|-------|
-| Free | €0 | 10 docs/month |
-| Pro | €39/month | Unlimited |
-| Team | €89/month | 5 users |
+| Piano | Prezzo | Limite |
+|-------|-------|-------|
+| Free  | €0 | 10 documenti/mese |
+| Pro   | €49/mese | Documenti illimitati + Affina con AI |
+| Team  | €89/agente/mese (min 3 agenti) | Dashboard team + brandizzazione |
+
+Prova 10 giorni inclusa su Pro e Team.
 
 ## Features
-- Natural language → professional document in <30s
-- Visit report + email follow-up + commercial offer
-- Dark UI optimized for mobile field use
-- Stripe subscription management
+- Descrizione naturale → 3 documenti professionali in < 30s
+- Affina con istruzioni AI ("rendi più formale", "aggiungi sconto 10%", ecc.)
+- Storico documenti per cliente
+- Stripe subscription + billing portal self-service
+- Password reset via email
+- Email transazionali (welcome, reset, pagamento ok/ko)
+- Cookie banner + pagine legali conformi GDPR
 
-## Run locally
+## Run locale
 ```bash
 pip install -r requirements.txt
-cp .env.example .env  # add ANTHROPIC_API_KEY + Stripe keys
+cp .env.example .env    # aggiungi ANTHROPIC_API_KEY, Stripe, Resend
 uvicorn main:app --reload
 ```
 
 ## Deploy
 ```bash
-railway up
+railway up --ci
 ```
 
+Production: <https://vynex-production-fb78.up.railway.app>
+
 ---
-*Zero competitors in this niche. Built in 3 days.*
+*Zero concorrenti verticali in Italia. Costruito da Roberto Pizzini.*
