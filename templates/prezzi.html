@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Prezzi — VisitAI{% endblock %}
+{% block title %}Prezzi — VYNEX{% endblock %}
 
 {% block body %}
 <nav class="nav-public">
     <div class="nav-inner">
-        <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
+        <a href="/" class="logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
         <div class="nav-links">
             <a href="/prezzi">Prezzi</a>
             {% if user %}
@@ -27,9 +27,9 @@
             <div class="pricing-card">
                 <div class="plan-name">Free</div>
                 <div class="plan-price">€0<span>/mese</span></div>
-                <div class="plan-desc">Per scoprire VisitAI senza impegno</div>
+                <div class="plan-desc">Per scoprire VYNEX senza impegno</div>
                 <ul class="plan-features">
-                    <li>5 documenti al mese</li>
+                    <li>10 documenti al mese</li>
                     <li>Report di visita professionale</li>
                     <li>Email di follow-up</li>
                     <li>Offerta commerciale</li>
@@ -65,9 +65,9 @@
                 {% endif %}
             </div>
 
-            <!-- ENTERPRISE -->
+            <!-- TEAM -->
             <div class="pricing-card">
-                <div class="plan-name">Enterprise</div>
+                <div class="plan-name">Team</div>
                 <div class="plan-price">€89<span>/agente/mese</span></div>
                 <div class="plan-price-sub">Min. 3 agenti · €267/mese</div>
                 <div class="plan-trial">✓ 10 giorni gratis inclusi</div>
@@ -81,11 +81,11 @@
                     <li>Supporto prioritario via email</li>
                     <li>Fatturazione mensile o annuale</li>
                 </ul>
-                {% if user and user.plan == "enterprise" %}
+                {% if user and user.plan == "team" %}
                 <div class="btn-primary btn-full" style="display:flex;justify-content:center;cursor:default">Piano attivo ✓</div>
                 {% else %}
                 <a href="{% if user %}/checkout/team{% else %}/registrati{% endif %}" class="btn-ghost btn-full" style="display:flex">
-                    {% if user %}Attiva Enterprise{% else %}Prova gratis 10 giorni{% endif %}
+                    {% if user %}Attiva Team{% else %}Prova gratis 10 giorni{% endif %}
                 </a>
                 {% endif %}
             </div>
@@ -99,7 +99,7 @@
             </div>
             <div class="faq-item">
                 <h3>Come funziona la prova di 10 giorni?</h3>
-                <p>Attivi il piano Pro o Enterprise, hai 10 giorni per testarlo senza limiti. Se non è per te, disdici prima della scadenza e non ti addebitiamo nulla.</p>
+                <p>Attivi il piano Pro o Team, hai 10 giorni per testarlo senza limiti. Se non è per te, disdici prima della scadenza e non ti addebitiamo nulla.</p>
             </div>
             <div class="faq-item">
                 <h3>Posso cancellare in qualsiasi momento?</h3>
@@ -107,26 +107,15 @@
             </div>
             <div class="faq-item">
                 <h3>I documenti sembrano davvero scritti da un professionista?</h3>
-                <p>Sì. VisitAI usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI — e puoi affinarli con istruzioni testuali.</p>
+                <p>Sì. VYNEX usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI — e puoi affinarli con istruzioni testuali.</p>
             </div>
             <div class="faq-item">
-                <h3>Come funziona il piano Enterprise per le aziende?</h3>
-                <p>Il piano Enterprise è per seat: ogni agente della tua rete ha il proprio accesso. Il minimo è 3 agenti (€267/mese). Per team più grandi contattaci per un preventivo personalizzato.</p>
+                <h3>Come funziona il piano Team per le aziende?</h3>
+                <p>Il piano Team è per seat: ogni agente della tua rete ha il proprio accesso. Il minimo è 3 agenti (€267/mese). Per team più grandi contattaci per un preventivo personalizzato.</p>
             </div>
         </div>
     </div>
 </section>
 
-<footer class="footer">
-    <div class="container">
-        <div class="footer-inner">
-            <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
-            <div class="footer-links">
-                <a href="mailto:ciao@visitai.it">Contatti</a>
-                <a href="/privacy">Privacy</a>
-            </div>
-        </div>
-        <p class="footer-copy">© 2026 VisitAI. Strumento AI per agenti commerciali italiani.</p>
-    </div>
-</footer>
+{% include "partials/footer.html" %}
 {% endblock %}

@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Accedi — VisitAI{% endblock %}
+{% block title %}Accedi — VYNEX{% endblock %}
 
 {% block body %}
 <div class="auth-split">
-    <!-- LEFT PANEL -->
     <div class="auth-left">
-        <a href="/" class="logo auth-split-logo">Visit<span class="logo-ai">AI</span></a>
+        <a href="/" class="logo auth-split-logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
         <div class="auth-left-content">
             <h2>Risparmia 20 ore<br>ogni mese</h2>
             <p>Ogni visita diventa report, email e offerta in 30 secondi. Sempre in italiano professionale.</p>
@@ -17,17 +16,16 @@
             </ul>
         </div>
         <div class="auth-left-quote">
-            <p>"Prima impiegavo 2 ore al giorno a scrivere report. Con VisitAI sono 10 minuti."</p>
+            <p>"Prima impiegavo 2 ore al giorno a scrivere report. Con VYNEX sono 10 minuti."</p>
             <div class="auth-quote-author">Marco B. · Agente commerciale, Milano</div>
         </div>
     </div>
 
-    <!-- RIGHT PANEL -->
     <div class="auth-right">
         <div class="auth-form-wrap">
             <div class="auth-form-header">
                 <h1>Bentornato</h1>
-                <p class="auth-sub">Accedi al tuo account VisitAI</p>
+                <p class="auth-sub">Accedi al tuo account VYNEX</p>
             </div>
 
             {% if error %}
@@ -46,6 +44,7 @@
                 <button type="submit" class="btn-primary btn-full btn-lg">Accedi</button>
             </form>
 
+            <p class="auth-switch"><a href="/recupera-password">Password dimenticata?</a></p>
             <p class="auth-switch">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
         </div>
     </div>

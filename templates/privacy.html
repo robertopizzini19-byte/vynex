@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — VYNEX{% endblock %}
+
+{% block body %}
+<nav class="nav-pub">
+    <a href="/" class="logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
+    <div class="nav-pub-actions">
+        <a href="/login" class="btn-ghost btn-sm">Accedi</a>
+        <a href="/registrati" class="btn-primary btn-sm">Inizia gratis</a>
+    </div>
+</nav>
+
+<section class="legal-page">
+    <div class="legal-inner">
+        <a href="/" class="legal-back">← Torna alla home</a>
+        <h1>Privacy Policy</h1>
+        <p class="legal-meta">Ultimo aggiornamento: 13 aprile 2026</p>
+
+        <h2>1. Titolare del trattamento</h2>
+        <p>
+            Il titolare del trattamento dei dati personali è <strong>Roberto Pizzini</strong>,
+            titolare del progetto VYNEX, raggiungibile all'indirizzo email
+            <a href="mailto:ciao@vynex.it">ciao@vynex.it</a>.
+        </p>
+
+        <h2>2. Tipologie di dati raccolti</h2>
+        <ul>
+            <li><strong>Dati di registrazione:</strong> nome, cognome, email, eventuale azienda mandante, password (salvata come hash bcrypt).</li>
+            <li><strong>Dati di utilizzo:</strong> testo delle descrizioni delle visite commerciali inserite dall'utente per la generazione dei documenti, documenti generati, timestamp di utilizzo.</li>
+            <li><strong>Dati di fatturazione:</strong> gestiti esclusivamente da Stripe Payments Europe, Ltd (vedi sezione 5). VYNEX non memorizza numeri di carta.</li>
+            <li><strong>Dati tecnici:</strong> indirizzo IP, user agent, cookie di sessione tecnici.</li>
+        </ul>
+
+        <h2>3. Finalità del trattamento</h2>
+        <ul>
+            <li>Erogazione del servizio di generazione documenti con AI.</li>
+            <li>Gestione dell'account, autenticazione e sicurezza.</li>
+            <li>Gestione degli abbonamenti e fatturazione.</li>
+            <li>Comunicazioni transazionali (conferme, reset password, avvisi di pagamento).</li>
+            <li>Adempimenti fiscali e legali.</li>
+        </ul>
+
+        <h2>4. Base giuridica</h2>
+        <p>
+            Il trattamento avviene per esecuzione del contratto di servizio (art. 6, par. 1, lett. b GDPR),
+            per obbligo di legge in materia fiscale (lett. c) e per legittimo interesse relativo alla sicurezza
+            dei sistemi (lett. f).
+        </p>
+
+        <h2>5. Responsabili del trattamento (processor)</h2>
+        <p>I dati sono elaborati dai seguenti fornitori, tutti conformi al GDPR:</p>
+        <ul>
+            <li><strong>Anthropic PBC</strong> — modello di intelligenza artificiale Claude Haiku per la generazione dei documenti. I contenuti inviati non vengono utilizzati per addestramento.</li>
+            <li><strong>Stripe Payments Europe, Ltd</strong> — gestione pagamenti e fatturazione.</li>
+            <li><strong>Supabase</strong> — hosting del database PostgreSQL (regione UE — Irlanda).</li>
+            <li><strong>Railway Corp.</strong> — hosting applicativo (regione UE — Paesi Bassi).</li>
+            <li><strong>Resend Inc.</strong> — invio email transazionali.</li>
+        </ul>
+
+        <h2>6. Periodo di conservazione</h2>
+        <p>
+            I dati dell'account sono conservati per tutta la durata del rapporto contrattuale.
+            In seguito alla cancellazione dell'account, i dati vengono eliminati entro 30 giorni,
+            fatti salvi gli obblighi di legge (10 anni per i documenti fiscali ex art. 2220 c.c.).
+            Le descrizioni delle visite e i documenti generati possono essere cancellati in qualsiasi
+            momento dal proprio account.
+        </p>
+
+        <h2>7. Diritti dell'interessato</h2>
+        <p>In ogni momento è possibile esercitare i diritti previsti dagli articoli 15-22 del GDPR:</p>
+        <ul>
+            <li>Accesso ai dati personali</li>
+            <li>Rettifica dei dati inesatti</li>
+            <li>Cancellazione dei dati ("diritto all'oblio")</li>
+            <li>Limitazione del trattamento</li>
+            <li>Portabilità dei dati</li>
+            <li>Opposizione al trattamento</li>
+            <li>Reclamo al Garante per la protezione dei dati personali (<a href="https://www.garanteprivacy.it" target="_blank" rel="noopener">www.garanteprivacy.it</a>)</li>
+        </ul>
+        <p>
+            Per esercitare questi diritti scrivere a
+            <a href="mailto:ciao@vynex.it">ciao@vynex.it</a>.
+            Risposta garantita entro 30 giorni.
+        </p>
+
+        <h2>8. Trasferimento dati extra-UE</h2>
+        <p>
+            Anthropic PBC, Stripe Inc. e Resend Inc. hanno sede negli Stati Uniti. I trasferimenti
+            avvengono sulla base delle Standard Contractual Clauses approvate dalla Commissione Europea.
+        </p>
+
+        <h2>9. Sicurezza</h2>
+        <p>
+            Utilizziamo TLS 1.3 per le connessioni, hash bcrypt per le password, token JWT firmati
+            per l'autenticazione e webhook Stripe con verifica HMAC-SHA256. Nessun dato di
+            pagamento transita dai nostri server.
+        </p>
+
+        <h2>10. Modifiche alla policy</h2>
+        <p>
+            VYNEX si riserva il diritto di modificare questa policy. Eventuali modifiche sostanziali
+            verranno comunicate via email almeno 15 giorni prima della loro entrata in vigore.
+        </p>
+    </div>
+</section>
+
+{% include "partials/footer.html" %}
+{% endblock %}

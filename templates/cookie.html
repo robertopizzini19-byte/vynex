@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Cookie Policy — VYNEX{% endblock %}
+
+{% block body %}
+<nav class="nav-pub">
+    <a href="/" class="logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
+    <div class="nav-pub-actions">
+        <a href="/login" class="btn-ghost btn-sm">Accedi</a>
+        <a href="/registrati" class="btn-primary btn-sm">Inizia gratis</a>
+    </div>
+</nav>
+
+<section class="legal-page">
+    <div class="legal-inner">
+        <a href="/" class="legal-back">← Torna alla home</a>
+        <h1>Cookie Policy</h1>
+        <p class="legal-meta">Ultimo aggiornamento: 13 aprile 2026</p>
+
+        <h2>Cosa sono i cookie</h2>
+        <p>
+            I cookie sono piccoli file di testo che i siti visitati inviano al terminale
+            dell'utente, dove vengono memorizzati per poi essere ritrasmessi al sito
+            alla successiva visita.
+        </p>
+
+        <h2>Cookie utilizzati da VYNEX</h2>
+        <p>
+            VYNEX utilizza <strong>esclusivamente cookie tecnici</strong> necessari al
+            funzionamento del servizio. Non utilizziamo cookie di profilazione,
+            di marketing o di terze parti per tracking pubblicitario.
+        </p>
+
+        <table class="legal-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Finalità</th>
+                    <th>Durata</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>access_token</code></td>
+                    <td>Tecnico — Sessione</td>
+                    <td>Mantenere l'utente autenticato tra una visita e l'altra.</td>
+                    <td>30 giorni</td>
+                </tr>
+                <tr>
+                    <td><code>vynex_cookie_ack</code></td>
+                    <td>Tecnico — Consenso</td>
+                    <td>Ricordare che l'utente ha visto il banner informativo.</td>
+                    <td>1 anno</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Base giuridica</h2>
+        <p>
+            I cookie tecnici non richiedono consenso preventivo ai sensi dell'art. 122
+            del Codice privacy (D.lgs. 196/2003 come modificato dal D.lgs. 101/2018).
+            Vengono installati in quanto strettamente necessari all'erogazione del servizio.
+        </p>
+
+        <h2>Come disabilitare i cookie</h2>
+        <p>
+            La disabilitazione dei cookie tecnici <strong>impedisce il corretto
+            funzionamento del servizio</strong> (in particolare l'autenticazione).
+            È comunque possibile gestire i cookie dalle impostazioni del proprio browser
+            (<a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Chrome</a>,
+            <a href="https://support.mozilla.org/it/kb/Attivare%20e%20disattivare%20i%20cookie" target="_blank" rel="noopener">Firefox</a>,
+            <a href="https://support.apple.com/guide/safari/gestione-dei-cookie-e-dei-dati-dei-siti-web-sfri11471/mac" target="_blank" rel="noopener">Safari</a>,
+            <a href="https://support.microsoft.com/it-it/windows/eliminare-e-gestire-i-cookie-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener">Edge</a>).
+        </p>
+
+        <h2>Cookie di terze parti</h2>
+        <p>
+            VYNEX <strong>non utilizza cookie di profilazione di terze parti</strong>.
+            Il servizio di pagamento Stripe imposta propri cookie solo durante il
+            checkout, esclusivamente per finalità di sicurezza e prevenzione frodi.
+            Per dettagli:
+            <a href="https://stripe.com/it/cookie-settings" target="_blank" rel="noopener">cookie policy di Stripe</a>.
+        </p>
+
+        <h2>Contatti</h2>
+        <p>
+            Per domande: <a href="mailto:ciao@vynex.it">ciao@vynex.it</a>.
+        </p>
+    </div>
+</section>
+
+{% include "partials/footer.html" %}
+{% endblock %}

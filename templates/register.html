@@ -1,16 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Registrati gratis — VisitAI{% endblock %}
+{% block title %}Registrati gratis — VYNEX{% endblock %}
 
 {% block body %}
 <div class="auth-split">
-    <!-- LEFT -->
     <div class="auth-left">
-        <a href="/" class="logo auth-split-logo">Visit<span class="logo-ai">AI</span></a>
+        <a href="/" class="logo auth-split-logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
         <div class="auth-left-content">
             <h2>Inizia gratis.<br>Senza carta.</h2>
-            <p>5 documenti gratuiti ogni mese, per sempre. Piano Pro con 10 giorni di prova inclusi.</p>
+            <p>10 documenti gratuiti ogni mese, per sempre. Piano Pro con 10 giorni di prova inclusi.</p>
             <ul class="auth-benefits">
-                <li><i data-lucide="check-circle"></i> 5 documenti/mese gratuiti per sempre</li>
+                <li><i data-lucide="check-circle"></i> 10 documenti/mese gratuiti per sempre</li>
                 <li><i data-lucide="check-circle"></i> Nessuna carta di credito richiesta</li>
                 <li><i data-lucide="check-circle"></i> Attivazione immediata</li>
                 <li><i data-lucide="check-circle"></i> Piano Pro: 10 giorni gratis</li>
@@ -28,7 +27,6 @@
         </div>
     </div>
 
-    <!-- RIGHT -->
     <div class="auth-right">
         <div class="auth-form-wrap">
             <div class="auth-form-header">
@@ -57,10 +55,13 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required placeholder="Minimo 8 caratteri" autocomplete="new-password">
                 </div>
+                <label style="display:flex;align-items:flex-start;gap:10px;margin:4px 0 18px;font-size:13px;color:var(--text-2);line-height:1.55;cursor:pointer">
+                    <input type="checkbox" name="accept_terms" value="on" required style="margin-top:3px;flex-shrink:0">
+                    <span>Accetto i <a href="/termini" target="_blank" style="color:var(--blue-l)">Termini e Condizioni</a> e la <a href="/privacy" target="_blank" style="color:var(--blue-l)">Privacy Policy</a>.</span>
+                </label>
                 <button type="submit" class="btn-primary btn-full btn-lg">Crea account gratis</button>
             </form>
 
-            <p class="auth-terms">Registrandoti accetti la <a href="/privacy">Privacy Policy</a>.</p>
             <p class="auth-switch">Hai già un account? <a href="/login">Accedi</a></p>
         </div>
     </div>

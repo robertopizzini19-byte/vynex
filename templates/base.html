@@ -3,14 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}VisitAI — Documenti commerciali in 30 secondi{% endblock %}</title>
-    <meta name="description" content="{% block description %}Descrivi la visita in 2 minuti. VisitAI genera report professionale, email di follow-up e offerta commerciale in 30 secondi. Per agenti commerciali italiani.{% endblock %}">
+    <title>{% block title %}VYNEX — Documenti commerciali in 30 secondi{% endblock %}</title>
+    <meta name="description" content="{% block description %}Descrivi la visita in 2 minuti. VYNEX genera report professionale, email di follow-up e offerta commerciale in 30 secondi. Per agenti commerciali italiani.{% endblock %}">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="apple-touch-icon" href="/static/favicon.svg">
+    <meta name="theme-color" content="#04060f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     {% block body %}{% endblock %}
+
+    <!-- Cookie banner (GDPR) -->
+    <div id="cookie-banner" class="cookie-banner" hidden>
+        <div class="cookie-banner-text">
+            Usiamo cookie tecnici necessari al funzionamento del sito. Nessun cookie di profilazione di terze parti.
+            <a href="/cookie">Cookie policy</a> · <a href="/privacy">Privacy</a>
+        </div>
+        <button type="button" class="btn-primary btn-sm" id="cookie-accept">Ho capito</button>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="/static/app.js"></script>
     {% block scripts %}{% endblock %}

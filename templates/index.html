@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}VisitAI — Ogni visita diventa 3 documenti in 30 secondi{% endblock %}
+{% block title %}VYNEX — Ogni visita diventa 3 documenti in 30 secondi{% endblock %}
 {% block description %}L'AI per agenti commerciali italiani. Descrivi la visita, ottieni report professionale, email di follow-up e offerta commerciale pronti all'uso. Prova gratis.{% endblock %}
 
 {% block body %}
 
 <!-- NAV -->
 <nav class="nav-pub">
-    <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
+    <a href="/" class="logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
     <div class="nav-pub-links">
         <a href="/prezzi">Prezzi</a>
     </div>
@@ -36,7 +36,7 @@
             </h1>
             <p class="hero-sub">
                 Descrivi la visita come parleresti a un collega.
-                VisitAI genera report professionale, email di follow-up e offerta commerciale —
+                VYNEX genera report professionale, email di follow-up e offerta commerciale —
                 pronti da inviare, sempre in italiano perfetto.
             </p>
             <div class="hero-actions">
@@ -47,7 +47,7 @@
                 <i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green)"></i>
                 Nessuna carta di credito richiesta
                 <span class="hero-proof-dot"></span>
-                5 documenti gratuiti/mese per sempre
+                10 documenti gratuiti/mese per sempre
             </div>
         </div>
 
@@ -63,7 +63,6 @@
                     <div class="mockup-title-bar"></div>
                 </div>
 
-                <!-- Input area -->
                 <div style="margin-bottom:14px">
                     <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Descrivi la visita</div>
                     <div style="background:var(--glass);border:1px solid var(--border-h);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text-2);line-height:1.6;font-style:italic;">
@@ -71,19 +70,16 @@
                     </div>
                 </div>
 
-                <!-- Button -->
                 <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r);padding:10px;text-align:center;font-size:13px;font-weight:600;color:#fff;margin-bottom:16px;box-shadow:0 4px 16px var(--blue-glow)">
                     ✦ Genera 3 documenti
                 </div>
 
-                <!-- Tab pills -->
                 <div style="display:flex;gap:4px;padding:4px;background:var(--glass);border:1px solid var(--border);border-radius:12px;margin-bottom:14px">
                     <div style="flex:1;padding:6px 0;text-align:center;background:var(--blue-dim);border-radius:9px;font-size:11.5px;font-weight:600;color:var(--blue-l)">📋 Report</div>
                     <div style="flex:1;padding:6px 0;text-align:center;font-size:11.5px;color:var(--text-3)">✉️ Email</div>
                     <div style="flex:1;padding:6px 0;text-align:center;font-size:11.5px;color:var(--text-3)">📄 Offerta</div>
                 </div>
 
-                <!-- Document preview lines -->
                 <div class="mockup-lines">
                     <div class="mockup-line mockup-line-full"></div>
                     <div class="mockup-line mockup-line-lg"></div>
@@ -92,14 +88,12 @@
                     <div class="mockup-line mockup-line-sm"></div>
                 </div>
 
-                <!-- Badges -->
                 <div class="mockup-badge-row">
                     <span class="mockup-badge mockup-badge-green">✓ Generato in 26s</span>
                     <span class="mockup-badge mockup-badge-blue">📋 Copiato</span>
                 </div>
             </div>
 
-            <!-- Floating notification -->
             <div style="position:absolute;bottom:-18px;right:-10px;background:var(--bg-2);border:1px solid var(--border-h);border-radius:var(--r-lg);padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;align-items:center;gap:10px;z-index:2">
                 <div style="width:34px;height:34px;background:var(--green-dim);border:1px solid rgba(16,185,129,.3);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px">✓</div>
                 <div>
@@ -152,8 +146,8 @@
             <div class="target-card">
                 <div class="target-card-icon">🏢</div>
                 <h3>Aziende con reti vendita</h3>
-                <p style="font-size:14px;margin-bottom:16px">Hai 3, 10, 50 agenti? Ogni agente risparmia ~20 ore al mese. VisitAI standardizza la qualità dei documenti e scala con la rete.</p>
-                <span style="display:inline-flex;align-items:center;padding:4px 12px;background:var(--purple-dim);border:1px solid rgba(139,92,246,.2);border-radius:100px;font-size:11.5px;font-weight:600;color:#c4b5fd">Enterprise · €89/agente · 10 gg gratis</span>
+                <p style="font-size:14px;margin-bottom:16px">Hai 3, 10, 50 agenti? Ogni agente risparmia ~20 ore al mese. VYNEX standardizza la qualità dei documenti e scala con la rete.</p>
+                <span style="display:inline-flex;align-items:center;padding:4px 12px;background:var(--purple-dim);border:1px solid rgba(139,92,246,.2);border-radius:100px;font-size:11.5px;font-weight:600;color:#c4b5fd">Team · €89/agente · 10 gg gratis</span>
             </div>
         </div>
     </div>
@@ -257,19 +251,17 @@
             <p class="section-sub" style="margin:0 auto">Inizia gratis. 10 giorni di prova su ogni piano. Disdici quando vuoi.</p>
         </div>
         <div class="pricing-grid" style="max-width:840px">
-            <!-- FREE -->
             <div class="pricing-card">
                 <div class="pricing-price">€0 <span>/mese</span></div>
                 <div class="pricing-sub">Free — Per sempre, senza carta di credito</div>
                 <ul class="pricing-features">
-                    <li>5 documenti al mese</li>
+                    <li>10 documenti al mese</li>
                     <li>Report + Email + Offerta</li>
                     <li>Storico documenti</li>
                 </ul>
                 <a href="/registrati" class="btn-ghost btn-full">Inizia gratis</a>
             </div>
 
-            <!-- PRO -->
             <div class="pricing-card popular">
                 <div class="pricing-badge">✦ Più scelto</div>
                 <div class="pricing-price">€49 <span>/mese</span></div>
@@ -284,17 +276,16 @@
                 <a href="/registrati" class="btn-primary btn-full">Prova 10 giorni gratis</a>
             </div>
 
-            <!-- ENTERPRISE -->
             <div class="pricing-card" style="grid-column:1/-1;max-width:500px;margin:0 auto;width:100%">
                 <div class="pricing-price">€89 <span>/agente/mese</span></div>
-                <div class="pricing-sub">Enterprise — Min. 3 agenti · €267/mese · 10 giorni gratis</div>
+                <div class="pricing-sub">Team — Min. 3 agenti · €267/mese · 10 giorni gratis</div>
                 <ul class="pricing-features">
                     <li>Tutto il piano Pro</li>
                     <li>Dashboard team centralizzata</li>
                     <li>Brandizzazione aziendale</li>
                     <li>Supporto prioritario email</li>
                 </ul>
-                <a href="/prezzi" class="btn-ghost btn-full">Scopri Enterprise</a>
+                <a href="/prezzi" class="btn-ghost btn-full">Scopri Team</a>
             </div>
         </div>
     </div>
@@ -305,22 +296,11 @@
     <div class="section-cta-inner">
         <div class="section-label" style="margin:0 auto 20px">Inizia oggi</div>
         <h2>Smetti di sprecare tempo.<br>Inizia gratis.</h2>
-        <p>5 documenti gratuiti al mese per sempre. Piano Pro con 10 giorni di prova inclusi — nessuna carta richiesta.</p>
+        <p>10 documenti gratuiti al mese per sempre. Piano Pro con 10 giorni di prova inclusi — nessuna carta richiesta.</p>
         <a href="/registrati" class="btn-primary btn-lg">Crea il tuo account gratis</a>
     </div>
 </section>
 
-<!-- FOOTER -->
-<footer class="footer">
-    <div class="footer-inner">
-        <a href="/" class="logo">Visit<span class="logo-ai">AI</span></a>
-        <div style="display:flex;gap:24px;align-items:center">
-            <a href="/prezzi" style="font-size:13.5px;color:var(--text-3)">Prezzi</a>
-            <a href="/privacy" style="font-size:13.5px;color:var(--text-3)">Privacy</a>
-            <a href="/termini" style="font-size:13.5px;color:var(--text-3)">Termini</a>
-        </div>
-        <p style="font-size:12.5px;color:var(--text-3);margin:0">© 2026 VisitAI</p>
-    </div>
-</footer>
+{% include "partials/footer.html" %}
 
 {% endblock %}
