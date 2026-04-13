@@ -2,7 +2,7 @@
 
 **Obiettivo:** 10 primi DM + tracking, target 1-2 trial attivi entro 7 giorni.
 **Regola personalizzazione:** mai inviare senza aver letto il profilo e scelto il template giusto.
-**Landing page:** https://vynex-production-fb78.up.railway.app (in attesa dominio custom `vynex.it`)
+**Landing page:** https://agentia-production-fb78.up.railway.app (in attesa dominio custom `vynex.it`)
 **Backup:** se il prospect chiede il sito "ufficiale", dire che stiamo finalizzando il dominio e inviare comunque il link Railway.
 
 ---
@@ -180,7 +180,7 @@ Ciao [Nome], follow-up veloce.
 So che non hai tempo, quindi sarò ultra breve:
 • VYNEX gratis 10 doc/mese
 • 2 minuti per provare
-• Link: https://vynex-production-fb78.up.railway.app
+• Link: https://agentia-production-fb78.up.railway.app
 
 Se non fa per te nessun problema, ma se ti fa risparmiare anche solo
 un'ora a settimana vale la prova.

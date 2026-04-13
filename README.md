@@ -46,7 +46,7 @@ uvicorn main:app --reload
 railway up --ci
 ```
 
-Production: <https://vynex-production-fb78.up.railway.app>
+Production: <https://agentia-production-fb78.up.railway.app> (custom domain `vynex.it` in arrivo)
 
 ---
 *Zero concorrenti verticali in Italia. Costruito da Roberto Pizzini.*
