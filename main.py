@@ -290,6 +290,57 @@ async def account_page(
     )
 
 
+@app.get("/api/export-data")
+@limiter.limit("5/hour")
+async def api_export_data(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user)
+):
+    """GDPR art. 15 — diritto di accesso. Esporta tutti i dati utente in JSON."""
+    result = await db.execute(
+        select(Document)
+        .where(Document.user_id == user.id)
+        .order_by(Document.created_at.asc())
+    )
+    docs = result.scalars().all()
+
+    export = {
+        "export_version": "1.0",
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "company_name": user.company_name,
+            "plan": user.plan,
+            "is_active": user.is_active,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "stripe_customer_id": user.stripe_customer_id,
+            "has_active_subscription": bool(user.stripe_subscription_id),
+        },
+        "documents": [
+            {
+                "id": d.id,
+                "created_at": d.created_at.isoformat() if d.created_at else None,
+                "cliente_nome": d.cliente_nome,
+                "azienda_cliente": d.azienda_cliente,
+                "input_text": d.input_text,
+                "report_visita": d.report_visita,
+                "email_followup": d.email_followup,
+                "offerta_commerciale": d.offerta_commerciale,
+            }
+            for d in docs
+        ],
+        "document_count": len(docs),
+    }
+    filename = f"vynex-export-{user.id}-{datetime.utcnow().strftime('%Y%m%d')}.json"
+    return JSONResponse(
+        content=export,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
 @app.post("/api/delete-account")
 @limiter.limit("3/hour")
 async def api_delete_account(
@@ -580,6 +631,81 @@ async def sitemap():
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "vynex"}
+
+
+@app.get("/admin/metrics")
+@limiter.limit("30/minute")
+async def admin_metrics(request: Request, db: AsyncSession = Depends(get_db)):
+    """Aggregati business per il founder. Protetto da ADMIN_TOKEN header."""
+    admin_token = os.getenv("ADMIN_TOKEN", "")
+    header_token = request.headers.get("X-Admin-Token", "")
+    if not admin_token or header_token != admin_token:
+        raise HTTPException(401, "Non autorizzato")
+
+    from datetime import timedelta
+    now = datetime.utcnow()
+    day_ago = now - timedelta(days=1)
+    week_ago = now - timedelta(days=7)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    total_users = (await db.execute(select(func.count(User.id)))).scalar() or 0
+    active_users = (await db.execute(
+        select(func.count(User.id)).where(User.is_active == True)
+    )).scalar() or 0
+    pro_users = (await db.execute(
+        select(func.count(User.id)).where(User.plan == "pro")
+    )).scalar() or 0
+    team_users = (await db.execute(
+        select(func.count(User.id)).where(User.plan == "team")
+    )).scalar() or 0
+    paying_with_sub = (await db.execute(
+        select(func.count(User.id)).where(User.stripe_subscription_id.isnot(None))
+    )).scalar() or 0
+
+    docs_total = (await db.execute(select(func.count(Document.id)))).scalar() or 0
+    docs_24h = (await db.execute(
+        select(func.count(Document.id)).where(Document.created_at >= day_ago)
+    )).scalar() or 0
+    docs_7d = (await db.execute(
+        select(func.count(Document.id)).where(Document.created_at >= week_ago)
+    )).scalar() or 0
+    docs_mtd = (await db.execute(
+        select(func.count(Document.id)).where(Document.created_at >= month_start)
+    )).scalar() or 0
+
+    signups_24h = (await db.execute(
+        select(func.count(User.id)).where(User.created_at >= day_ago)
+    )).scalar() or 0
+    signups_7d = (await db.execute(
+        select(func.count(User.id)).where(User.created_at >= week_ago)
+    )).scalar() or 0
+
+    mrr = pro_users * 49 + team_users * 89
+
+    return {
+        "generated_at": now.isoformat() + "Z",
+        "users": {
+            "total": total_users,
+            "active": active_users,
+            "free": total_users - pro_users - team_users,
+            "pro": pro_users,
+            "team": team_users,
+            "paying": paying_with_sub,
+            "signups_24h": signups_24h,
+            "signups_7d": signups_7d,
+        },
+        "revenue": {
+            "mrr_eur": mrr,
+            "target_eur": 117,
+            "progress_pct": round(mrr / 117 * 100, 1) if mrr else 0,
+        },
+        "activity": {
+            "documents_total": docs_total,
+            "documents_24h": docs_24h,
+            "documents_7d": docs_7d,
+            "documents_mtd": docs_mtd,
+        },
+    }
 
 
 @app.exception_handler(404)

@@ -53,7 +53,11 @@
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Minimo 8 caratteri" autocomplete="new-password">
+                    <input type="password" id="password" name="password" required minlength="8" placeholder="Minimo 8 caratteri" autocomplete="new-password">
+                    <div class="pw-strength" id="pw-strength">
+                        <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
+                        <div class="pw-strength-label" id="pw-strength-label">Debole</div>
+                    </div>
                 </div>
                 <label style="display:flex;align-items:flex-start;gap:10px;margin:4px 0 18px;font-size:13px;color:var(--text-2);line-height:1.55;cursor:pointer">
                     <input type="checkbox" name="accept_terms" value="on" required style="margin-top:3px;flex-shrink:0">

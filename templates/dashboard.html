@@ -39,15 +39,24 @@
         </div>
 
         {% if user.plan == "free" %}
-        <div class="upgrade-banner">
+        {% set used_pct = (usage * 100 // limit) if limit else 0 %}
+        <div class="upgrade-banner {% if usage >= limit %}upgrade-banner-critical{% elif used_pct >= 70 %}upgrade-banner-warning{% endif %}">
             <div class="upgrade-banner-left">
                 <div class="upgrade-banner-icon"><i data-lucide="zap"></i></div>
                 <div>
+                    {% if usage >= limit %}
+                    <div class="upgrade-banner-title">Hai finito i documenti del mese</div>
+                    <div class="upgrade-banner-sub">Passa a Pro: documenti illimitati · 10 giorni gratis · nessuna carta subito</div>
+                    {% elif used_pct >= 70 %}
+                    <div class="upgrade-banner-title">Ti restano solo {{ limit - usage }} documenti</div>
+                    <div class="upgrade-banner-sub">Pro: illimitati · 10 giorni gratis · disdici quando vuoi</div>
+                    {% else %}
                     <div class="upgrade-banner-title">Passa a Pro — documenti illimitati</div>
                     <div class="upgrade-banner-sub">{{ limit - usage }} rimanenti · 10 giorni gratis · nessuna carta subito</div>
+                    {% endif %}
                 </div>
             </div>
-            <a href="/checkout/pro" class="btn-primary btn-sm">Prova gratis</a>
+            <a href="/checkout/pro" class="btn-primary btn-sm">{% if usage >= limit %}Sblocca Pro{% else %}Prova gratis{% endif %}</a>
         </div>
         {% endif %}
 

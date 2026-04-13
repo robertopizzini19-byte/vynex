@@ -29,4 +29,37 @@ document.addEventListener('DOMContentLoaded', () => {
             acceptBtn.addEventListener('click', () => { banner.hidden = true; });
         }
     }
+
+    // Password strength meter
+    const pwInput = document.getElementById('password');
+    const pwWrap = document.getElementById('pw-strength');
+    const pwFill = document.getElementById('pw-strength-fill');
+    const pwLabel = document.getElementById('pw-strength-label');
+    if (pwInput && pwWrap && pwFill && pwLabel) {
+        const scorePassword = (pw) => {
+            if (!pw) return 0;
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (pw.length >= 12) score++;
+            if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+            if (/\d/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            return score;
+        };
+        pwInput.addEventListener('input', () => {
+            const pw = pwInput.value;
+            if (!pw) {
+                pwWrap.classList.remove('active');
+                return;
+            }
+            pwWrap.classList.add('active');
+            const score = scorePassword(pw);
+            let level = 'weak', text = 'Debole';
+            if (score >= 4) { level = 'strong'; text = 'Forte'; }
+            else if (score >= 2) { level = 'medium'; text = 'Media'; }
+            pwFill.className = 'pw-strength-fill ' + level;
+            pwLabel.className = 'pw-strength-label ' + level;
+            pwLabel.textContent = text;
+        });
+    }
 });

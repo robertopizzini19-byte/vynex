@@ -21,6 +21,22 @@
     <meta name="twitter:image" content="/static/logo-wordmark.svg">
     <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
 
+    <link rel="canonical" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "VYNEX",
+      "url": "https://agentia-production-fb78.up.railway.app",
+      "logo": "https://agentia-production-fb78.up.railway.app/static/logo-wordmark.svg",
+      "description": "AI per agenti commerciali italiani. Genera report di visita, email di follow-up e offerte commerciali in 30 secondi.",
+      "areaServed": "IT",
+      "inLanguage": "it-IT"
+    }
+    </script>
+    {% block ld_json %}{% endblock %}
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
