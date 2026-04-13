@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete as sa_delete
 from datetime import datetime
 from contextlib import asynccontextmanager
 import logging
@@ -13,10 +13,12 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+from email_validator import validate_email, EmailNotValidError
+
 from database import get_db, init_db
 from models import User, Document
 from auth import (
-    hash_password, authenticate_user, create_access_token,
+    hash_password, verify_password, authenticate_user, create_access_token,
     get_current_user, require_user, get_user_by_email,
     create_password_reset_token, verify_password_reset_token
 )
@@ -189,15 +191,24 @@ async def api_register(
     if accept_terms != "on":
         return RedirectResponse("/registrati?error=Devi+accettare+termini+e+privacy", status_code=302)
 
-    existing = await get_user_by_email(db, email)
+    try:
+        valid = validate_email(email, check_deliverability=False)
+        email_norm = valid.normalized.lower()
+    except EmailNotValidError:
+        return RedirectResponse("/registrati?error=Email+non+valida", status_code=302)
+
+    existing = await get_user_by_email(db, email_norm)
     if existing:
         return RedirectResponse("/registrati?error=Email+già+registrata", status_code=302)
 
     if len(password) < 8:
         return RedirectResponse("/registrati?error=Password+di+almeno+8+caratteri", status_code=302)
 
+    if not full_name.strip() or len(full_name.strip()) < 2:
+        return RedirectResponse("/registrati?error=Nome+non+valido", status_code=302)
+
     user = User(
-        email=email.lower().strip(),
+        email=email_norm,
         hashed_password=hash_password(password),
         full_name=full_name.strip(),
         company_name=company_name.strip() or None,
@@ -262,6 +273,49 @@ async def api_reset(
 @app.get("/logout")
 async def logout():
     response = RedirectResponse("/", status_code=302)
+    response.delete_cookie("access_token")
+    return response
+
+
+@app.get("/account", response_class=HTMLResponse)
+async def account_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user)
+):
+    error = request.query_params.get("error", "")
+    return templates.TemplateResponse(
+        "account.html",
+        {"request": request, "user": user, "error": error}
+    )
+
+
+@app.post("/api/delete-account")
+@limiter.limit("3/hour")
+async def api_delete_account(
+    request: Request,
+    password: str = Form(...),
+    confirm: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user)
+):
+    if confirm != "ELIMINA":
+        return RedirectResponse("/account?error=Conferma+scrivendo+ELIMINA", status_code=302)
+    if not verify_password(password, user.hashed_password):
+        return RedirectResponse("/account?error=Password+non+corretta", status_code=302)
+
+    if user.stripe_subscription_id:
+        try:
+            import stripe as _stripe
+            await _stripe.Subscription.delete_async(user.stripe_subscription_id)
+        except Exception:
+            logger.exception("stripe subscription delete failed")
+
+    await db.execute(sa_delete(Document).where(Document.user_id == user.id))
+    await db.delete(user)
+    await db.commit()
+
+    response = RedirectResponse("/?deleted=1", status_code=302)
     response.delete_cookie("access_token")
     return response
 

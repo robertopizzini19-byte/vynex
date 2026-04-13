@@ -2085,3 +2085,107 @@ textarea {
 @media (max-width: 640px) {
   .not-found h1 { font-size: 88px; letter-spacing: -3px; }
 }
+
+/* ─── ACCOUNT PAGE ───────────────────────────────────────────────────────── */
+.account-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  max-width: 760px;
+}
+.account-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+}
+.account-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 20px;
+  letter-spacing: -0.2px;
+}
+.account-dl {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 14px 20px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+.account-dl dt {
+  color: var(--text-3);
+  font-weight: 500;
+}
+.account-dl dd { color: var(--text-1); margin: 0; }
+.account-danger {
+  border-color: rgba(239, 68, 68, 0.25);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.04), transparent);
+}
+.account-danger .account-card-title { color: #fca5a5; }
+.account-warning {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: 10px;
+}
+.account-warning-list {
+  list-style: disc;
+  padding-left: 22px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.8;
+  margin-bottom: 22px;
+}
+.account-danger-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.account-danger-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.account-danger-form label code {
+  background: rgba(239, 68, 68, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #fca5a5;
+  font-size: 12px;
+}
+.account-danger-form input {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text-1);
+  font-size: 14px;
+  font-family: inherit;
+}
+.account-danger-form input:focus {
+  outline: none;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: transform var(--t), box-shadow var(--t);
+}
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+}
+@media (max-width: 640px) {
+  .account-dl { grid-template-columns: 1fr; gap: 4px 0; }
+  .account-dl dt { margin-top: 10px; }
+}
