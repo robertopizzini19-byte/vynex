@@ -4,7 +4,11 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./agentia.db")
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+connect_args = {}
+if "asyncpg" in DATABASE_URL:
+    connect_args = {"statement_cache_size": 0, "prepared_statement_cache_size": 0}
+
+engine = create_async_engine(DATABASE_URL, echo=False, connect_args=connect_args)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
