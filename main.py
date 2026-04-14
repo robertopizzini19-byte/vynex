@@ -4,31 +4,39 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete as sa_delete
-from datetime import datetime
+from sqlalchemy import select, func, or_
+from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 import logging
 import os
+import io
 
 from dotenv import load_dotenv
 load_dotenv()
 
 from email_validator import validate_email, EmailNotValidError
 
-from database import get_db, init_db
+from database import get_db, init_db, AsyncSessionLocal
 from models import User, Document
 from auth import (
     hash_password, verify_password, authenticate_user, create_access_token,
     get_current_user, require_user, get_user_by_email,
-    create_password_reset_token, verify_password_reset_token
+    create_password_reset_token, verify_password_reset_token,
+    validate_password_strength, create_email_verification_token,
+    consume_email_verification_token,
 )
 from ai_engine import genera_documenti, rigenera_documento
-from stripe_handler import create_checkout_session, create_portal_session, handle_webhook
+from stripe_handler import (
+    create_checkout_session, create_portal_session, handle_webhook, apply_coupon,
+)
 from rate_limit import limiter, rate_limit_exceeded_handler, RateLimitExceeded
-from emailer import send_welcome_email, send_password_reset_email
+from emailer import (
+    send_welcome_email, send_password_reset_email, send_verification_email,
+)
+from logging_setup import configure_logging, RequestIdMiddleware, user_id_var
 
+configure_logging(os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("vynex")
-logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager
@@ -65,6 +73,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestIdMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -87,6 +96,7 @@ async def get_monthly_usage(db: AsyncSession, user_id: int) -> int:
         select(func.count(Document.id))
         .where(Document.user_id == user_id)
         .where(Document.created_at >= start)
+        .where(Document.deleted_at.is_(None))
     )
     return result.scalar() or 0
 
@@ -180,10 +190,14 @@ async def api_login(
     password: str = Form(...),
     db: AsyncSession = Depends(get_db)
 ):
-    user = await authenticate_user(db, email, password)
+    user, reason = await authenticate_user(db, email, password)
     if not user:
+        if reason == "locked":
+            return RedirectResponse("/login?error=Account+temporaneamente+bloccato.+Riprova+tra+15+minuti", status_code=302)
+        if reason == "deleted":
+            return RedirectResponse("/login?error=Account+eliminato", status_code=302)
         return RedirectResponse("/login?error=Email+o+password+non+corretti", status_code=302)
-    token = create_access_token({"sub": user.email})
+    token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
     return redirect_with_cookie("/dashboard", token)
 
 
@@ -211,8 +225,10 @@ async def api_register(
     if existing:
         return RedirectResponse("/registrati?error=Email+già+registrata", status_code=302)
 
-    if len(password) < 8:
-        return RedirectResponse("/registrati?error=Password+di+almeno+8+caratteri", status_code=302)
+    ok, msg = validate_password_strength(password)
+    if not ok:
+        from urllib.parse import quote_plus
+        return RedirectResponse(f"/registrati?error={quote_plus(msg)}", status_code=302)
 
     if not full_name.strip() or len(full_name.strip()) < 2:
         return RedirectResponse("/registrati?error=Nome+non+valido", status_code=302)
@@ -233,7 +249,15 @@ async def api_register(
     except Exception:
         logger.exception("welcome email failed")
 
-    token = create_access_token({"sub": user.email})
+    try:
+        verify_token = await create_email_verification_token(db, user)
+        base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+        verify_link = f"{base_url}/verifica-email?token={verify_token}"
+        await send_verification_email(user.email, user.full_name, verify_link)
+    except Exception:
+        logger.exception("verification email failed")
+
+    token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
     return redirect_with_cookie("/dashboard", token)
 
 
@@ -270,12 +294,17 @@ async def api_reset(
     email = verify_password_reset_token(token)
     if not email:
         return RedirectResponse("/recupera-password?error=Link+scaduto+o+non+valido", status_code=302)
-    if len(password) < 8:
-        return RedirectResponse(f"/reset-password?token={token}&error=Password+minimo+8+caratteri", status_code=302)
+    ok, msg = validate_password_strength(password)
+    if not ok:
+        from urllib.parse import quote_plus
+        return RedirectResponse(f"/reset-password?token={token}&error={quote_plus(msg)}", status_code=302)
     user = await get_user_by_email(db, email)
     if not user:
         return RedirectResponse("/recupera-password?error=Utente+non+trovato", status_code=302)
     user.hashed_password = hash_password(password)
+    user.token_version = (user.token_version or 0) + 1
+    user.failed_login_attempts = 0
+    user.locked_until = None
     await db.commit()
     return RedirectResponse("/login?error=Password+aggiornata%2C+accedi+con+la+nuova", status_code=302)
 
@@ -283,6 +312,60 @@ async def api_reset(
 @app.get("/logout")
 async def logout():
     response = RedirectResponse("/", status_code=302)
+    response.delete_cookie("access_token")
+    return response
+
+
+@app.get("/verifica-email", response_class=HTMLResponse)
+async def verifica_email_page(request: Request, db: AsyncSession = Depends(get_db)):
+    token = request.query_params.get("token", "")
+    if not token:
+        return templates.TemplateResponse(
+            "verifica_email.html",
+            {"request": request, "ok": False, "error": "Token mancante."},
+        )
+    user = await consume_email_verification_token(db, token)
+    if not user:
+        return templates.TemplateResponse(
+            "verifica_email.html",
+            {"request": request, "ok": False, "error": "Token non valido o scaduto."},
+        )
+    return templates.TemplateResponse(
+        "verifica_email.html",
+        {"request": request, "ok": True, "error": ""},
+    )
+
+
+@app.post("/api/rinvia-verifica")
+@limiter.limit("3/hour")
+async def api_rinvia_verifica(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    if user.email_verified:
+        return JSONResponse({"status": "already_verified"})
+    try:
+        verify_token = await create_email_verification_token(db, user)
+        base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+        verify_link = f"{base_url}/verifica-email?token={verify_token}"
+        await send_verification_email(user.email, user.full_name, verify_link)
+    except Exception:
+        logger.exception("rinvia verification email failed")
+        return JSONResponse({"error": "Invio fallito"}, status_code=500)
+    return JSONResponse({"status": "sent"})
+
+
+@app.post("/api/logout-all")
+@limiter.limit("5/hour")
+async def api_logout_all(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    user.token_version = (user.token_version or 0) + 1
+    await db.commit()
+    response = JSONResponse({"status": "ok"})
     response.delete_cookie("access_token")
     return response
 
@@ -372,8 +455,16 @@ async def api_delete_account(
         except Exception:
             logger.exception("stripe subscription delete failed")
 
-    await db.execute(sa_delete(Document).where(Document.user_id == user.id))
-    await db.delete(user)
+    now = datetime.utcnow()
+    user.deleted_at = now
+    user.is_active = False
+    user.token_version = (user.token_version or 0) + 1
+    user.email = f"deleted-{user.id}-{int(now.timestamp())}@deleted.local"
+    await db.execute(
+        Document.__table__.update()
+        .where(Document.user_id == user.id)
+        .values(deleted_at=now)
+    )
     await db.commit()
 
     response = RedirectResponse("/?deleted=1", status_code=302)
@@ -389,15 +480,41 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user)
 ):
+    q = (request.query_params.get("q", "") or "").strip()
+    try:
+        page = max(1, int(request.query_params.get("page", "1")))
+    except ValueError:
+        page = 1
+    page_size = 10
+    offset = (page - 1) * page_size
+
+    base_query = select(Document).where(
+        Document.user_id == user.id,
+        Document.deleted_at.is_(None),
+    )
+    count_query = select(func.count(Document.id)).where(
+        Document.user_id == user.id,
+        Document.deleted_at.is_(None),
+    )
+
+    if q:
+        like = f"%{q}%"
+        filt = or_(
+            Document.cliente_nome.ilike(like),
+            Document.azienda_cliente.ilike(like),
+            Document.input_text.ilike(like),
+        )
+        base_query = base_query.where(filt)
+        count_query = count_query.where(filt)
+
+    total = (await db.execute(count_query)).scalar() or 0
     result = await db.execute(
-        select(Document)
-        .where(Document.user_id == user.id)
-        .order_by(Document.created_at.desc())
-        .limit(10)
+        base_query.order_by(Document.created_at.desc()).offset(offset).limit(page_size)
     )
     documenti = result.scalars().all()
     usage = await get_monthly_usage(db, user.id)
     upgrade_msg = request.query_params.get("upgrade", "")
+    has_more = (offset + len(documenti)) < total
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -405,7 +522,11 @@ async def dashboard(
         "documenti": documenti,
         "usage": usage,
         "limit": user.monthly_limit,
-        "upgrade_msg": upgrade_msg
+        "upgrade_msg": upgrade_msg,
+        "search_query": q,
+        "page": page,
+        "has_more": has_more,
+        "total_docs": total,
     })
 
 
@@ -434,7 +555,11 @@ async def documento_detail(
     user: User = Depends(require_user)
 ):
     result = await db.execute(
-        select(Document).where(Document.id == doc_id, Document.user_id == user.id)
+        select(Document).where(
+            Document.id == doc_id,
+            Document.user_id == user.id,
+            Document.deleted_at.is_(None),
+        )
     )
     doc = result.scalar_one_or_none()
     if not doc:
@@ -493,6 +618,8 @@ async def api_genera(
         offerta_commerciale=result["offerta_commerciale"],
         cliente_nome=result.get("cliente_nome"),
         azienda_cliente=result.get("azienda_cliente"),
+        tokens_used=result.get("tokens_used"),
+        generation_time_ms=result.get("generation_time_ms"),
     )
     db.add(doc)
     await db.commit()
@@ -811,8 +938,122 @@ I documenti si rinnovano il primo di ogni mese. Se servono di più, Pro offre 10
 
 
 @app.get("/health")
-async def health():
+async def health(db: AsyncSession = Depends(get_db)):
+    """Shallow health — returns 200 quickly, used by platform probes."""
     return {"status": "ok", "service": "vynex"}
+
+
+@app.get("/health/deep")
+@limiter.limit("30/minute")
+async def health_deep(request: Request, db: AsyncSession = Depends(get_db)):
+    """Deep health: DB + Anthropic + Stripe + Resend reachability."""
+    checks: dict = {}
+
+    try:
+        await db.execute(select(func.count(User.id)))
+        checks["database"] = "ok"
+    except Exception as exc:
+        checks["database"] = f"error: {exc}"
+
+    checks["anthropic_api_key"] = "set" if os.getenv("ANTHROPIC_API_KEY") else "missing"
+    checks["stripe_api_key"] = "set" if os.getenv("STRIPE_SECRET_KEY") else "missing"
+    checks["stripe_webhook_secret"] = "set" if os.getenv("STRIPE_WEBHOOK_SECRET") else "missing"
+    checks["resend_api_key"] = "set" if os.getenv("RESEND_API_KEY") else "missing"
+
+    all_ok = checks.get("database") == "ok" and checks.get("anthropic_api_key") == "set"
+    return JSONResponse(
+        {"status": "ok" if all_ok else "degraded", "checks": checks},
+        status_code=200 if all_ok else 503,
+    )
+
+
+@app.post("/api/apply-coupon")
+@limiter.limit("10/hour")
+async def api_apply_coupon(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    body = await request.json()
+    code = (body.get("code") or "").strip()
+    ok, msg = await apply_coupon(db, user, code)
+    if not ok:
+        return JSONResponse({"error": msg}, status_code=400)
+    return JSONResponse({"status": "ok", "stripe_coupon": msg})
+
+
+@app.get("/api/documento/{doc_id}/pdf")
+@limiter.limit("30/hour")
+async def api_documento_pdf(
+    doc_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    result = await db.execute(
+        select(Document).where(
+            Document.id == doc_id,
+            Document.user_id == user.id,
+            Document.deleted_at.is_(None),
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(404, "Documento non trovato")
+
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+    except ImportError:
+        raise HTTPException(503, "Export PDF non disponibile")
+
+    buffer = io.BytesIO()
+    pdf = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=18 * mm, rightMargin=18 * mm,
+        topMargin=18 * mm, bottomMargin=18 * mm,
+        title=f"VYNEX — Documento {doc.id}",
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "TitleVynex", parent=styles["Title"], fontSize=18, textColor="#0f172a"
+    )
+    h2_style = ParagraphStyle(
+        "H2Vynex", parent=styles["Heading2"], fontSize=13, textColor="#1e293b", spaceBefore=12
+    )
+    body_style = ParagraphStyle(
+        "BodyVynex", parent=styles["BodyText"], fontSize=10, leading=14, textColor="#1e293b"
+    )
+
+    def _section(title_txt: str, body_txt: str | None):
+        if not body_txt:
+            return []
+        safe = body_txt.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        safe = safe.replace("\n", "<br/>")
+        return [Paragraph(title_txt, h2_style), Spacer(1, 4), Paragraph(safe, body_style)]
+
+    story = [
+        Paragraph(f"VYNEX — {doc.cliente_nome or 'Documento'}", title_style),
+        Paragraph(
+            f"{doc.azienda_cliente or ''} · generato il {doc.created_at.strftime('%d/%m/%Y')}",
+            body_style,
+        ),
+        Spacer(1, 8),
+    ]
+    story += _section("Report di visita", doc.report_visita)
+    story += [PageBreak()] + _section("Email di follow-up", doc.email_followup)
+    story += [PageBreak()] + _section("Offerta commerciale", doc.offerta_commerciale)
+
+    pdf.build(story)
+    buffer.seek(0)
+    filename = f"vynex-{doc.id}.pdf"
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/admin/metrics")

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status, Request
@@ -7,9 +7,11 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import os
+import re
+import secrets
 
 from database import get_db
-from models import User
+from models import User, EmailVerificationToken
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione")
 if os.getenv("BASE_URL", "").startswith("https://") and SECRET_KEY == "dev-secret-key-cambia-in-produzione":
@@ -17,6 +19,10 @@ if os.getenv("BASE_URL", "").startswith("https://") and SECRET_KEY == "dev-secre
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 PASSWORD_RESET_EXPIRE_MINUTES = 60
+EMAIL_VERIFY_EXPIRE_HOURS = 48
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_MINUTES = 15
+IDLE_TIMEOUT_DAYS = 14
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
@@ -30,10 +36,25 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def validate_password_strength(password: str) -> Tuple[bool, str]:
+    if len(password) < 8:
+        return False, "La password deve avere almeno 8 caratteri."
+    if len(password) > 128:
+        return False, "La password è troppo lunga (max 128 caratteri)."
+    if not re.search(r"[a-zA-Z]", password):
+        return False, "La password deve contenere almeno una lettera."
+    if not re.search(r"\d", password):
+        return False, "La password deve contenere almeno un numero."
+    weak = {"password", "12345678", "qwerty12", "password1", "abcd1234", "letmein1"}
+    if password.lower() in weak:
+        return False, "Password troppo comune. Scegline una diversa."
+    return True, ""
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None, token_version: int = 0) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS))
-    to_encode.update({"exp": expire, "purpose": "access"})
+    to_encode.update({"exp": expire, "purpose": "access", "tv": token_version})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -55,16 +76,67 @@ def verify_password_reset_token(token: str) -> Optional[str]:
         return None
 
 
+def generate_email_verification_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+async def create_email_verification_token(db: AsyncSession, user: User) -> str:
+    token = generate_email_verification_token()
+    record = EmailVerificationToken(
+        user_id=user.id,
+        token=token,
+        expires_at=datetime.utcnow() + timedelta(hours=EMAIL_VERIFY_EXPIRE_HOURS),
+    )
+    db.add(record)
+    await db.commit()
+    return token
+
+
+async def consume_email_verification_token(db: AsyncSession, token: str) -> Optional[User]:
+    result = await db.execute(
+        select(EmailVerificationToken).where(EmailVerificationToken.token == token)
+    )
+    record = result.scalar_one_or_none()
+    if not record or record.used_at or record.expires_at < datetime.utcnow():
+        return None
+    user_result = await db.execute(select(User).where(User.id == record.user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        return None
+    record.used_at = datetime.utcnow()
+    user.email_verified = True
+    user.email_verified_at = datetime.utcnow()
+    await db.commit()
+    return user
+
+
 async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
     result = await db.execute(select(User).where(User.email == email.lower()))
     return result.scalar_one_or_none()
 
 
-async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> Tuple[Optional[User], str]:
+    """Returns (user, reason). reason is one of: ok, not_found, wrong_password, locked, deleted."""
     user = await get_user_by_email(db, email)
-    if not user or not verify_password(password, user.hashed_password):
-        return None
-    return user
+    if not user:
+        return None, "not_found"
+    if user.deleted_at is not None:
+        return None, "deleted"
+    if user.is_locked:
+        return None, "locked"
+    if not verify_password(password, user.hashed_password):
+        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+        if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+            user.failed_login_attempts = 0
+        await db.commit()
+        return None, "wrong_password"
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    user.last_login_at = datetime.utcnow()
+    user.last_activity_at = datetime.utcnow()
+    await db.commit()
+    return user, "ok"
 
 
 async def get_current_user(
@@ -88,10 +160,18 @@ async def get_current_user(
         email: str = payload.get("sub")
         if not email:
             return None
+        token_tv = payload.get("tv", 0)
     except JWTError:
         return None
 
-    return await get_user_by_email(db, email)
+    user = await get_user_by_email(db, email)
+    if not user:
+        return None
+    if (user.token_version or 0) != token_tv:
+        return None
+    if user.deleted_at is not None:
+        return None
+    return user
 
 
 async def require_user(
@@ -109,4 +189,6 @@ async def require_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account disattivato"
         )
+    user.last_activity_at = datetime.utcnow()
+    await db.commit()
     return user

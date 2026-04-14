@@ -1,9 +1,21 @@
 import anthropic
 import os
 import json
-import re
+import asyncio
+import logging
+import time
 
-client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+logger = logging.getLogger("vynex.ai")
+
+ANTHROPIC_TIMEOUT_S = 60.0
+MAX_RETRIES = 3
+RETRY_BASE_DELAY_S = 1.5
+MODEL = "claude-haiku-4-5-20251001"
+
+client = anthropic.AsyncAnthropic(
+    api_key=os.getenv("ANTHROPIC_API_KEY"),
+    timeout=ANTHROPIC_TIMEOUT_S,
+)
 
 SYSTEM_PROMPT = """Sei un assistente specializzato per agenti di commercio italiani.
 Devi generare documenti professionali in italiano perfetto, formale ma umano.
@@ -13,7 +25,6 @@ Non usare mai frasi generiche o template ovvi. Ogni documento deve sembrare scri
 
 def extract_json(text: str) -> dict:
     """Estrae JSON da una risposta che potrebbe contenere testo extra."""
-    # Cerca il primo { e l'ultimo }
     start = text.find("{")
     end = text.rfind("}") + 1
     if start == -1 or end == 0:
@@ -22,13 +33,43 @@ def extract_json(text: str) -> dict:
     return json.loads(json_str)
 
 
+_RETRYABLE = (
+    anthropic.APIConnectionError,
+    anthropic.APITimeoutError,
+    anthropic.RateLimitError,
+    anthropic.InternalServerError,
+)
+
+
+async def _call_claude(prompt: str, max_tokens: int = 2048):
+    """Calls Claude with retry+exponential backoff. Returns the message object."""
+    last_exc: Exception | None = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            return await client.messages.create(
+                model=MODEL,
+                max_tokens=max_tokens,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        except _RETRYABLE as exc:
+            last_exc = exc
+            if attempt == MAX_RETRIES - 1:
+                logger.error("Anthropic call failed after %d attempts: %s", MAX_RETRIES, exc)
+                raise
+            delay = RETRY_BASE_DELAY_S * (2 ** attempt)
+            logger.warning("Anthropic attempt %d failed (%s), retrying in %.1fs", attempt + 1, exc, delay)
+            await asyncio.sleep(delay)
+    raise last_exc  # unreachable
+
+
 async def genera_documenti(input_testo: str, nome_agente: str, azienda_mandante: str = "") -> dict:
     """
     Dato il resoconto informale dell'agente, genera 3 documenti professionali.
 
     Returns:
         dict con chiavi: report_visita, email_followup, offerta_commerciale,
-                         cliente_nome, azienda_cliente
+                         cliente_nome, azienda_cliente, tokens_used, generation_time_ms
     """
     mandante_info = f"L'agente rappresenta: {azienda_mandante}" if azienda_mandante else ""
 
@@ -54,21 +95,20 @@ IMPORTANTE:
 - Le date vanno in formato italiano (es. 21 marzo 2026)
 - Se mancano informazioni usa [da completare] per i campi obbligatori"""
 
-    message = await client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=2048,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}]
-    )
+    t0 = time.perf_counter()
+    message = await _call_claude(prompt, max_tokens=2048)
+    elapsed_ms = int((time.perf_counter() - t0) * 1000)
 
     response_text = message.content[0].text
     result = extract_json(response_text)
 
-    # Validazione campi obbligatori
     required_fields = ["report_visita", "email_followup", "offerta_commerciale"]
     for field in required_fields:
         if field not in result:
             raise ValueError(f"Campo mancante nella risposta AI: {field}")
+
+    usage = getattr(message, "usage", None)
+    tokens_used = (usage.input_tokens + usage.output_tokens) if usage else None
 
     return {
         "cliente_nome": result.get("cliente_nome", ""),
@@ -76,6 +116,8 @@ IMPORTANTE:
         "report_visita": result["report_visita"],
         "email_followup": result["email_followup"],
         "offerta_commerciale": result["offerta_commerciale"],
+        "tokens_used": tokens_used,
+        "generation_time_ms": elapsed_ms,
     }
 
 
@@ -86,13 +128,6 @@ async def rigenera_documento(
     istruzione: str,
     nome_agente: str
 ) -> str:
-    """
-    Rigenera un singolo documento con istruzioni specifiche di modifica.
-
-    Args:
-        tipo: "report_visita" | "email_followup" | "offerta_commerciale"
-        istruzione: cosa vuole cambiare l'agente (es. "rendi il tono più formale", "aggiungi lo sconto del 15%")
-    """
     tipo_labels = {
         "report_visita": "report di visita",
         "email_followup": "email di follow-up",
@@ -109,11 +144,5 @@ Istruzione di modifica: "{istruzione}"
 
 Rigenera SOLO il {tipo_labels[tipo]} applicando la modifica richiesta. Mantieni il formato e la struttura originale. Restituisci solo il testo del documento, senza commenti o spiegazioni."""
 
-    message = await client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}]
-    )
-
+    message = await _call_claude(prompt, max_tokens=1024)
     return message.content[0].text.strip()

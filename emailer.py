@@ -87,8 +87,36 @@ async def send_payment_success_email(to: str, name: str, plan: str) -> bool:
 async def send_payment_failed_email(to: str, name: str) -> bool:
     body = f"""
     <h1 style="font-size:22px;color:#f1f5f9">Pagamento non riuscito</h1>
-    <p style="color:#94a3b8;line-height:1.7">Ciao {name.split()[0]}, l'ultimo pagamento del tuo abbonamento VYNEX non è andato a buon fine.</p>
-    <p style="color:#94a3b8;line-height:1.7">Aggiorna il metodo di pagamento dal portale di fatturazione per evitare l'interruzione del servizio.</p>
+    <p style="color:#94a3b8;line-height:1.7">Ciao {name.split()[0]}, l'ultimo pagamento del tuo abbonamento VYNEX non è andato a buon fine. Hai 7 giorni di tempo per aggiornare il metodo di pagamento prima che il piano venga sospeso.</p>
     <p><a href="{BASE_URL}/portale-fatturazione" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Aggiorna pagamento</a></p>
     """
     return await _send(to, "VYNEX — Pagamento non riuscito", _wrap(body))
+
+
+async def send_verification_email(to: str, name: str, verify_link: str) -> bool:
+    body = f"""
+    <h1 style="font-size:22px;color:#f1f5f9">Verifica la tua email</h1>
+    <p style="color:#94a3b8;line-height:1.7">Ciao {name.split()[0]}, conferma il tuo indirizzo email per attivare completamente il tuo account VYNEX. Il link è valido 48 ore.</p>
+    <p><a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Verifica email</a></p>
+    <p style="color:#64748b;font-size:12px;line-height:1.6">Se non hai creato un account VYNEX, ignora questa email.</p>
+    """
+    return await _send(to, "Verifica la tua email — VYNEX", _wrap(body))
+
+
+async def send_account_locked_email(to: str, name: str) -> bool:
+    body = f"""
+    <h1 style="font-size:22px;color:#f1f5f9">Account temporaneamente bloccato</h1>
+    <p style="color:#94a3b8;line-height:1.7">Ciao {name.split()[0]}, abbiamo rilevato 5 tentativi di login falliti. Per sicurezza il tuo account è bloccato per 15 minuti.</p>
+    <p style="color:#94a3b8;line-height:1.7">Se non sei stato tu, ti consigliamo di reimpostare la password.</p>
+    <p><a href="{BASE_URL}/password-dimenticata" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Reimposta password</a></p>
+    """
+    return await _send(to, "VYNEX — Account temporaneamente bloccato", _wrap(body))
+
+
+async def send_subscription_past_due_email(to: str, name: str, days_remaining: int) -> bool:
+    body = f"""
+    <h1 style="font-size:22px;color:#f1f5f9">Abbonamento in sospeso</h1>
+    <p style="color:#94a3b8;line-height:1.7">Ciao {name.split()[0]}, l'abbonamento VYNEX è in stato "past due". Hai ancora <strong>{days_remaining} giorni</strong> di accesso completo prima del downgrade automatico al piano Free.</p>
+    <p><a href="{BASE_URL}/portale-fatturazione" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Aggiorna pagamento ora</a></p>
+    """
+    return await _send(to, "VYNEX — Abbonamento in sospeso", _wrap(body))

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Verifica email — VYNEX{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+    <div class="auth-card">
+        <a href="/" class="auth-logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
+        {% if ok %}
+            <h1 class="auth-title">Email verificata</h1>
+            <p class="auth-sub">Grazie! Il tuo indirizzo è stato confermato. Puoi accedere alla dashboard.</p>
+            <a href="/dashboard" class="btn-primary btn-lg" style="width:100%;margin-top:24px">Vai alla dashboard</a>
+        {% else %}
+            <h1 class="auth-title">Verifica non riuscita</h1>
+            <p class="auth-sub">{{ error or "Link non valido o scaduto." }}</p>
+            <p class="auth-sub" style="margin-top:16px">Accedi e richiedi un nuovo link di verifica dalla pagina account.</p>
+            <a href="/login" class="btn-primary btn-lg" style="width:100%;margin-top:24px">Vai al login</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

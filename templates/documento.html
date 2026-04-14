@@ -13,10 +13,16 @@
                     {{ doc.created_at.strftime("%d %B %Y, %H:%M") }}
                 </p>
             </div>
-            <a href="/dashboard" class="btn-ghost">
-                <i data-lucide="arrow-left" style="width:15px;height:15px"></i>
-                Dashboard
-            </a>
+            <div style="display:flex;gap:10px">
+                <a href="/api/documento/{{ doc.id }}/pdf" class="btn-ghost" download>
+                    <i data-lucide="file-down" style="width:15px;height:15px"></i>
+                    PDF
+                </a>
+                <a href="/dashboard" class="btn-ghost">
+                    <i data-lucide="arrow-left" style="width:15px;height:15px"></i>
+                    Dashboard
+                </a>
+            </div>
         </div>
 
         <div class="doc-original">
