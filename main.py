@@ -3,7 +3,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Plai
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from datetime import datetime, timedelta
@@ -35,7 +34,11 @@ from emailer import (
     send_welcome_email, send_password_reset_email, send_verification_email,
 )
 from logging_setup import configure_logging, RequestIdMiddleware, user_id_var
-from oauth_google import oauth as google_oauth, is_enabled as google_oauth_enabled
+from oauth_google import (
+    is_enabled as google_oauth_enabled,
+    client_id as google_client_id,
+    verify_credential as verify_google_credential,
+)
 
 configure_logging(os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("vynex")
@@ -65,9 +68,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "img-src 'self' data:; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com; "
-            "connect-src 'self' https://api.stripe.com; "
-            "frame-src https://js.stripe.com https://hooks.stripe.com; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com https://accounts.google.com/gsi/client; "
+            "connect-src 'self' https://api.stripe.com https://accounts.google.com/gsi/; "
+            "frame-src https://js.stripe.com https://hooks.stripe.com https://accounts.google.com/gsi/; "
             "base-uri 'self'; form-action 'self' https://checkout.stripe.com; "
             "frame-ancestors 'none'"
         )
@@ -76,14 +79,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione"),
-    session_cookie="vynex_oauth_state",
-    max_age=600,
-    https_only=os.getenv("BASE_URL", "").startswith("https://"),
-    same_site="lax",
-)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -152,6 +147,14 @@ async def come_funziona(request: Request):
     return templates.TemplateResponse("come_funziona.html", {"request": request})
 
 
+def _google_ctx() -> dict:
+    return {
+        "oauth_google": google_oauth_enabled(),
+        "google_client_id": google_client_id(),
+        "base_url": os.getenv("BASE_URL", "http://localhost:8000").rstrip("/"),
+    }
+
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
@@ -160,7 +163,7 @@ async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
     error = request.query_params.get("error", "")
     return templates.TemplateResponse(
         "login.html",
-        {"request": request, "error": error, "oauth_google": google_oauth_enabled()},
+        {"request": request, "error": error, **_google_ctx()},
     )
 
 
@@ -172,41 +175,47 @@ async def register_page(request: Request, db: AsyncSession = Depends(get_db)):
     error = request.query_params.get("error", "")
     return templates.TemplateResponse(
         "register.html",
-        {"request": request, "error": error, "oauth_google": google_oauth_enabled()},
+        {"request": request, "error": error, **_google_ctx()},
     )
 
 
-@app.get("/auth/google")
-async def auth_google(request: Request):
+@app.post("/auth/google/verify")
+async def auth_google_verify(request: Request, db: AsyncSession = Depends(get_db)):
+    """Google Identity Services callback — riceve un JWT ID token dal widget GIS.
+
+    GIS fa POST form-encoded con:
+      - credential: il JWT ID token firmato da Google
+      - g_csrf_token: token CSRF (deve matchare il cookie g_csrf_token, double-submit)
+    """
     if not google_oauth_enabled():
         raise HTTPException(503, "Google login non configurato")
-    base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
-    redirect_uri = f"{base_url}/auth/google/callback"
-    return await google_oauth.google.authorize_redirect(request, redirect_uri)
 
+    form = await request.form()
+    credential = form.get("credential")
+    csrf_body = form.get("g_csrf_token")
+    csrf_cookie = request.cookies.get("g_csrf_token")
 
-@app.get("/auth/google/callback")
-async def auth_google_callback(request: Request, db: AsyncSession = Depends(get_db)):
-    if not google_oauth_enabled():
-        raise HTTPException(503, "Google login non configurato")
-    try:
-        token = await google_oauth.google.authorize_access_token(request)
-    except Exception:
-        logger.exception("google oauth callback failed")
-        return RedirectResponse("/login?error=Login+Google+fallito", status_code=302)
+    if not credential:
+        return RedirectResponse("/login?error=Token+Google+mancante", status_code=303)
+    if not csrf_body or csrf_body != csrf_cookie:
+        logger.warning("Google verify CSRF mismatch")
+        return RedirectResponse("/login?error=CSRF+non+valido", status_code=303)
 
-    userinfo = token.get("userinfo") or {}
-    email = (userinfo.get("email") or "").lower()
-    name = userinfo.get("name") or ""
-    email_verified = bool(userinfo.get("email_verified", False))
+    idinfo = verify_google_credential(credential)
+    if not idinfo:
+        return RedirectResponse("/login?error=Token+Google+non+valido", status_code=303)
+
+    email = (idinfo.get("email") or "").lower().strip()
+    name = idinfo.get("name") or (email.split("@")[0] if email else "")
+    email_verified = bool(idinfo.get("email_verified", False))
 
     if not email:
-        return RedirectResponse("/login?error=Email+Google+mancante", status_code=302)
+        return RedirectResponse("/login?error=Email+Google+mancante", status_code=303)
 
     existing = await get_user_by_email(db, email)
     if existing:
         if existing.deleted_at is not None:
-            return RedirectResponse("/login?error=Account+eliminato", status_code=302)
+            return RedirectResponse("/login?error=Account+eliminato", status_code=303)
         existing.last_login_at = datetime.utcnow()
         existing.last_activity_at = datetime.utcnow()
         existing.failed_login_attempts = 0
@@ -215,7 +224,10 @@ async def auth_google_callback(request: Request, db: AsyncSession = Depends(get_
             existing.email_verified = True
             existing.email_verified_at = datetime.utcnow()
         await db.commit()
-        access = create_access_token({"sub": existing.email}, token_version=existing.token_version or 0)
+        access = create_access_token(
+            {"sub": existing.email},
+            token_version=existing.token_version or 0,
+        )
         return redirect_with_cookie("/dashboard", access)
 
     import secrets as _secrets
