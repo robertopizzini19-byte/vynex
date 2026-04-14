@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Plai
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from datetime import datetime, timedelta
@@ -34,6 +35,7 @@ from emailer import (
     send_welcome_email, send_password_reset_email, send_verification_email,
 )
 from logging_setup import configure_logging, RequestIdMiddleware, user_id_var
+from oauth_google import oauth as google_oauth, is_enabled as google_oauth_enabled
 
 configure_logging(os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("vynex")
@@ -74,6 +76,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione"),
+    session_cookie="vynex_oauth_state",
+    max_age=600,
+    https_only=os.getenv("BASE_URL", "").startswith("https://"),
+    same_site="lax",
+)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -148,7 +158,10 @@ async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
     if user:
         return RedirectResponse("/dashboard", status_code=302)
     error = request.query_params.get("error", "")
-    return templates.TemplateResponse("login.html", {"request": request, "error": error})
+    return templates.TemplateResponse(
+        "login.html",
+        {"request": request, "error": error, "oauth_google": google_oauth_enabled()},
+    )
 
 
 @app.get("/registrati", response_class=HTMLResponse)
@@ -157,7 +170,78 @@ async def register_page(request: Request, db: AsyncSession = Depends(get_db)):
     if user:
         return RedirectResponse("/dashboard", status_code=302)
     error = request.query_params.get("error", "")
-    return templates.TemplateResponse("register.html", {"request": request, "error": error})
+    return templates.TemplateResponse(
+        "register.html",
+        {"request": request, "error": error, "oauth_google": google_oauth_enabled()},
+    )
+
+
+@app.get("/auth/google")
+async def auth_google(request: Request):
+    if not google_oauth_enabled():
+        raise HTTPException(503, "Google login non configurato")
+    base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+    redirect_uri = f"{base_url}/auth/google/callback"
+    return await google_oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/auth/google/callback")
+async def auth_google_callback(request: Request, db: AsyncSession = Depends(get_db)):
+    if not google_oauth_enabled():
+        raise HTTPException(503, "Google login non configurato")
+    try:
+        token = await google_oauth.google.authorize_access_token(request)
+    except Exception:
+        logger.exception("google oauth callback failed")
+        return RedirectResponse("/login?error=Login+Google+fallito", status_code=302)
+
+    userinfo = token.get("userinfo") or {}
+    email = (userinfo.get("email") or "").lower()
+    name = userinfo.get("name") or ""
+    email_verified = bool(userinfo.get("email_verified", False))
+
+    if not email:
+        return RedirectResponse("/login?error=Email+Google+mancante", status_code=302)
+
+    existing = await get_user_by_email(db, email)
+    if existing:
+        if existing.deleted_at is not None:
+            return RedirectResponse("/login?error=Account+eliminato", status_code=302)
+        existing.last_login_at = datetime.utcnow()
+        existing.last_activity_at = datetime.utcnow()
+        existing.failed_login_attempts = 0
+        existing.locked_until = None
+        if email_verified and not existing.email_verified:
+            existing.email_verified = True
+            existing.email_verified_at = datetime.utcnow()
+        await db.commit()
+        access = create_access_token({"sub": existing.email}, token_version=existing.token_version or 0)
+        return redirect_with_cookie("/dashboard", access)
+
+    import secrets as _secrets
+    random_pw = _secrets.token_urlsafe(32)
+    new_user = User(
+        email=email,
+        hashed_password=hash_password(random_pw),
+        full_name=name or email.split("@")[0],
+        company_name=None,
+        plan="free",
+        email_verified=email_verified,
+        email_verified_at=datetime.utcnow() if email_verified else None,
+        last_login_at=datetime.utcnow(),
+        last_activity_at=datetime.utcnow(),
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    try:
+        await send_welcome_email(new_user.email, new_user.full_name)
+    except Exception:
+        logger.exception("welcome email (google signup) failed")
+
+    access = create_access_token({"sub": new_user.email}, token_version=0)
+    return redirect_with_cookie("/dashboard", access)
 
 
 @app.get("/recupera-password", response_class=HTMLResponse)
@@ -377,10 +461,99 @@ async def account_page(
     user: User = Depends(require_user)
 ):
     error = request.query_params.get("error", "")
+    message = request.query_params.get("message", "")
     return templates.TemplateResponse(
         "account.html",
-        {"request": request, "user": user, "error": error}
+        {"request": request, "user": user, "error": error, "message": message}
     )
+
+
+@app.post("/api/account/update")
+@limiter.limit("10/hour")
+async def api_account_update(
+    request: Request,
+    full_name: str = Form(...),
+    email: str = Form(...),
+    company_name: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    from urllib.parse import quote_plus
+    full_name_clean = full_name.strip()
+    company_clean = company_name.strip() or None
+
+    if len(full_name_clean) < 2 or len(full_name_clean) > 120:
+        return RedirectResponse("/account?error=Nome+non+valido", status_code=302)
+
+    try:
+        valid = validate_email(email, check_deliverability=False)
+        email_norm = valid.normalized.lower()
+    except EmailNotValidError:
+        return RedirectResponse("/account?error=Email+non+valida", status_code=302)
+
+    email_changed = email_norm != user.email
+    if email_changed:
+        existing = await get_user_by_email(db, email_norm)
+        if existing and existing.id != user.id:
+            return RedirectResponse("/account?error=Email+già+in+uso", status_code=302)
+
+    user.full_name = full_name_clean
+    user.company_name = company_clean
+    message = "Dati aggiornati"
+
+    if email_changed:
+        user.email = email_norm
+        user.email_verified = False
+        user.email_verified_at = None
+        user.token_version = (user.token_version or 0) + 1
+        await db.commit()
+        try:
+            verify_token = await create_email_verification_token(db, user)
+            base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+            verify_link = f"{base_url}/verifica-email?token={verify_token}"
+            await send_verification_email(user.email, user.full_name, verify_link)
+        except Exception:
+            logger.exception("verification email on update failed")
+        new_token = create_access_token({"sub": user.email}, token_version=user.token_version)
+        response = RedirectResponse(
+            f"/account?message={quote_plus('Email cambiata. Controlla la nuova casella per verificarla.')}",
+            status_code=302,
+        )
+        response.set_cookie(
+            "access_token", new_token,
+            httponly=True, secure=True, samesite="lax",
+            max_age=60 * 60 * 24 * 30,
+        )
+        return response
+
+    await db.commit()
+    return RedirectResponse(f"/account?message={quote_plus(message)}", status_code=302)
+
+
+@app.post("/api/account/password")
+@limiter.limit("5/hour")
+async def api_account_password(
+    request: Request,
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    from urllib.parse import quote_plus
+    if not verify_password(current_password, user.hashed_password):
+        return RedirectResponse("/account?error=Password+attuale+non+corretta", status_code=302)
+    ok, msg = validate_password_strength(new_password)
+    if not ok:
+        return RedirectResponse(f"/account?error={quote_plus(msg)}", status_code=302)
+    user.hashed_password = hash_password(new_password)
+    user.token_version = (user.token_version or 0) + 1
+    await db.commit()
+    response = RedirectResponse(
+        "/login?error=Password+aggiornata%2C+rifai+il+login",
+        status_code=302,
+    )
+    response.delete_cookie("access_token")
+    return response
 
 
 @app.get("/api/export-data")

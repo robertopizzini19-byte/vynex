@@ -13,16 +13,21 @@
             </div>
         </div>
 
+        {% if message %}<div class="alert-success" style="margin-bottom:16px">{{ message }}</div>{% endif %}
+
         <div class="account-grid">
             <div class="account-card">
                 <h2 class="account-card-title">Profilo</h2>
                 <dl class="account-dl">
-                    <dt>Nome</dt><dd>{{ user.full_name }}</dd>
-                    <dt>Email</dt><dd>{{ user.email }}</dd>
-                    {% if user.company_name %}
-                    <dt>Azienda mandante</dt><dd>{{ user.company_name }}</dd>
-                    {% endif %}
                     <dt>Piano</dt><dd><span class="stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</span></dd>
+                    <dt>Email verificata</dt><dd>
+                        {% if user.email_verified %}
+                            <span style="color:#10b981">✓ Sì</span>
+                        {% else %}
+                            <span style="color:#f59e0b">Non verificata</span>
+                            <button type="button" id="btn-rinvia-verifica" class="btn-ghost btn-sm" style="margin-left:8px">Rinvia email</button>
+                        {% endif %}
+                    </dd>
                     <dt>Iscritto il</dt><dd>{{ user.created_at.strftime("%d/%m/%Y") }}</dd>
                 </dl>
                 {% if user.plan != "free" %}
@@ -30,6 +35,56 @@
                 {% else %}
                 <a href="/checkout/pro" class="btn-primary btn-sm">Passa a Pro</a>
                 {% endif %}
+            </div>
+
+            <div class="account-card">
+                <h2 class="account-card-title">Dati personali</h2>
+                <p class="account-warning" style="color:var(--text-2)">
+                    Aggiorna nome, email o azienda mandante. Se cambi l'email riceverai un nuovo link di verifica.
+                </p>
+                {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
+                <form action="/api/account/update" method="POST" class="account-form">
+                    <label>
+                        <span>Nome completo</span>
+                        <input type="text" name="full_name" value="{{ user.full_name }}" required minlength="2" maxlength="120">
+                    </label>
+                    <label>
+                        <span>Email</span>
+                        <input type="email" name="email" value="{{ user.email }}" required maxlength="255">
+                    </label>
+                    <label>
+                        <span>Azienda mandante <span style="color:var(--text-3);font-weight:400">(opzionale)</span></span>
+                        <input type="text" name="company_name" value="{{ user.company_name or '' }}" maxlength="120">
+                    </label>
+                    <button type="submit" class="btn-primary btn-sm">Salva modifiche</button>
+                </form>
+            </div>
+
+            <div class="account-card">
+                <h2 class="account-card-title">Cambia password</h2>
+                <p class="account-warning" style="color:var(--text-2)">
+                    Dopo il cambio ti sarà richiesto di rifare il login su tutti i dispositivi.
+                </p>
+                <form action="/api/account/password" method="POST" class="account-form">
+                    <label>
+                        <span>Password attuale</span>
+                        <input type="password" name="current_password" required>
+                    </label>
+                    <label>
+                        <span>Nuova password</span>
+                        <input type="password" name="new_password" required minlength="8">
+                    </label>
+                    <button type="submit" class="btn-primary btn-sm">Aggiorna password</button>
+                </form>
+            </div>
+
+            <div class="account-card">
+                <h2 class="account-card-title">Sicurezza sessioni</h2>
+                <p class="account-warning" style="color:var(--text-2)">
+                    Disconnetti l'account da <strong>tutti i dispositivi</strong> dove è attualmente loggato.
+                    Usa questa funzione se pensi che qualcuno abbia accesso al tuo account.
+                </p>
+                <button type="button" id="btn-logout-all" class="btn-ghost btn-sm">Disconnetti tutti i dispositivi</button>
             </div>
 
             <div class="account-card">
@@ -66,4 +121,42 @@
         </div>
     </main>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const rinviaBtn = document.getElementById('btn-rinvia-verifica');
+if (rinviaBtn) {
+    rinviaBtn.addEventListener('click', async () => {
+        rinviaBtn.disabled = true;
+        rinviaBtn.textContent = 'Invio...';
+        try {
+            const res = await fetch('/api/rinvia-verifica', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                rinviaBtn.textContent = data.status === 'sent' ? 'Email inviata ✓' : 'Già verificata';
+            } else {
+                rinviaBtn.textContent = 'Errore — riprova';
+                rinviaBtn.disabled = false;
+            }
+        } catch (e) {
+            rinviaBtn.textContent = 'Errore — riprova';
+            rinviaBtn.disabled = false;
+        }
+    });
+}
+
+const logoutAllBtn = document.getElementById('btn-logout-all');
+if (logoutAllBtn) {
+    logoutAllBtn.addEventListener('click', async () => {
+        if (!confirm('Disconnettere l\'account da tutti i dispositivi?')) return;
+        try {
+            const res = await fetch('/api/logout-all', { method: 'POST' });
+            if (res.ok) window.location.href = '/login?error=Disconnesso+da+tutti+i+dispositivi';
+        } catch (e) {
+            alert('Errore. Riprova.');
+        }
+    });
+}
+</script>
 {% endblock %}

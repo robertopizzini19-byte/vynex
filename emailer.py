@@ -94,13 +94,24 @@ async def send_payment_failed_email(to: str, name: str) -> bool:
 
 
 async def send_verification_email(to: str, name: str, verify_link: str) -> bool:
+    first = name.split()[0] if name else "ciao"
     body = f"""
-    <h1 style="font-size:22px;color:#f1f5f9">Verifica la tua email</h1>
-    <p style="color:#94a3b8;line-height:1.7">Ciao {name.split()[0]}, conferma il tuo indirizzo email per attivare completamente il tuo account VYNEX. Il link è valido 48 ore.</p>
-    <p><a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Verifica email</a></p>
-    <p style="color:#64748b;font-size:12px;line-height:1.6">Se non hai creato un account VYNEX, ignora questa email.</p>
+    <h1 style="font-size:26px;color:#f1f5f9;font-weight:800;line-height:1.3;margin:0 0 16px">Verifica il tuo indirizzo email</h1>
+    <p style="color:#cbd5e1;line-height:1.7;font-size:15px;margin:0 0 24px">Ciao {first}, grazie per esserti registrato su VYNEX. Per completare l'attivazione dell'account e iniziare a generare documenti commerciali in 30 secondi, conferma il tuo indirizzo email cliccando sul pulsante qui sotto.</p>
+
+    <div style="text-align:center;margin:32px 0">
+      <a href="{verify_link}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:0.3px">Verifica email</a>
+    </div>
+
+    <p style="color:#94a3b8;line-height:1.7;font-size:13px;margin:24px 0 8px">Se il pulsante non funziona, copia e incolla questo link nel browser:</p>
+    <p style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:12px;word-break:break-all;font-family:monospace;font-size:12px;color:#60a5fa;margin:0 0 24px">{verify_link}</p>
+
+    <div style="border-top:1px solid #1e293b;padding-top:20px;margin-top:32px">
+      <p style="color:#64748b;font-size:12px;line-height:1.6;margin:0">Il link è valido per 48 ore. Se non hai creato un account VYNEX, ignora questa email — nessun account verrà attivato.</p>
+      <p style="color:#64748b;font-size:12px;line-height:1.6;margin:8px 0 0">Per sicurezza, non condividere questo link con nessuno.</p>
+    </div>
     """
-    return await _send(to, "Verifica la tua email — VYNEX", _wrap(body))
+    return await _send(to, "Verifica il tuo account VYNEX", _wrap(body))
 
 
 async def send_account_locked_email(to: str, name: str) -> bool:
