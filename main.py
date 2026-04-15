@@ -61,13 +61,19 @@ def _validate_prod_env() -> None:
         "ANTHROPIC_API_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
-        "RESEND_API_KEY",
         "ADMIN_TOKEN",
     ]
     missing = [k for k in required if not os.getenv(k)]
     if missing:
         raise RuntimeError(
             f"Env vars mancanti in produzione: {', '.join(missing)}"
+        )
+    # RESEND_API_KEY non e' fatal: l'emailer e' gia' graceful no-op.
+    # Logga forte per ricordarsi di settarla prima del lancio.
+    if not os.getenv("RESEND_API_KEY"):
+        import logging
+        logging.getLogger("vynex.main").warning(
+            "RESEND_API_KEY non settata — email transazionali disabilitate"
         )
     if "sqlite" in os.getenv("DATABASE_URL", ""):
         raise RuntimeError("DATABASE_URL deve puntare a Postgres in produzione")
