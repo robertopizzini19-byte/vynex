@@ -4,9 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, update
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
+import asyncio
+import hmac
 import logging
 import os
 import io
@@ -44,6 +46,38 @@ configure_logging(os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("vynex")
 
 
+def _validate_prod_env() -> None:
+    """Refuse to boot if production env is missing critical secrets.
+
+    Better to crash at startup than to serve traffic with silently
+    disabled payments, email, or AI generation.
+    """
+    is_prod = os.getenv("BASE_URL", "").startswith("https://")
+    if not is_prod:
+        return
+    required = [
+        "SECRET_KEY",
+        "DATABASE_URL",
+        "ANTHROPIC_API_KEY",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "RESEND_API_KEY",
+        "ADMIN_TOKEN",
+    ]
+    missing = [k for k in required if not os.getenv(k)]
+    if missing:
+        raise RuntimeError(
+            f"Env vars mancanti in produzione: {', '.join(missing)}"
+        )
+    if "sqlite" in os.getenv("DATABASE_URL", ""):
+        raise RuntimeError("DATABASE_URL deve puntare a Postgres in produzione")
+    if len(os.getenv("ADMIN_TOKEN", "")) < 32:
+        raise RuntimeError("ADMIN_TOKEN troppo corto — usa almeno 32 byte casuali")
+
+
+_validate_prod_env()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
@@ -68,15 +102,52 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "img-src 'self' data:; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com https://accounts.google.com/gsi/client; "
-            "connect-src 'self' https://api.stripe.com https://accounts.google.com/gsi/; "
-            "frame-src https://js.stripe.com https://hooks.stripe.com https://accounts.google.com/gsi/; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com https://accounts.google.com; "
+            "connect-src 'self' https://api.stripe.com https://accounts.google.com; "
+            "frame-src https://js.stripe.com https://hooks.stripe.com https://accounts.google.com; "
             "base-uri 'self'; form-action 'self' https://checkout.stripe.com; "
             "frame-ancestors 'none'"
         )
         return response
 
 
+_CSRF_EXEMPT_PATHS = ("/webhook/stripe", "/auth/google/verify")
+_CSRF_SAFE_METHODS = ("GET", "HEAD", "OPTIONS", "TRACE")
+
+
+class OriginCSRFMiddleware(BaseHTTPMiddleware):
+    """Reject state-changing requests whose Origin/Referer doesn't match BASE_URL.
+
+    Belt-and-suspenders on top of SameSite=Lax cookies. Prevents classic
+    CSRF even if a future browser relaxes SameSite semantics or if a
+    subdomain is compromised.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method in _CSRF_SAFE_METHODS:
+            return await call_next(request)
+        path = request.url.path
+        if any(path.startswith(p) for p in _CSRF_EXEMPT_PATHS):
+            return await call_next(request)
+        base_url = os.getenv("BASE_URL", "").rstrip("/")
+        if not base_url or not base_url.startswith("https://"):
+            return await call_next(request)
+        origin = request.headers.get("origin", "")
+        referer = request.headers.get("referer", "")
+        if origin and origin.rstrip("/") == base_url:
+            return await call_next(request)
+        if referer and referer.startswith(base_url + "/"):
+            return await call_next(request)
+        logger.warning(
+            "CSRF block: %s %s origin=%r referer=%r",
+            request.method, path, origin, referer,
+        )
+        return JSONResponse(
+            {"error": "Origine richiesta non valida"}, status_code=403
+        )
+
+
+app.add_middleware(OriginCSRFMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -85,11 +156,14 @@ templates = Jinja2Templates(directory="templates")
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
+_COOKIE_SECURE = os.getenv("BASE_URL", "").startswith("https://")
+
+
 def redirect_with_cookie(url: str, token: str) -> RedirectResponse:
     response = RedirectResponse(url=url, status_code=302)
     response.set_cookie(
         "access_token", token,
-        httponly=True, secure=True, samesite="lax",
+        httponly=True, secure=_COOKIE_SECURE, samesite="lax",
         max_age=60 * 60 * 24 * 30  # 30 giorni
     )
     return response
@@ -180,6 +254,7 @@ async def register_page(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @app.post("/auth/google/verify")
+@limiter.limit("20/minute")
 async def auth_google_verify(request: Request, db: AsyncSession = Depends(get_db)):
     """Google Identity Services callback — riceve un JWT ID token dal widget GIS.
 
@@ -216,6 +291,8 @@ async def auth_google_verify(request: Request, db: AsyncSession = Depends(get_db
     if existing:
         if existing.deleted_at is not None:
             return RedirectResponse("/login?error=Account+eliminato", status_code=303)
+        if not existing.is_active:
+            return RedirectResponse("/login?error=Account+disattivato", status_code=303)
         existing.last_login_at = datetime.utcnow()
         existing.last_activity_at = datetime.utcnow()
         existing.failed_login_attempts = 0
@@ -270,8 +347,7 @@ async def reset_page(request: Request):
     token = request.query_params.get("token", "")
     if not token:
         return RedirectResponse("/recupera-password?error=Link+non+valido", status_code=302)
-    email = verify_password_reset_token(token)
-    if not email:
+    if verify_password_reset_token(token) is None:
         return RedirectResponse("/recupera-password?error=Link+scaduto+o+non+valido", status_code=302)
     return templates.TemplateResponse("reset_password.html", {"request": request, "token": token})
 
@@ -279,7 +355,7 @@ async def reset_page(request: Request):
 # ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 @app.post("/api/login")
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def api_login(
     request: Request,
     email: str = Form(...),
@@ -292,6 +368,8 @@ async def api_login(
             return RedirectResponse("/login?error=Account+temporaneamente+bloccato.+Riprova+tra+15+minuti", status_code=302)
         if reason == "deleted":
             return RedirectResponse("/login?error=Account+eliminato", status_code=302)
+        if reason == "inactive":
+            return RedirectResponse("/login?error=Account+disattivato", status_code=302)
         return RedirectResponse("/login?error=Email+o+password+non+corretti", status_code=302)
     token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
     return redirect_with_cookie("/dashboard", token)
@@ -329,12 +407,20 @@ async def api_register(
     if not full_name.strip() or len(full_name.strip()) < 2:
         return RedirectResponse("/registrati?error=Nome+non+valido", status_code=302)
 
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or (request.client.host if request.client else "")
+    )[:45]
+    user_agent = request.headers.get("user-agent", "")[:500]
     user = User(
         email=email_norm,
         hashed_password=hash_password(password),
         full_name=full_name.strip(),
         company_name=company_name.strip() or None,
-        plan="free"
+        plan="free",
+        consent_accepted_at=datetime.utcnow(),
+        consent_ip=client_ip,
+        consent_user_agent=user_agent,
     )
     db.add(user)
     await db.commit()
@@ -366,7 +452,7 @@ async def api_forgot(
 ):
     user = await get_user_by_email(db, email)
     if user:
-        token = create_password_reset_token(user.email)
+        token = create_password_reset_token(user.email, token_version=user.token_version or 0)
         base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
         reset_link = f"{base_url}/reset-password?token={token}"
         try:
@@ -387,16 +473,21 @@ async def api_reset(
     password: str = Form(...),
     db: AsyncSession = Depends(get_db)
 ):
-    email = verify_password_reset_token(token)
-    if not email:
+    parsed = verify_password_reset_token(token)
+    if parsed is None:
         return RedirectResponse("/recupera-password?error=Link+scaduto+o+non+valido", status_code=302)
+    email, token_tv = parsed
     ok, msg = validate_password_strength(password)
     if not ok:
         from urllib.parse import quote_plus
         return RedirectResponse(f"/reset-password?token={token}&error={quote_plus(msg)}", status_code=302)
     user = await get_user_by_email(db, email)
     if not user:
-        return RedirectResponse("/recupera-password?error=Utente+non+trovato", status_code=302)
+        return RedirectResponse("/recupera-password?error=Link+scaduto+o+non+valido", status_code=302)
+    # Single-use enforcement: after first reset we bump token_version,
+    # so a replayed token can't match anymore.
+    if (user.token_version or 0) != token_tv:
+        return RedirectResponse("/recupera-password?error=Link+già+utilizzato+o+scaduto", status_code=302)
     user.hashed_password = hash_password(password)
     user.token_version = (user.token_version or 0) + 1
     user.failed_login_attempts = 0
@@ -406,7 +497,15 @@ async def api_reset(
 
 
 @app.get("/logout")
-async def logout():
+async def logout(request: Request, db: AsyncSession = Depends(get_db)):
+    user = await get_current_user(request, db)
+    if user:
+        await db.execute(
+            update(User)
+            .where(User.id == user.id)
+            .values(token_version=(user.token_version or 0) + 1)
+        )
+        await db.commit()
     response = RedirectResponse("/", status_code=302)
     response.delete_cookie("access_token")
     return response
@@ -533,7 +632,7 @@ async def api_account_update(
         )
         response.set_cookie(
             "access_token", new_token,
-            httponly=True, secure=True, samesite="lax",
+            httponly=True, secure=_COOKIE_SECURE, samesite="lax",
             max_age=60 * 60 * 24 * 30,
         )
         return response
@@ -765,13 +864,6 @@ async def api_genera(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user)
 ):
-    usage = await get_monthly_usage(db, user.id)
-    if usage >= user.monthly_limit:
-        return JSONResponse(
-            {"error": "Limite mensile raggiunto. Prova Pro gratis per 10 giorni — documenti illimitati."},
-            status_code=429
-        )
-
     body = await request.json()
     input_testo = body.get("input_testo", "").strip()
     azienda_mandante = body.get("azienda_mandante", "").strip()
@@ -782,6 +874,31 @@ async def api_genera(
     if len(input_testo) > 2000:
         return JSONResponse({"error": "Descrizione troppo lunga (max 2000 caratteri)."}, status_code=400)
 
+    # Atomic quota reservation: lock the user row, re-check usage, insert
+    # a placeholder Document, commit (releases lock). Concurrent requests
+    # serialize on the user row so quota can't be bypassed under load.
+    # The placeholder is counted toward quota during the slow AI call;
+    # on failure we soft-delete it so the slot is freed.
+    locked_result = await db.execute(
+        select(User).where(User.id == user.id).with_for_update()
+    )
+    locked_user = locked_result.scalar_one_or_none()
+    if locked_user is None:
+        await db.rollback()
+        return JSONResponse({"error": "Utente non trovato"}, status_code=404)
+    usage = await get_monthly_usage(db, user.id)
+    if usage >= locked_user.monthly_limit:
+        await db.rollback()
+        return JSONResponse(
+            {"error": "Limite mensile raggiunto. Prova Pro gratis per 10 giorni — documenti illimitati."},
+            status_code=429
+        )
+
+    doc = Document(user_id=user.id, input_text=input_testo)
+    db.add(doc)
+    await db.commit()
+    await db.refresh(doc)
+
     try:
         result = await genera_documenti(
             input_testo=input_testo,
@@ -790,23 +907,20 @@ async def api_genera(
         )
     except Exception:
         logger.exception("genera_documenti failed")
+        doc.deleted_at = datetime.utcnow()
+        await db.commit()
         return JSONResponse(
             {"error": "Errore durante la generazione. Riprova tra qualche secondo."},
             status_code=500
         )
 
-    doc = Document(
-        user_id=user.id,
-        input_text=input_testo,
-        report_visita=result["report_visita"],
-        email_followup=result["email_followup"],
-        offerta_commerciale=result["offerta_commerciale"],
-        cliente_nome=result.get("cliente_nome"),
-        azienda_cliente=result.get("azienda_cliente"),
-        tokens_used=result.get("tokens_used"),
-        generation_time_ms=result.get("generation_time_ms"),
-    )
-    db.add(doc)
+    doc.report_visita = result["report_visita"]
+    doc.email_followup = result["email_followup"]
+    doc.offerta_commerciale = result["offerta_commerciale"]
+    doc.cliente_nome = result.get("cliente_nome")
+    doc.azienda_cliente = result.get("azienda_cliente")
+    doc.tokens_used = result.get("tokens_used")
+    doc.generation_time_ms = result.get("generation_time_ms")
     await db.commit()
     await db.refresh(doc)
 
@@ -827,6 +941,11 @@ async def api_rigenera(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user)
 ):
+    if user.plan == "free":
+        return JSONResponse(
+            {"error": "Rigenerazione disponibile solo per Pro/Team. Passa a Pro per accedere."},
+            status_code=402,
+        )
     body = await request.json()
     doc_id = body.get("doc_id")
     tipo = body.get("tipo")
@@ -837,6 +956,8 @@ async def api_rigenera(
 
     if not istruzione:
         return JSONResponse({"error": "Specifica cosa vuoi modificare."}, status_code=400)
+    if len(istruzione) > 500:
+        return JSONResponse({"error": "Istruzione troppo lunga (max 500 caratteri)."}, status_code=400)
 
     result = await db.execute(
         select(Document).where(Document.id == doc_id, Document.user_id == user.id)
@@ -880,7 +1001,11 @@ async def checkout(
     if not os.getenv("STRIPE_SECRET_KEY"):
         raise HTTPException(503, "Pagamenti non ancora configurati")
 
-    checkout_url = await create_checkout_session(user, plan)
+    try:
+        checkout_url = await create_checkout_session(db, user, plan)
+    except RuntimeError as exc:
+        logger.error("checkout failed: %s", exc)
+        return RedirectResponse("/prezzi?error=Errore+pagamento.+Riprova.", status_code=302)
     return RedirectResponse(checkout_url, status_code=302)
 
 
@@ -1175,6 +1300,11 @@ async def api_documento_pdf(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user),
 ):
+    if user.plan == "free":
+        raise HTTPException(
+            402,
+            "Export PDF disponibile solo per Pro/Team. Passa a Pro per scaricare.",
+        )
     result = await db.execute(
         select(Document).where(
             Document.id == doc_id,
@@ -1231,7 +1361,9 @@ async def api_documento_pdf(
     story += [PageBreak()] + _section("Email di follow-up", doc.email_followup)
     story += [PageBreak()] + _section("Offerta commerciale", doc.offerta_commerciale)
 
-    pdf.build(story)
+    # reportlab is synchronous and CPU-bound. Running it directly on the
+    # event loop blocks every other coroutine for hundreds of ms per call.
+    await asyncio.to_thread(pdf.build, story)
     buffer.seek(0)
     filename = f"vynex-{doc.id}.pdf"
     return Response(
@@ -1247,7 +1379,9 @@ async def admin_metrics(request: Request, db: AsyncSession = Depends(get_db)):
     """Aggregati business per il founder. Protetto da ADMIN_TOKEN header."""
     admin_token = os.getenv("ADMIN_TOKEN", "")
     header_token = request.headers.get("X-Admin-Token", "")
-    if not admin_token or header_token != admin_token:
+    if not admin_token or not hmac.compare_digest(
+        header_token.encode("utf-8"), admin_token.encode("utf-8")
+    ):
         raise HTTPException(401, "Non autorizzato")
 
     from datetime import timedelta

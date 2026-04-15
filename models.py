@@ -37,6 +37,10 @@ class User(Base):
     subscription_current_period_end = Column(DateTime, nullable=True)
     token_version = Column(Integer, default=0, nullable=False)
 
+    consent_accepted_at = Column(DateTime, nullable=True)
+    consent_ip = Column(String(45), nullable=True)
+    consent_user_agent = Column(String(500), nullable=True)
+
     documents = relationship("Document", back_populates="user")
     team_members = relationship(
         "User",

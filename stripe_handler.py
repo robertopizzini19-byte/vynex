@@ -16,6 +16,9 @@ from emailer import (
 logger = logging.getLogger("vynex.stripe")
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
+# Pinning the API version freezes the schema we parse — a Stripe-side
+# upgrade can't silently change field shapes on us.
+stripe.api_version = "2024-06-20"
 
 PRO_PRICE_ID = os.getenv("STRIPE_PRO_PRICE_ID", "")
 TEAM_PRICE_ID = os.getenv("STRIPE_TEAM_PRICE_ID", "")
@@ -24,16 +27,27 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
 GRACE_PERIOD_DAYS = 7
 
 
-async def create_checkout_session(user: User, plan: str, coupon_code: str | None = None) -> str:
+async def create_checkout_session(
+    db: AsyncSession, user: User, plan: str, coupon_code: str | None = None
+) -> str:
+    if plan not in ("pro", "team"):
+        raise ValueError("plan deve essere 'pro' o 'team'")
     price_id = PRO_PRICE_ID if plan == "pro" else TEAM_PRICE_ID
+    if not price_id:
+        raise RuntimeError(f"STRIPE_{plan.upper()}_PRICE_ID non configurato")
 
     if not user.stripe_customer_id:
         customer = await stripe.Customer.create_async(
             email=user.email,
             name=user.full_name,
-            metadata={"user_id": str(user.id)}
+            metadata={"user_id": str(user.id)},
+            idempotency_key=f"customer-user-{user.id}",
         )
         customer_id = customer.id
+        # Persist immediately so concurrent checkout attempts don't create
+        # a second Customer in Stripe for the same user.
+        user.stripe_customer_id = customer_id
+        await db.commit()
     else:
         customer_id = user.stripe_customer_id
 
@@ -53,7 +67,11 @@ async def create_checkout_session(user: User, plan: str, coupon_code: str | None
         create_kwargs["discounts"] = [{"coupon": coupon_code}]
         create_kwargs.pop("allow_promotion_codes", None)
 
-    session = await stripe.checkout.Session.create_async(**create_kwargs)
+    try:
+        session = await stripe.checkout.Session.create_async(**create_kwargs)
+    except stripe.error.StripeError as exc:
+        logger.exception("Stripe checkout create failed for user %s", user.id)
+        raise RuntimeError("Errore creazione sessione Stripe") from exc
     return session.url
 
 
@@ -65,10 +83,21 @@ async def create_portal_session(user: User) -> str:
     return session.url
 
 
-async def _record_event(db: AsyncSession, event_id: str, event_type: str) -> bool:
-    """Insert event into log. Returns True if new, False if already processed."""
-    log_entry = StripeEventLog(event_id=event_id, event_type=event_type)
-    db.add(log_entry)
+async def _already_processed(db: AsyncSession, event_id: str) -> bool:
+    result = await db.execute(
+        select(StripeEventLog).where(StripeEventLog.event_id == event_id)
+    )
+    return result.scalar_one_or_none() is not None
+
+
+async def _mark_processed(db: AsyncSession, event_id: str, event_type: str) -> bool:
+    """Insert event into log after successful handler.
+
+    Returns False if a concurrent delivery already recorded the same event
+    (unique constraint on event_id), in which case the caller should treat
+    it as a duplicate.
+    """
+    db.add(StripeEventLog(event_id=event_id, event_type=event_type))
     try:
         await db.commit()
         return True
@@ -96,17 +125,24 @@ def _plan_from_price(price_id: str) -> str | None:
 
 async def handle_webhook(payload: bytes, sig_header: str, db: AsyncSession):
     webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    if not webhook_secret:
+        logger.error("STRIPE_WEBHOOK_SECRET not configured, rejecting webhook")
+        raise ValueError("Webhook secret not configured")
+    if not sig_header:
+        raise ValueError("Missing Stripe-Signature header")
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
     except stripe.error.SignatureVerificationError:
         raise ValueError("Invalid webhook signature")
+    except ValueError:
+        raise ValueError("Invalid webhook payload")
 
     event_id = event["id"]
     event_type = event["type"]
 
-    is_new = await _record_event(db, event_id, event_type)
-    if not is_new:
+    # Idempotency check first — don't re-run handlers for events already processed.
+    if await _already_processed(db, event_id):
         logger.info("Stripe event %s already processed, skipping", event_id)
         return
 
@@ -114,9 +150,12 @@ async def handle_webhook(payload: bytes, sig_header: str, db: AsyncSession):
         await _dispatch_event(event_type, event, db)
     except Exception:
         logger.exception("Stripe event %s (%s) handler failed", event_id, event_type)
-        # Re-raise so Stripe retries; we already logged the event so duplicate
-        # delivery will be filtered, but the second delivery still re-runs the handler.
+        # Don't mark processed — Stripe retries and next delivery re-runs handler.
         raise
+
+    # Only mark processed after successful dispatch so failures get retried.
+    if not await _mark_processed(db, event_id, event_type):
+        logger.info("Stripe event %s already recorded by concurrent delivery", event_id)
 
 
 async def _dispatch_event(event_type: str, event: dict, db: AsyncSession):
@@ -227,6 +266,44 @@ async def _dispatch_event(event_type: str, event: dict, db: AsyncSession):
         if user and user.subscription_status == "past_due":
             user.subscription_status = "active"
             await db.commit()
+
+    elif event_type == "charge.refunded":
+        charge = event["data"]["object"]
+        customer_id = charge.get("customer")
+        if not customer_id:
+            return
+        result = await db.execute(
+            select(User).where(User.stripe_customer_id == customer_id)
+        )
+        user = result.scalar_one_or_none()
+        if user:
+            logger.warning(
+                "Charge refunded for user %s (customer %s, amount %s)",
+                user.id, customer_id, charge.get("amount_refunded"),
+            )
+
+    elif event_type == "charge.dispute.created":
+        dispute = event["data"]["object"]
+        customer_id = dispute.get("customer")
+        if not customer_id:
+            return
+        result = await db.execute(
+            select(User).where(User.stripe_customer_id == customer_id)
+        )
+        user = result.scalar_one_or_none()
+        if user:
+            # Freeze account on dispute to limit abuse window.
+            user.plan = "free"
+            user.subscription_status = "disputed"
+            user.is_active = False
+            await db.commit()
+            logger.warning(
+                "Dispute created for user %s — account frozen", user.id
+            )
+
+    elif event_type == "customer.subscription.trial_will_end":
+        # No action required; just acknowledge so Stripe stops retrying.
+        logger.info("Trial ending soon for event %s", event.get("id"))
 
 
 async def apply_coupon(db: AsyncSession, user: User, code: str) -> tuple[bool, str]:

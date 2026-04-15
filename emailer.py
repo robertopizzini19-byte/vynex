@@ -20,24 +20,31 @@ async def _send(to: str, subject: str, html: str) -> bool:
     if not RESEND_API_KEY:
         logger.info("RESEND_API_KEY not set — skipping email to %s (%s)", to, subject)
         return False
-    async with httpx.AsyncClient(timeout=10) as client:
-        res = await client.post(
-            RESEND_URL,
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": EMAIL_FROM,
-                "to": [to],
-                "subject": subject,
-                "html": html,
-                "reply_to": EMAIL_REPLY_TO,
-            },
-        )
-        if res.status_code >= 400:
-            logger.error("Resend error %s: %s", res.status_code, res.text)
-            return False
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            res = await client.post(
+                RESEND_URL,
+                headers={
+                    "Authorization": f"Bearer {RESEND_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": EMAIL_FROM,
+                    "to": [to],
+                    "subject": subject,
+                    "html": html,
+                    "reply_to": EMAIL_REPLY_TO,
+                },
+            )
+    except httpx.TimeoutException:
+        logger.error("Resend timeout for %s (%s)", to, subject)
+        return False
+    except httpx.HTTPError as exc:
+        logger.error("Resend transport error for %s: %s", to, exc)
+        return False
+    if res.status_code >= 400:
+        logger.error("Resend error %s: %s", res.status_code, res.text)
+        return False
     return True
 
 

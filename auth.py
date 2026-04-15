@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 import os
 import re
 import secrets
@@ -16,6 +16,8 @@ from models import User, EmailVerificationToken
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione")
 if os.getenv("BASE_URL", "").startswith("https://") and SECRET_KEY == "dev-secret-key-cambia-in-produzione":
     raise RuntimeError("SECRET_KEY non impostata in produzione — set SECRET_KEY env var")
+if len(SECRET_KEY) < 32:
+    raise RuntimeError("SECRET_KEY troppo corta — usa almeno 32 byte casuali")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 PASSWORD_RESET_EXPIRE_MINUTES = 60
@@ -58,21 +60,30 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None, t
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_password_reset_token(email: str) -> str:
+def create_password_reset_token(email: str, token_version: int = 0) -> str:
+    """Binds reset token to user's token_version at creation time.
+
+    After the password is reset we bump token_version, so the same reset
+    token can never be replayed — tv no longer matches.
+    """
     expire = datetime.utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
     return jwt.encode(
-        {"sub": email, "exp": expire, "purpose": "reset"},
+        {"sub": email, "exp": expire, "purpose": "reset", "tv": token_version},
         SECRET_KEY, algorithm=ALGORITHM
     )
 
 
-def verify_password_reset_token(token: str) -> Optional[str]:
+def verify_password_reset_token(token: str) -> Optional[Tuple[str, int]]:
+    """Returns (email, token_version_at_issue) or None if invalid."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("purpose") != "reset":
             return None
-        return payload.get("sub")
-    except JWTError:
+        email = payload.get("sub")
+        if not email:
+            return None
+        return email, int(payload.get("tv", 0))
+    except (JWTError, ValueError, TypeError):
         return None
 
 
@@ -81,11 +92,20 @@ def generate_email_verification_token() -> str:
 
 
 async def create_email_verification_token(db: AsyncSession, user: User) -> str:
+    now = datetime.utcnow()
+    await db.execute(
+        EmailVerificationToken.__table__.update()
+        .where(
+            EmailVerificationToken.user_id == user.id,
+            EmailVerificationToken.used_at.is_(None),
+        )
+        .values(used_at=now)
+    )
     token = generate_email_verification_token()
     record = EmailVerificationToken(
         user_id=user.id,
         token=token,
-        expires_at=datetime.utcnow() + timedelta(hours=EMAIL_VERIFY_EXPIRE_HOURS),
+        expires_at=now + timedelta(hours=EMAIL_VERIFY_EXPIRE_HOURS),
     )
     db.add(record)
     await db.commit()
@@ -110,32 +130,67 @@ async def consume_email_verification_token(db: AsyncSession, token: str) -> Opti
     return user
 
 
-async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
-    result = await db.execute(select(User).where(User.email == email.lower()))
+async def get_user_by_email(
+    db: AsyncSession, email: str, include_deleted: bool = False
+) -> Optional[User]:
+    stmt = select(User).where(User.email == email.lower())
+    if not include_deleted:
+        stmt = stmt.where(User.deleted_at.is_(None))
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> Tuple[Optional[User], str]:
-    """Returns (user, reason). reason is one of: ok, not_found, wrong_password, locked, deleted."""
-    user = await get_user_by_email(db, email)
+    """Returns (user, reason). reason is one of: ok, not_found, wrong_password, locked, deleted, inactive.
+
+    Uses a DB-side atomic UPDATE to increment failed_login_attempts so
+    concurrent wrong-password requests can't race past MAX_FAILED_ATTEMPTS.
+    """
+    user = await get_user_by_email(db, email, include_deleted=True)
     if not user:
         return None, "not_found"
     if user.deleted_at is not None:
         return None, "deleted"
+    if not user.is_active:
+        return None, "inactive"
     if user.is_locked:
         return None, "locked"
     if not verify_password(password, user.hashed_password):
-        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
-        if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
-            user.failed_login_attempts = 0
+        now = datetime.utcnow()
+        locked_until_value = now + timedelta(minutes=LOCKOUT_MINUTES)
+        await db.execute(
+            update(User)
+            .where(User.id == user.id)
+            .values(
+                failed_login_attempts=User.failed_login_attempts + 1,
+            )
+        )
         await db.commit()
+        await db.refresh(user)
+        if (user.failed_login_attempts or 0) >= MAX_FAILED_ATTEMPTS:
+            await db.execute(
+                update(User)
+                .where(User.id == user.id)
+                .values(
+                    failed_login_attempts=0,
+                    locked_until=locked_until_value,
+                )
+            )
+            await db.commit()
         return None, "wrong_password"
-    user.failed_login_attempts = 0
-    user.locked_until = None
-    user.last_login_at = datetime.utcnow()
-    user.last_activity_at = datetime.utcnow()
+    now = datetime.utcnow()
+    await db.execute(
+        update(User)
+        .where(User.id == user.id)
+        .values(
+            failed_login_attempts=0,
+            locked_until=None,
+            last_login_at=now,
+            last_activity_at=now,
+        )
+    )
     await db.commit()
+    await db.refresh(user)
     return user, "ok"
 
 
@@ -155,13 +210,13 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("purpose") not in (None, "access"):
+        if payload.get("purpose") != "access":
             return None
         email: str = payload.get("sub")
         if not email:
             return None
-        token_tv = payload.get("tv", 0)
-    except JWTError:
+        token_tv = int(payload.get("tv", 0))
+    except (JWTError, ValueError, TypeError):
         return None
 
     user = await get_user_by_email(db, email)
@@ -171,6 +226,12 @@ async def get_current_user(
         return None
     if user.deleted_at is not None:
         return None
+    if not user.is_active:
+        return None
+    if user.last_activity_at is not None:
+        idle = datetime.utcnow() - user.last_activity_at
+        if idle > timedelta(days=IDLE_TIMEOUT_DAYS):
+            return None
     return user
 
 
@@ -189,6 +250,8 @@ async def require_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account disattivato"
         )
-    user.last_activity_at = datetime.utcnow()
+    await db.execute(
+        update(User).where(User.id == user.id).values(last_activity_at=datetime.utcnow())
+    )
     await db.commit()
     return user

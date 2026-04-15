@@ -11,7 +11,11 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-cambia-in-produzione")
 
 
 def _user_or_ip(request: Request) -> str:
-    """Prefer authenticated user as rate-limit key, fallback to IP."""
+    """Prefer authenticated user as rate-limit key, fallback to IP.
+
+    Validates expiration so an attacker can't replay a long-expired JWT
+    to escape IP-based rate limiting.
+    """
     token = request.cookies.get("access_token")
     if not token:
         auth = request.headers.get("Authorization", "")
@@ -19,10 +23,11 @@ def _user_or_ip(request: Request) -> str:
             token = auth[7:]
     if token:
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
-            email = payload.get("sub")
-            if email:
-                return f"user:{email}"
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            if payload.get("purpose") == "access":
+                email = payload.get("sub")
+                if email:
+                    return f"user:{email}"
         except JWTError:
             pass
     return f"ip:{get_remote_address(request)}"
