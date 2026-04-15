@@ -67,8 +67,35 @@ _PG_MIGRATIONS = [
 ]
 
 
+async def _drop_orphan_sequences(conn) -> None:
+    # A past deploy crashed between creating the sequence and the table,
+    # leaving `*_id_seq` dangling. create_all would then collide on the
+    # next SERIAL create. Drop any sequence whose owning table is missing.
+    rows = await conn.execute(text(
+        "SELECT c.relname FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE c.relkind = 'S' AND n.nspname = 'public' "
+        "AND c.relname LIKE '%\\_id\\_seq' ESCAPE '\\'"
+    ))
+    for (seq_name,) in rows.fetchall():
+        tbl = seq_name[:-len("_id_seq")]
+        exists = (await conn.execute(text(
+            "SELECT 1 FROM information_schema.tables "
+            "WHERE table_schema='public' AND table_name=:t"
+        ), {"t": tbl})).scalar()
+        if not exists:
+            logger.warning("dropping orphan sequence %s (table %s missing)", seq_name, tbl)
+            await conn.execute(text(f'DROP SEQUENCE IF EXISTS public."{seq_name}" CASCADE'))
+
+
 async def init_db():
     async with engine.begin() as conn:
+        if "asyncpg" in DATABASE_URL:
+            try:
+                await _drop_orphan_sequences(conn)
+            except Exception as exc:
+                logger.warning("orphan sequence cleanup failed: %s", exc)
+
         await conn.run_sync(Base.metadata.create_all)
 
         if "asyncpg" in DATABASE_URL:
