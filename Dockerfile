@@ -7,6 +7,8 @@ FROM python:3.11-slim AS runtime
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+# cache-bust: 2026-04-15T12:15
+ARG CACHEBUST=1
 COPY . .
 
 RUN useradd -r -u 1000 vynex && chown -R vynex:vynex /app
