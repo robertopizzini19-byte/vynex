@@ -89,12 +89,15 @@ async def _drop_orphan_sequences(conn) -> None:
 
 
 async def init_db():
+    logger.warning("VYNEX-INIT-DB-MARKER-REV3 starting")
     async with engine.begin() as conn:
         if "asyncpg" in DATABASE_URL:
+            logger.warning("VYNEX-INIT-DB-MARKER-REV3 pg detected, cleanup running")
             try:
                 await _drop_orphan_sequences(conn)
+                logger.warning("VYNEX-INIT-DB-MARKER-REV3 cleanup done")
             except Exception as exc:
-                logger.warning("orphan sequence cleanup failed: %s", exc)
+                logger.warning("VYNEX-INIT-DB-MARKER-REV3 cleanup failed: %s", exc)
 
         await conn.run_sync(Base.metadata.create_all)
 
