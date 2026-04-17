@@ -12,10 +12,10 @@ Setup Google Cloud Console:
 2. APIs & Services → OAuth consent screen → External → compila nome + support email
 3. Credentials → Create OAuth client ID → Web application
 4. Authorized JavaScript origins:
-   - https://agentia-production-fb78.up.railway.app
+   - https://vynex.it
    - http://localhost:8000  (dev)
 5. Authorized redirect URIs:
-   - https://agentia-production-fb78.up.railway.app/auth/google/verify
+   - https://vynex.it/auth/google/verify
    - http://localhost:8000/auth/google/verify  (dev)
 6. Copia SOLO il Client ID → Railway env var: GOOGLE_CLIENT_ID
 """

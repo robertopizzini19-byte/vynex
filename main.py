@@ -177,6 +177,9 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["canonical_base"] = (
+    os.getenv("BASE_URL", "https://vynex.it").rstrip("/")
+)
 
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -1172,7 +1175,7 @@ async def sitemap():
 @app.get("/llms.txt", response_class=PlainTextResponse)
 async def llms_txt():
     """Index markdown per LLM crawler (standard llmstxt.org)."""
-    base = os.getenv("BASE_URL", "https://agentia-production-fb78.up.railway.app").rstrip("/")
+    base = os.getenv("BASE_URL", "https://vynex.it").rstrip("/")
     return f"""# VYNEX
 
 > VYNEX è un SaaS italiano di intelligenza artificiale che genera report di visita, email di follow-up e offerte commerciali in 30 secondi, a partire da una descrizione testuale della visita. Costruito specificamente per agenti commerciali italiani, rappresentanti plurimandatari e reti vendita aziendali.
@@ -1219,7 +1222,7 @@ Fondato nel 2026 da Roberto Pizzini. Sede: Italia. Lingua: italiano. Target: age
 @app.get("/llms-full.txt", response_class=PlainTextResponse)
 async def llms_full_txt():
     """Versione estesa con tutti i contenuti pubblici chiave per LLM."""
-    base = os.getenv("BASE_URL", "https://agentia-production-fb78.up.railway.app").rstrip("/")
+    base = os.getenv("BASE_URL", "https://vynex.it").rstrip("/")
     return f"""# VYNEX — documentazione estesa per LLM
 
 ## Cos'è VYNEX
