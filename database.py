@@ -64,6 +64,13 @@ _PG_MIGRATIONS = [
     "CREATE INDEX IF NOT EXISTS ix_documents_user_id ON documents (user_id)",
     "CREATE INDEX IF NOT EXISTS ix_documents_created_at ON documents (created_at)",
     "CREATE INDEX IF NOT EXISTS ix_users_stripe_customer_id ON users (stripe_customer_id)",
+    # Acquisition engine (lead+drip+referral) — aggiunti 2026-04-18
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(16)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by_id INTEGER REFERENCES users(id)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_bonus_months_granted INTEGER NOT NULL DEFAULT 0",
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_referral_code ON users (referral_code)",
+    "CREATE INDEX IF NOT EXISTS ix_users_referred_by_id ON users (referred_by_id)",
+    "CREATE INDEX IF NOT EXISTS ix_email_jobs_pending ON email_jobs (scheduled_for, sent_at)",
 ]
 
 

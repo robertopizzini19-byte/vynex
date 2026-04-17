@@ -1,5 +1,6 @@
 .env
 *.db
+NUL
 __pycache__/
 *.pyc
 *.pyo

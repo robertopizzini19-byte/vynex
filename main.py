@@ -19,7 +19,7 @@ load_dotenv()
 from email_validator import validate_email, EmailNotValidError
 
 from database import get_db, init_db, AsyncSessionLocal
-from models import User, Document
+from models import User, Document, Lead, EmailJob, ReferralClick
 from auth import (
     hash_password, verify_password, authenticate_user, create_access_token,
     get_current_user, require_user, get_user_by_email,
@@ -28,6 +28,15 @@ from auth import (
     consume_email_verification_token,
 )
 from ai_engine import genera_documenti, rigenera_documento
+from acquisition import (
+    post_signup_setup,
+    upsert_lead,
+    enroll_lead_in_sequence,
+    process_email_queue,
+    verify_sig,
+)
+from email_templates import SEQUENCE_LEAD_DEMO
+from scheduler import start_scheduler, shutdown_scheduler
 from stripe_handler import (
     create_checkout_session, create_portal_session, handle_webhook, apply_coupon,
 )
@@ -87,7 +96,17 @@ _validate_prod_env()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    yield
+    try:
+        start_scheduler()
+    except Exception:
+        logger.exception("scheduler start failed — acquisition drip disabled")
+    try:
+        yield
+    finally:
+        try:
+            await shutdown_scheduler()
+        except Exception:
+            logger.exception("scheduler shutdown failed")
 
 
 app = FastAPI(title="VYNEX", lifespan=lifespan)
@@ -335,8 +354,16 @@ async def auth_google_verify(request: Request, db: AsyncSession = Depends(get_db
     except Exception:
         logger.exception("welcome email (google signup) failed")
 
+    try:
+        ref_cookie = (request.cookies.get("vynex_ref") or "")[:16] or None
+        await post_signup_setup(db, new_user, ref_cookie)
+    except Exception:
+        logger.exception("post_signup_setup (google) failed")
+
     access = create_access_token({"sub": new_user.email}, token_version=0)
-    return redirect_with_cookie("/dashboard", access)
+    response = redirect_with_cookie("/dashboard", access)
+    response.delete_cookie("vynex_ref")
+    return response
 
 
 @app.get("/recupera-password", response_class=HTMLResponse)
@@ -445,8 +472,16 @@ async def api_register(
     except Exception:
         logger.exception("verification email failed")
 
+    try:
+        ref_cookie = (request.cookies.get("vynex_ref") or "")[:16] or None
+        await post_signup_setup(db, user, ref_cookie)
+    except Exception:
+        logger.exception("post_signup_setup failed")
+
     token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
-    return redirect_with_cookie("/dashboard", token)
+    response = redirect_with_cookie("/dashboard", token)
+    response.delete_cookie("vynex_ref")
+    return response
 
 
 @app.post("/api/recupera-password")
@@ -806,6 +841,30 @@ async def dashboard(
     upgrade_msg = request.query_params.get("upgrade", "")
     has_more = (offset + len(documenti)) < total
 
+    if not user.referral_code:
+        try:
+            from acquisition import referral_code as _gen_ref
+            for _ in range(5):
+                code = _gen_ref()
+                exists = await db.execute(
+                    select(User.id).where(User.referral_code == code)
+                )
+                if exists.scalar_one_or_none() is None:
+                    user.referral_code = code
+                    await db.commit()
+                    break
+        except Exception:
+            logger.exception("lazy referral_code gen failed")
+
+    referrals_signups = (await db.execute(
+        select(func.count(User.id)).where(User.referred_by_id == user.id)
+    )).scalar() or 0
+    referrals_paying = (await db.execute(
+        select(func.count(User.id))
+        .where(User.referred_by_id == user.id)
+        .where(User.plan.in_(("pro", "team")))
+    )).scalar() or 0
+
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "user": user,
@@ -817,6 +876,9 @@ async def dashboard(
         "page": page,
         "has_more": has_more,
         "total_docs": total,
+        "base_url": os.getenv("BASE_URL", "http://localhost:8000").rstrip("/"),
+        "referrals_signups": referrals_signups,
+        "referrals_paying": referrals_paying,
     })
 
 
@@ -1454,6 +1516,337 @@ async def admin_metrics(request: Request, db: AsyncSession = Depends(get_db)):
             "documents_mtd": docs_mtd,
         },
     }
+
+
+# ─── ACQUISITION ENGINE — lead capture, drip, referral, tracking ─────────────
+
+import json as _json
+import csv as _csv
+
+_GIF_1x1 = bytes([
+    0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00,
+    0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x21,
+    0xf9, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0x2c, 0x00, 0x00,
+    0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44,
+    0x01, 0x00, 0x3b,
+])
+
+
+@app.get("/demo", response_class=HTMLResponse)
+async def demo_page(request: Request):
+    return templates.TemplateResponse(
+        "demo.html",
+        {"request": request, "error": request.query_params.get("error", "")},
+    )
+
+
+@app.post("/api/demo")
+@limiter.limit("3/hour")
+async def api_demo(
+    request: Request,
+    email: str = Form(...),
+    full_name: str = Form(...),
+    company: str = Form(""),
+    input_text: str = Form(...),
+    accept_terms: str = Form(""),
+    website: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+):
+    if website:
+        # honeypot: silent drop (non dire al bot che l'abbiamo capito)
+        return RedirectResponse("/demo?error=Errore+di+validazione", status_code=302)
+    if accept_terms != "on":
+        return RedirectResponse("/demo?error=Devi+accettare+la+privacy+policy", status_code=302)
+    try:
+        valid = validate_email(email, check_deliverability=False)
+        email_norm = valid.normalized.lower()
+    except EmailNotValidError:
+        return RedirectResponse("/demo?error=Email+non+valida", status_code=302)
+    if len(input_text.strip()) < 30:
+        return RedirectResponse("/demo?error=Descrivi+la+visita+in+almeno+30+caratteri", status_code=302)
+    if len(full_name.strip()) < 2:
+        return RedirectResponse("/demo?error=Nome+non+valido", status_code=302)
+
+    try:
+        docs = await genera_documenti(
+            input_text.strip()[:2000],
+            nome_agente=full_name.strip()[:120],
+            azienda_mandante=company.strip()[:120],
+        )
+    except Exception:
+        logger.exception("demo generation failed")
+        return RedirectResponse(
+            "/demo?error=Generazione+non+riuscita.+Riprova+tra+1+minuto",
+            status_code=302,
+        )
+
+    lead, _created = await upsert_lead(
+        db,
+        email=email_norm,
+        full_name=full_name.strip(),
+        company=company.strip() or None,
+        source="demo",
+    )
+    lead.demo_input = _json.dumps({
+        "input": input_text.strip()[:2000],
+        "report_visita": docs["report_visita"],
+        "email_followup": docs["email_followup"],
+        "offerta_commerciale": docs["offerta_commerciale"],
+        "cliente_nome": docs.get("cliente_nome", ""),
+        "azienda_cliente": docs.get("azienda_cliente", ""),
+    })
+    lead.last_engaged_at = datetime.utcnow()
+    await db.commit()
+
+    try:
+        await enroll_lead_in_sequence(db, lead, SEQUENCE_LEAD_DEMO)
+    except Exception:
+        logger.exception("demo sequence enroll failed lead=%s", lead.id)
+
+    return RedirectResponse(f"/demo/result/{lead.unsub_token}", status_code=302)
+
+
+@app.get("/demo/result/{token}", response_class=HTMLResponse)
+async def demo_result(token: str, request: Request, db: AsyncSession = Depends(get_db)):
+    r = await db.execute(select(Lead).where(Lead.unsub_token == token))
+    lead = r.scalar_one_or_none()
+    if lead is None or not lead.demo_input:
+        return templates.TemplateResponse(
+            "404.html", {"request": request}, status_code=404
+        )
+    try:
+        data = _json.loads(lead.demo_input)
+    except Exception:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    first_name = (lead.full_name or "").split(" ")[0] or lead.email.split("@")[0]
+    return templates.TemplateResponse(
+        "demo_result.html",
+        {
+            "request": request,
+            "lead_first_name": first_name,
+            "lead_unsub_token": lead.unsub_token,
+            "report_visita": data.get("report_visita", ""),
+            "email_followup": data.get("email_followup", ""),
+            "offerta_commerciale": data.get("offerta_commerciale", ""),
+        },
+    )
+
+
+@app.get("/r/{code}")
+async def referral_click_route(code: str, request: Request, db: AsyncSession = Depends(get_db)):
+    code_norm = code.strip().upper()[:16]
+    r = await db.execute(select(User).where(User.referral_code == code_norm))
+    referrer = r.scalar_one_or_none()
+    if referrer is not None and referrer.deleted_at is None:
+        try:
+            ip = (
+                request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+                or (request.client.host if request.client else "")
+            )[:45]
+            db.add(ReferralClick(
+                referrer_user_id=referrer.id,
+                ip=ip,
+                user_agent=request.headers.get("user-agent", "")[:500],
+                referer=request.headers.get("referer", "")[:500],
+            ))
+            await db.commit()
+        except Exception:
+            logger.exception("referral click log failed")
+    response = RedirectResponse("/registrati", status_code=302)
+    response.set_cookie(
+        "vynex_ref", code_norm,
+        httponly=True, secure=_COOKIE_SECURE, samesite="lax",
+        max_age=60 * 60 * 24 * 30,
+    )
+    return response
+
+
+@app.get("/e/o/{job_id}/{sig}.gif")
+async def tracking_open(job_id: int, sig: str, db: AsyncSession = Depends(get_db)):
+    if verify_sig(job_id, "open", sig):
+        try:
+            await db.execute(
+                update(EmailJob)
+                .where(EmailJob.id == job_id)
+                .where(EmailJob.opened_at.is_(None))
+                .values(opened_at=datetime.utcnow())
+            )
+            await db.commit()
+        except Exception:
+            logger.exception("tracking open update failed job=%s", job_id)
+    return Response(
+        content=_GIF_1x1,
+        media_type="image/gif",
+        headers={"Cache-Control": "no-store", "Pragma": "no-cache"},
+    )
+
+
+@app.get("/e/c/{job_id}/{sig}")
+async def tracking_click(
+    job_id: int, sig: str, request: Request, db: AsyncSession = Depends(get_db)
+):
+    target = request.query_params.get("u", "/")
+    if not verify_sig(job_id, "click", sig):
+        return RedirectResponse("/", status_code=302)
+    if not (target.startswith("http://") or target.startswith("https://") or target.startswith("/")):
+        target = "/"
+    try:
+        await db.execute(
+            update(EmailJob)
+            .where(EmailJob.id == job_id)
+            .where(EmailJob.clicked_at.is_(None))
+            .values(clicked_at=datetime.utcnow())
+        )
+        await db.commit()
+    except Exception:
+        logger.exception("tracking click update failed job=%s", job_id)
+    return RedirectResponse(target, status_code=302)
+
+
+@app.get("/unsubscribe/{token}", response_class=HTMLResponse)
+async def unsubscribe_route(token: str, request: Request, db: AsyncSession = Depends(get_db)):
+    r = await db.execute(select(Lead).where(Lead.unsub_token == token))
+    lead = r.scalar_one_or_none()
+    if lead is None:
+        return HTMLResponse(
+            "<h1 style='font-family:sans-serif;padding:40px'>Token non valido o già usato.</h1>",
+            status_code=404,
+        )
+    if not lead.unsubscribed:
+        lead.unsubscribed = True
+        lead.unsubscribed_at = datetime.utcnow()
+        await db.commit()
+    return HTMLResponse(
+        "<!DOCTYPE html><html lang='it'><body style='font-family:system-ui;"
+        "background:#04060f;color:#f1f5f9;min-height:100vh;display:flex;"
+        "align-items:center;justify-content:center;padding:40px'>"
+        "<div style='max-width:480px;text-align:center'>"
+        "<h1 style='font-size:28px;margin:0 0 16px'>Disiscritto ✓</h1>"
+        "<p style='color:#94a3b8;line-height:1.7'>Non riceverai più email di acquisizione VYNEX. "
+        "Le email transazionali (reset password, fatture) continueranno se hai un account.</p>"
+        "<p style='margin-top:32px'><a href='/' style='color:#60a5fa'>Torna a vynex.it</a></p>"
+        "</div></body></html>"
+    )
+
+
+# ─── ADMIN acquisition tools ──────────────────────────────────────────────────
+
+def _require_admin(request: Request) -> None:
+    token = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+    expected = os.getenv("ADMIN_TOKEN", "")
+    if not expected or not hmac.compare_digest(token, expected):
+        raise HTTPException(401, "Admin token non valido")
+
+
+@app.post("/api/admin/leads/import")
+async def admin_leads_import(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    body = await request.body()
+    if not body:
+        raise HTTPException(400, "CSV vuoto")
+    text = body.decode("utf-8", errors="replace")
+    reader = _csv.DictReader(io.StringIO(text))
+    if "email" not in (reader.fieldnames or []):
+        raise HTTPException(400, "CSV deve avere header con almeno: email")
+
+    from email_templates import SEQUENCE_COLD
+    created = 0
+    skipped = 0
+    enrolled = 0
+    for row in reader:
+        email = (row.get("email") or "").strip().lower()
+        if not email or "@" not in email:
+            skipped += 1
+            continue
+        try:
+            lead, new = await upsert_lead(
+                db,
+                email=email,
+                full_name=row.get("full_name") or row.get("name"),
+                company=row.get("company") or row.get("azienda"),
+                source="cold",
+                notes=row.get("notes"),
+            )
+            if new:
+                created += 1
+            n = await enroll_lead_in_sequence(db, lead, SEQUENCE_COLD)
+            enrolled += n
+        except Exception:
+            logger.exception("cold lead import failed for %s", email)
+            skipped += 1
+    return {"created": created, "skipped": skipped, "jobs_enrolled": enrolled}
+
+
+@app.get("/api/admin/acquisition/stats")
+async def admin_acquisition_stats(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    now = datetime.utcnow()
+    day_ago = now - timedelta(days=1)
+    week_ago = now - timedelta(days=7)
+
+    lead_total = (await db.execute(select(func.count(Lead.id)))).scalar() or 0
+    lead_24h = (await db.execute(
+        select(func.count(Lead.id)).where(Lead.created_at >= day_ago)
+    )).scalar() or 0
+    lead_by_source_q = await db.execute(
+        select(Lead.source, func.count(Lead.id)).group_by(Lead.source)
+    )
+    lead_by_source = {src: cnt for src, cnt in lead_by_source_q.all()}
+
+    jobs_pending = (await db.execute(
+        select(func.count(EmailJob.id)).where(EmailJob.sent_at.is_(None))
+    )).scalar() or 0
+    jobs_sent_24h = (await db.execute(
+        select(func.count(EmailJob.id))
+        .where(EmailJob.sent_at >= day_ago)
+        .where(EmailJob.error.is_(None))
+    )).scalar() or 0
+    jobs_failed_24h = (await db.execute(
+        select(func.count(EmailJob.id))
+        .where(EmailJob.sent_at >= day_ago)
+        .where(EmailJob.error.is_not(None))
+    )).scalar() or 0
+    jobs_opened_7d = (await db.execute(
+        select(func.count(EmailJob.id)).where(EmailJob.opened_at >= week_ago)
+    )).scalar() or 0
+    jobs_clicked_7d = (await db.execute(
+        select(func.count(EmailJob.id)).where(EmailJob.clicked_at >= week_ago)
+    )).scalar() or 0
+
+    referrals_total = (await db.execute(
+        select(func.count(User.id)).where(User.referred_by_id.is_not(None))
+    )).scalar() or 0
+    referrals_paying = (await db.execute(
+        select(func.count(User.id))
+        .where(User.referred_by_id.is_not(None))
+        .where(User.plan.in_(("pro", "team")))
+    )).scalar() or 0
+
+    return {
+        "generated_at": now.isoformat() + "Z",
+        "leads": {
+            "total": lead_total,
+            "last_24h": lead_24h,
+            "by_source": lead_by_source,
+        },
+        "email_jobs": {
+            "pending": jobs_pending,
+            "sent_24h": jobs_sent_24h,
+            "failed_24h": jobs_failed_24h,
+            "opened_7d": jobs_opened_7d,
+            "clicked_7d": jobs_clicked_7d,
+        },
+        "referrals": {
+            "total_signups": referrals_total,
+            "paying": referrals_paying,
+        },
+    }
+
+
+@app.post("/api/admin/acquisition/tick")
+async def admin_acquisition_tick(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    return await process_email_queue(db)
 
 
 @app.exception_handler(404)

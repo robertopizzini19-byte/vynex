@@ -60,6 +60,28 @@
         </div>
         {% endif %}
 
+        {% if user.referral_code %}
+        <div style="margin:28px 0;padding:24px;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08));border:1px solid rgba(96,165,250,0.25);border-radius:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+                <div style="flex:1;min-width:240px">
+                    <div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:0.5px;margin-bottom:6px">INVITA UN AGENTE · 1 MESE GRATIS</div>
+                    <div style="color:#cbd5e1;font-size:15px;line-height:1.6">Ogni 2 agenti che attivano il piano Pro dal tuo link, ti regaliamo 30 giorni gratis.</div>
+                    <div style="margin-top:8px;color:#94a3b8;font-size:13px">
+                        {{ referrals_signups }} iscritti · <strong style="color:#f1f5f9">{{ referrals_paying }}</strong> paganti
+                        {% if referrals_paying > 0 %} · prossimo bonus a {{ referrals_paying + 1 if referrals_paying % 2 else referrals_paying + 2 }}{% endif %}
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <input id="ref-link" readonly value="{{ base_url }}/r/{{ user.referral_code }}"
+                           onclick="this.select()"
+                           style="padding:10px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;color:#f1f5f9;font-family:monospace;font-size:13px;min-width:240px">
+                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('ref-link').value);this.innerText='Copiato ✓';setTimeout(()=>this.innerText='Copia',2000)"
+                            style="padding:10px 16px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">Copia</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="section-label-app">Documenti recenti</div>
 
         {% if documenti %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Demo gratis — VYNEX genera 3 documenti in 30 secondi{% endblock %}
+{% block description %}Prova VYNEX senza account. Descrivi una visita, ricevi report + email di follow-up + offerta commerciale nella tua casella. Gratis, 3 documenti, nessuna carta.{% endblock %}
+
+{% block body %}
+{% include 'partials/nav.html' ignore missing %}
+
+<main style="max-width:720px;margin:0 auto;padding:80px 24px 120px">
+  <div style="text-align:center;margin-bottom:48px">
+    <div style="display:inline-block;padding:6px 14px;border:1px solid rgba(96,165,250,0.3);border-radius:999px;color:#60a5fa;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:24px">DEMO — NESSUN ACCOUNT RICHIESTO</div>
+    <h1 style="font-size:44px;font-weight:800;color:#f1f5f9;line-height:1.15;margin:0 0 20px">Prova VYNEX in 30 secondi.</h1>
+    <p style="font-size:18px;color:#94a3b8;line-height:1.6;margin:0 auto;max-width:560px">Descrivi una visita commerciale qualsiasi. Riceverai <strong style="color:#f1f5f9">3 documenti pronti</strong> — report, follow-up, offerta — nella tua email. Gratis.</p>
+  </div>
+
+  {% if error %}
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;margin-bottom:24px;color:#fca5a5">{{ error }}</div>
+  {% endif %}
+
+  <form action="/api/demo" method="POST" style="background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.15);border-radius:16px;padding:32px;backdrop-filter:blur(10px)">
+    <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">La tua email</label>
+    <input type="email" name="email" required placeholder="mario.rossi@esempio.it"
+           style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:24px">
+
+    <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">Il tuo nome</label>
+    <input type="text" name="full_name" required placeholder="Mario Rossi" maxlength="120"
+           style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:24px">
+
+    <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">Azienda (opzionale)</label>
+    <input type="text" name="company" placeholder="Rossi Srl" maxlength="120"
+           style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:24px">
+
+    <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">Racconta una visita commerciale (2-4 righe)</label>
+    <textarea name="input_text" required rows="6" maxlength="2000" placeholder="Oggi ho visitato Tecnoservice Srl, referente Ing. Bianchi. Cercano un partner per forniture industriali ricorrenti. Competitor attuale: Bergamo Industriale. Budget indicato: 15K/anno. Prossimo step: invio offerta entro venerdì."
+              style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:15px;line-height:1.6;margin-bottom:20px;resize:vertical;font-family:inherit"></textarea>
+
+    <!-- honeypot anti-bot: campo nascosto che i bot riempiono automaticamente -->
+    <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px">
+
+    <label style="display:flex;align-items:flex-start;gap:10px;margin:20px 0 24px;color:#94a3b8;font-size:13px;line-height:1.6;cursor:pointer">
+      <input type="checkbox" name="accept_terms" required style="margin-top:3px;accent-color:#60a5fa">
+      <span>Accetto la <a href="/privacy" style="color:#60a5fa">privacy policy</a>. Ho capito che riceverò un'email con i documenti generati e potrò disiscrivermi con un click.</span>
+    </label>
+
+    <button type="submit" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:16px;border-radius:12px;border:none;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:0.3px">
+      Genera i 3 documenti (gratis) →
+    </button>
+
+    <p style="color:#64748b;font-size:12px;text-align:center;margin:16px 0 0;line-height:1.6">
+      Nessuna carta. Nessun account. Un solo tentativo gratuito per email. I documenti arrivano entro 1 minuto.
+    </p>
+  </form>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1e293b;text-align:center;color:#64748b;font-size:13px">
+    Già hai un account VYNEX? <a href="/login" style="color:#60a5fa;text-decoration:none">Accedi →</a>
+  </div>
+</main>
+{% endblock %}
