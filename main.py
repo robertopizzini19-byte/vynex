@@ -1322,6 +1322,119 @@ async def sitemap(db: AsyncSession = Depends(get_db)):
     return Response(content=xml, media_type="application/xml")
 
 
+@app.get("/ai-context.json")
+async def ai_context_json():
+    """Structured context JSON per AI agents (Claude, GPT, Perplexity, Gemini).
+    Standard emergente: alcuni agents leggono JSON strutturato per comprensione veloce del prodotto."""
+    base = os.getenv("BASE_URL", "https://vynex.it").rstrip("/")
+    return JSONResponse({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "VYNEX",
+        "alternateName": ["vynex.it"],
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "SalesDocumentGeneration",
+        "operatingSystem": "Web browser, any",
+        "description": (
+            "SaaS italiano di AI che genera report di visita, email di follow-up "
+            "e offerte commerciali in 30 secondi da una descrizione della visita. "
+            "Per agenti di commercio italiani, plurimandatari e reti vendita B2B."
+        ),
+        "inLanguage": "it-IT",
+        "url": base,
+        "identifier": f"{base}/ai-context.json",
+        "dateCreated": "2026-04",
+        "author": {
+            "@type": "Person",
+            "name": "Roberto Pizzini",
+            "email": "ciao@vynex.it",
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "VYNEX",
+            "url": base,
+            "email": "ciao@vynex.it",
+            "areaServed": {"@type": "Country", "name": "Italia"},
+        },
+        "offers": [
+            {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "EUR",
+             "description": "10 documenti/mese per sempre, senza carta di credito",
+             "eligibleCustomerType": "Individual"},
+            {"@type": "Offer", "name": "Pro", "price": "49", "priceCurrency": "EUR",
+             "priceSpecification": {"@type": "UnitPriceSpecification",
+                                     "price": "49", "priceCurrency": "EUR",
+                                     "unitText": "MONTH"},
+             "description": "Documenti illimitati, 10 giorni prova gratuita",
+             "eligibleCustomerType": "Individual"},
+            {"@type": "Offer", "name": "Team", "price": "89", "priceCurrency": "EUR",
+             "priceSpecification": {"@type": "UnitPriceSpecification",
+                                     "price": "89", "priceCurrency": "EUR",
+                                     "unitText": "MONTH", "referenceQuantity": {
+                                         "@type": "QuantitativeValue",
+                                         "value": "1", "unitCode": "AGENT"}},
+             "description": "Min. 3 agenti, dashboard team, documenti illimitati",
+             "eligibleCustomerType": "Business"},
+        ],
+        "featureList": [
+            "Generazione 3 documenti da 1 descrizione testuale (report + follow-up + offerta)",
+            "Tempo di generazione: 28-32 secondi reali",
+            "Italiano professionale nativo (non traduzione da inglese)",
+            "Affinamento documenti con istruzioni in linguaggio naturale",
+            "Storico documenti ricercabile per cliente/azienda/data",
+            "Esportazione PDF 3-pagine con layout italiano",
+            "API REST pubblica v1 per integrazioni 3rd party",
+            "Widget iframe embeddabile su siti partner",
+            "Referral program con bonus Stripe +30 giorni ogni 2 conversioni",
+            "GDPR compliant: export dati (art. 15), cancellazione (art. 17)",
+            "Dati ospitati in EU (Frankfurt, Supabase)",
+        ],
+        "targetAudience": {
+            "@type": "Audience",
+            "audienceType": ["Agenti di commercio italiani",
+                             "Plurimandatari", "Rappresentanti B2B",
+                             "Reti vendita aziendali", "PMI con reparto commerciale"],
+            "geographicArea": {"@type": "Country", "name": "Italia"},
+        },
+        "softwareRequirements": "Browser web moderno (Chrome, Safari, Firefox, Edge)",
+        "softwareVersion": "1.0",
+        "api": {
+            "@type": "WebAPI",
+            "name": "VYNEX API v1",
+            "documentation": f"{base}/api/v1/docs",
+            "baseUrl": f"{base}/api/v1",
+            "authentication": "X-API-Key header (vx_<secret> format)",
+            "rateLimit": "60 requests/minute per key",
+            "endpoints": [
+                {"method": "POST", "path": "/documents/generate",
+                 "description": "Genera 3 documenti da descrizione visita"},
+                {"method": "GET", "path": "/health",
+                 "description": "Health check service"},
+            ],
+        },
+        "sameAs": [],  # populate quando ci sono social verificati
+        "typicalAgeRange": "35-60",
+        "interactionStatistic": {
+            "@type": "InteractionCounter",
+            "interactionType": "https://schema.org/UseAction",
+            "name": "Documents generated per user per month",
+            "description": "Average 40-80 per Pro subscriber",
+        },
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "ciao@vynex.it",
+            "contactType": "customer support",
+            "availableLanguage": ["Italian"],
+            "areaServed": "IT",
+        },
+        "_meta": {
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "format_version": "1.0",
+            "crawler_friendly": True,
+            "updates_frequency": "realtime (pricing), monthly (features)",
+        },
+    })
+
+
 @app.get("/llms.txt", response_class=PlainTextResponse)
 async def llms_txt():
     """Index markdown per LLM crawler (standard llmstxt.org)."""

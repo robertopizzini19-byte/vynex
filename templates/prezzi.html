@@ -1,5 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Prezzi — VYNEX{% endblock %}
+{% block title %}Prezzi VYNEX — Free €0, Pro €49/mese, Team €89/agente{% endblock %}
+{% block description %}Piani VYNEX chiari: Free 10 doc/mese per sempre, Pro documenti illimitati a €49/mese con 10 giorni gratis, Team €89/agente per reti vendita (min 3). Nessuna carta per iniziare.{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "VYNEX — AI italiana per agenti commerciali",
+  "description": "SaaS che genera report di visita, email di follow-up e offerta commerciale in 30 secondi da una descrizione testuale della visita.",
+  "brand": {"@type": "Brand", "name": "VYNEX"},
+  "category": "Sales Document Generation Software",
+  "inLanguage": "it-IT",
+  "audience": {"@type": "BusinessAudience", "audienceType": "Agenti di commercio italiani, reti vendita B2B, PMI"},
+  "offers": {
+    "@type": "AggregateOffer",
+    "priceCurrency": "EUR",
+    "lowPrice": "0",
+    "highPrice": "89",
+    "offerCount": "3",
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Free",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "priceSpecification": {"@type": "UnitPriceSpecification", "price": "0", "priceCurrency": "EUR", "unitText": "MONTH"},
+        "description": "10 documenti al mese per sempre, nessuna carta richiesta",
+        "availability": "https://schema.org/InStock",
+        "eligibleCustomerType": "Individual"
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro",
+        "price": "49",
+        "priceCurrency": "EUR",
+        "priceSpecification": {"@type": "UnitPriceSpecification", "price": "49", "priceCurrency": "EUR", "unitText": "MONTH"},
+        "description": "Documenti illimitati, 10 giorni di prova gratuita",
+        "availability": "https://schema.org/InStock",
+        "eligibleCustomerType": "Individual"
+      },
+      {
+        "@type": "Offer",
+        "name": "Team",
+        "price": "89",
+        "priceCurrency": "EUR",
+        "priceSpecification": {"@type": "UnitPriceSpecification", "price": "89", "priceCurrency": "EUR", "unitText": "MONTH"},
+        "description": "Per agente, minimo 3 agenti, dashboard team + stats aggregate",
+        "availability": "https://schema.org/InStock",
+        "eligibleCustomerType": "Business"
+      }
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ canonical_base }}/"},
+    {"@type": "ListItem", "position": 2, "name": "Prezzi", "item": "{{ canonical_base }}/prezzi"}
+  ]
+}
+</script>
+{% endblock %}
 
 {% block body %}
 <nav class="nav-public">
