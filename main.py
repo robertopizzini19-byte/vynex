@@ -1723,6 +1723,142 @@ async def api_documento_pdf(
     )
 
 
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard_html():
+    """Dashboard admin UI — fetcha endpoint admin lato client con token in localStorage.
+    Token chiesto 1 volta via prompt() al primo accesso, persistito 30 giorni."""
+    return HTMLResponse("""<!DOCTYPE html><html lang="it"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYNEX · Admin</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#04060f;color:#f1f5f9;padding:32px;max-width:1200px;margin:0 auto}
+h1{font-size:28px;font-weight:800;margin:0 0 6px;background:linear-gradient(135deg,#60a5fa,#8b5cf6,#ec4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#64748b;font-size:13px;margin-bottom:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:32px}
+.card{background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.2);border-radius:14px;padding:20px;backdrop-filter:blur(10px)}
+.k{color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.v{font-size:28px;font-weight:800;color:#f1f5f9;margin-top:6px}
+.vs{font-size:12px;color:#64748b;margin-top:4px}
+.section{background:rgba(15,23,42,0.4);border:1px solid rgba(96,165,250,0.15);border-radius:14px;padding:24px;margin-bottom:20px}
+.section h2{font-size:16px;font-weight:700;margin:0 0 16px;color:#60a5fa;letter-spacing:0.3px}
+pre{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px;font-size:12px;overflow-x:auto;color:#cbd5e1;margin:0;font-family:Menlo,Consolas,monospace}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+button:hover{transform:translateY(-1px)}
+button.ghost{background:rgba(15,23,42,0.8);border:1px solid #334155}
+.err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;color:#fca5a5;margin-bottom:16px;font-size:13px}
+a{color:#60a5fa;text-decoration:none}
+</style></head><body>
+<h1>VYNEX Admin</h1>
+<div class="sub">Dashboard ops · Refresh ogni 60s · <span id="last-refresh">—</span> · <a href="/" style="margin-left:12px">← Site</a> · <a href="#" onclick="localStorage.removeItem('vynex_admin_token');location.reload();return false">🔓 Cambia token</a></div>
+
+<div id="err"></div>
+
+<div class="grid" id="overview"></div>
+
+<div class="section">
+  <h2>📧 EMAIL QUEUE</h2>
+  <div class="grid" id="email-stats"></div>
+  <div class="row" style="margin-top:14px">
+    <button onclick="call('POST','/api/admin/acquisition/tick').then(r=>alert('tick: '+JSON.stringify(r)));">Tick manuale</button>
+    <button class="ghost" onclick="if(confirm('Reset retry su tutti i job pending?'))call('POST','/api/admin/acquisition/retry-all').then(r=>alert('reset: '+JSON.stringify(r)));">Retry all</button>
+  </div>
+</div>
+
+<div class="section">
+  <h2>📊 NPS</h2>
+  <div class="grid" id="nps-stats"></div>
+</div>
+
+<div class="section">
+  <h2>📝 BLOG (ultimi)</h2>
+  <pre id="blog-list">loading…</pre>
+  <div class="row" style="margin-top:14px">
+    <input id="blog-kw" placeholder="keyword long-tail" style="flex:1;padding:8px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;color:#f1f5f9;font-size:13px;min-width:240px">
+    <button onclick="gen()">Genera articolo</button>
+  </div>
+</div>
+
+<div class="section">
+  <h2>🔧 HEALTH</h2>
+  <pre id="health">loading…</pre>
+</div>
+
+<script>
+let T = localStorage.getItem('vynex_admin_token');
+if (!T) { T = prompt('Admin token:'); if (T) localStorage.setItem('vynex_admin_token', T); }
+
+async function call(method, path, body) {
+  const opts = {method, headers: {'Authorization': 'Bearer ' + T}};
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const r = await fetch(path, opts);
+  if (r.status === 401) { localStorage.removeItem('vynex_admin_token'); showErr('Token non valido — ricarica la pagina'); throw 'unauth'; }
+  return r.ok ? r.json() : Promise.reject(await r.text());
+}
+
+function showErr(m) { document.getElementById('err').innerHTML = '<div class="err">'+m+'</div>'; }
+
+function card(k, v, vs) { return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${vs?'<div class="vs">'+vs+'</div>':''}</div>`; }
+
+async function refresh() {
+  try {
+    const [acq, nps, blog] = await Promise.all([
+      call('GET', '/api/admin/acquisition/stats'),
+      call('GET', '/api/admin/nps/stats'),
+      call('GET', '/api/admin/blog/list'),
+    ]);
+
+    document.getElementById('overview').innerHTML =
+      card('LEADS totali', acq.leads.total, '+' + acq.leads.last_24h + ' ultime 24h') +
+      card('EMAIL JOBS pending', acq.email_jobs.pending, '') +
+      card('REFERRALS paying', acq.referrals.paying, acq.referrals.total_signups + ' iscritti totali') +
+      card('SORGENTI lead', Object.keys(acq.leads.by_source).length, JSON.stringify(acq.leads.by_source));
+
+    document.getElementById('email-stats').innerHTML =
+      card('Pending', acq.email_jobs.pending, '') +
+      card('Sent 24h', acq.email_jobs.sent_24h, '') +
+      card('Failed 24h', acq.email_jobs.failed_24h || 0, '') +
+      card('Opens 7d', acq.email_jobs.opened_7d, '') +
+      card('Clicks 7d', acq.email_jobs.clicked_7d, '');
+
+    document.getElementById('nps-stats').innerHTML =
+      card('NPS score', nps.nps !== null ? nps.nps : '—', 'n=' + nps.total) +
+      card('Promoters (9-10)', nps.buckets.promoters, '') +
+      card('Passives (7-8)', nps.buckets.passives, '') +
+      card('Detractors (0-6)', nps.buckets.detractors, '') +
+      card('Avg score', nps.avg !== null ? nps.avg.toFixed(1) : '—', '');
+
+    document.getElementById('blog-list').textContent = blog.length
+      ? blog.slice(0, 10).map(p => (p.published?'✓':'✗') + ' ' + p.slug + '  [' + (p.keyword || '—') + ']').join('\\n')
+      : 'nessun articolo';
+
+    const h = await fetch('/health').then(r=>r.json());
+    document.getElementById('health').textContent = JSON.stringify(h, null, 2);
+
+    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString('it');
+    document.getElementById('err').innerHTML = '';
+  } catch (e) { if (e !== 'unauth') showErr('Errore: ' + e); }
+}
+
+async function gen() {
+  const kw = document.getElementById('blog-kw').value.trim();
+  if (!kw) return alert('Inserisci una keyword');
+  const btn = event.target; btn.disabled = true; btn.innerText = 'Generazione…';
+  try {
+    const r = await call('POST', '/api/admin/blog/generate', {keyword: kw});
+    alert('Articolo: ' + r.url);
+    refresh();
+  } catch (e) { alert('Errore: ' + e); }
+  btn.disabled = false; btn.innerText = 'Genera articolo';
+}
+
+if (T) { refresh(); setInterval(refresh, 60000); }
+else { showErr('Inserisci admin token e ricarica la pagina.'); }
+</script></body></html>""")
+
+
 @app.get("/admin/metrics")
 @limiter.limit("30/minute")
 async def admin_metrics(request: Request, db: AsyncSession = Depends(get_db)):
