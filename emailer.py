@@ -56,7 +56,15 @@ async def _send_brevo(to: str, subject: str, html: str) -> bool:
         logger.error("Brevo transport error: %s", exc)
         return False
     if res.status_code >= 400:
-        logger.error("Brevo error %s: %s", res.status_code, res.text)
+        # 403 permission_denied = account not activated (blocking for ALL emails, not this one).
+        # Log as WARNING (not ERROR) so logs are cleaner while waiting for manual activation.
+        if res.status_code == 403 and "not yet activated" in res.text:
+            logger.warning("Brevo SMTP not activated (account-wide): %s", res.text[:200])
+        else:
+            logger.error("Brevo error %s: %s", res.status_code, res.text)
+        # Return error detail in second tuple element via logger context? Pass it via raising.
+        # Keep the bool API for backwards compat and let _schedule_retry detect patterns from
+        # the error message we log. Mark as failed for the caller.
         return False
     return True
 

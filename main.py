@@ -33,6 +33,7 @@ from acquisition import (
     upsert_lead,
     enroll_lead_in_sequence,
     process_email_queue,
+    reset_all_retries,
     verify_sig,
 )
 from email_templates import SEQUENCE_LEAD_DEMO
@@ -2068,6 +2069,16 @@ async def admin_acquisition_stats(request: Request, db: AsyncSession = Depends(g
 async def admin_acquisition_tick(request: Request, db: AsyncSession = Depends(get_db)):
     _require_admin(request)
     return await process_email_queue(db)
+
+
+@app.post("/api/admin/acquisition/retry-all")
+async def admin_acquisition_retry_all(request: Request, db: AsyncSession = Depends(get_db)):
+    """Sblocca tutti i job email pending — reset retry_count, next_retry_at, error.
+    Da usare dopo che il provider email (Brevo/Resend) e' stato attivato."""
+    _require_admin(request)
+    unlocked = await reset_all_retries(db)
+    processed = await process_email_queue(db)
+    return {"unlocked": unlocked, "immediately_processed": processed}
 
 
 @app.post("/api/admin/maintenance/run")
