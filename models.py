@@ -200,6 +200,35 @@ class AuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+class NPSResponse(Base):
+    """Risposte NPS survey — 1 per (user_id, survey_tag).
+    survey_tag: 't7' (7 giorni post-signup) | 't30' (30 giorni) | 'churn' (prima cancellazione)."""
+    __tablename__ = "nps_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    survey_tag = Column(String(20), nullable=False, index=True)
+    score = Column(Integer, nullable=True)  # 0-10
+    comment = Column(Text, nullable=True)
+    invited_at = Column(DateTime, default=datetime.utcnow)
+    responded_at = Column(DateTime, nullable=True)
+
+
+class APIKey(Base):
+    """Chiave API v1 per integrazioni 3rd party. Plain key mostrato 1 sola volta
+    alla creazione, poi salviamo solo SHA256 hash + prefix per riconoscimento."""
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(120), nullable=True)
+    prefix = Column(String(16), nullable=False, index=True)  # es. "vx_live_abc"
+    key_hash = Column(String(128), unique=True, nullable=False, index=True)
+    last_used_at = Column(DateTime, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class BlogPost(Base):
     """Articolo SEO per attirare traffico organico long-tail.
     Generabile a mano o via POST admin /api/admin/blog/generate (Claude Haiku).

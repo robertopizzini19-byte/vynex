@@ -84,6 +84,11 @@ _PG_MIGRATIONS = [
     # Blog SEO + UTM tracking — 2026-04-18 sera
     "CREATE INDEX IF NOT EXISTS ix_blog_posts_published ON blog_posts (published, published_at)",
     "CREATE INDEX IF NOT EXISTS ix_lead_sources_utm ON lead_sources (utm_source, utm_campaign)",
+    # NPS + API v1 — 2026-04-18 notte
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_nps_user_tag ON nps_responses (user_id, survey_tag)",
+    "CREATE INDEX IF NOT EXISTS ix_nps_responded ON nps_responses (responded_at)",
+    "CREATE INDEX IF NOT EXISTS ix_api_keys_prefix ON api_keys (prefix)",
+    "CREATE INDEX IF NOT EXISTS ix_api_keys_user_active ON api_keys (user_id, revoked_at)",
 ]
 
 
