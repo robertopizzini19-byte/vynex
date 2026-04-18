@@ -7,33 +7,82 @@
 {% include 'partials/nav.html' ignore missing %}
 
 <main style="max-width:840px;margin:0 auto;padding:60px 24px 100px">
-  <div style="text-align:center;margin-bottom:48px">
+  <div style="text-align:center;margin-bottom:40px">
     <div style="display:inline-block;padding:6px 14px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:999px;color:#4ade80;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:20px">✓ DOCUMENTI GENERATI</div>
     <h1 style="font-size:36px;font-weight:800;color:#f1f5f9;line-height:1.2;margin:0 0 16px">Ecco i tuoi 3 documenti, {{ lead_first_name }}.</h1>
-    <p style="font-size:16px;color:#94a3b8;line-height:1.6;margin:0 auto;max-width:560px">Generati a partire dalla tua descrizione. Copia e personalizza — o crea un account gratuito per salvarli e generarne altri.</p>
+    <p style="font-size:16px;color:#94a3b8;line-height:1.6;margin:0 auto 24px;max-width:560px">Generati in 30 secondi a partire dalla tua descrizione. Copiali, scaricali in PDF, o crea un account gratuito per salvarli e generarne altri illimitati.</p>
+  </div>
+
+  <div style="background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.12));border:1px solid rgba(96,165,250,0.35);border-radius:16px;padding:24px;margin-bottom:32px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+    <div style="flex:1;min-width:220px">
+      <div style="font-size:13px;font-weight:700;color:#60a5fa;letter-spacing:0.5px;margin-bottom:4px">PROSSIMO STEP</div>
+      <div style="color:#f1f5f9;font-size:16px;font-weight:600;line-height:1.5">Crea account gratuito · 10 documenti/mese, senza carta</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="/demo/result/{{ lead_unsub_token }}/pdf" style="display:inline-flex;align-items:center;gap:8px;background:rgba(15,23,42,0.8);border:1px solid #334155;color:#f1f5f9;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px">📄 Scarica PDF</a>
+      <a href="/registrati" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Crea account →</a>
+    </div>
   </div>
 
   <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.2);border-radius:16px;padding:28px;margin-bottom:20px">
-    <h2 style="font-size:18px;color:#60a5fa;font-weight:700;margin:0 0 16px;letter-spacing:0.3px">📋 Report di visita</h2>
-    <div style="color:#e2e8f0;line-height:1.7;font-size:15px;white-space:pre-wrap">{{ report_visita }}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+      <h2 style="font-size:18px;color:#60a5fa;font-weight:700;margin:0;letter-spacing:0.3px">📋 Report di visita</h2>
+      <button type="button" data-copy="report" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copia</button>
+    </div>
+    <div id="doc-report" style="color:#e2e8f0;line-height:1.7;font-size:15px;white-space:pre-wrap">{{ report_visita }}</div>
   </div>
 
   <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.2);border-radius:16px;padding:28px;margin-bottom:20px">
-    <h2 style="font-size:18px;color:#60a5fa;font-weight:700;margin:0 0 16px;letter-spacing:0.3px">✉️ Email di follow-up</h2>
-    <div style="color:#e2e8f0;line-height:1.7;font-size:15px;white-space:pre-wrap">{{ email_followup }}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+      <h2 style="font-size:18px;color:#60a5fa;font-weight:700;margin:0;letter-spacing:0.3px">✉️ Email di follow-up</h2>
+      <button type="button" data-copy="email" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copia</button>
+    </div>
+    <div id="doc-email" style="color:#e2e8f0;line-height:1.7;font-size:15px;white-space:pre-wrap">{{ email_followup }}</div>
   </div>
 
   <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.2);border-radius:16px;padding:28px;margin-bottom:40px">
-    <h2 style="font-size:18px;color:#60a5fa;font-weight:700;margin:0 0 16px;letter-spacing:0.3px">💼 Offerta commerciale</h2>
-    <div style="color:#e2e8f0;line-height:1.7;font-size:15px;white-space:pre-wrap">{{ offerta_commerciale }}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+      <h2 style="font-size:18px;color:#60a5fa;font-weight:700;margin:0;letter-spacing:0.3px">💼 Offerta commerciale</h2>
+      <button type="button" data-copy="offerta" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copia</button>
+    </div>
+    <div id="doc-offerta" style="color:#e2e8f0;line-height:1.7;font-size:15px;white-space:pre-wrap">{{ offerta_commerciale }}</div>
   </div>
 
   <div style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.1));border:1px solid rgba(96,165,250,0.3);border-radius:20px;padding:40px;text-align:center">
-    <h3 style="font-size:24px;color:#f1f5f9;font-weight:800;margin:0 0 12px;line-height:1.3">Ti è piaciuto il risultato?</h3>
-    <p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 auto 28px;max-width:520px">Crea un account gratuito e ottieni <strong style="color:#f1f5f9">10 documenti/mese per sempre</strong>, senza carta. Bastano 30 secondi.</p>
-    <a href="/registrati" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.3px">Attiva account gratuito →</a>
+    <h3 style="font-size:26px;color:#f1f5f9;font-weight:800;margin:0 0 12px;line-height:1.3">Ti è piaciuto il risultato?</h3>
+    <p style="color:#cbd5e1;font-size:16px;line-height:1.7;margin:0 auto 28px;max-width:560px">Crea un account gratuito e ottieni <strong style="color:#f1f5f9">10 documenti/mese per sempre</strong>, senza carta. Bastano 30 secondi.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="/registrati" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.3px">Attiva account gratuito →</a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ canonical_base }}/demo" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:rgba(15,23,42,0.8);border:1px solid #334155;color:#f1f5f9;padding:16px 24px;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px">🔗 Condividi su LinkedIn</a>
+    </div>
   </div>
 
   <p style="text-align:center;color:#64748b;font-size:12px;margin-top:32px">Questo link è privato e valido 7 giorni. Puoi sempre <a href="/unsubscribe/{{ lead_unsub_token }}" style="color:#64748b">disiscriverti dalle email VYNEX</a>.</p>
 </main>
+
+<script>
+(function(){
+  document.querySelectorAll('[data-copy]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.getAttribute('data-copy');
+      var el = document.getElementById('doc-' + key);
+      if (!el) return;
+      var text = el.innerText;
+      var original = btn.innerText;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function(){
+          btn.innerText = 'Copiato \u2713';
+          setTimeout(function(){ btn.innerText = original; }, 2000);
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); btn.innerText = 'Copiato \u2713'; } catch(e){}
+        document.body.removeChild(ta);
+        setTimeout(function(){ btn.innerText = original; }, 2000);
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}

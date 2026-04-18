@@ -1082,6 +1082,7 @@ async def api_rigenera(
 @app.get("/checkout/{plan}")
 @limiter.limit("10/hour")
 async def checkout(
+    request: Request,
     plan: str,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_user)
@@ -1662,6 +1663,106 @@ async def demo_result(token: str, request: Request, db: AsyncSession = Depends(g
             "report_visita": data.get("report_visita", ""),
             "email_followup": data.get("email_followup", ""),
             "offerta_commerciale": data.get("offerta_commerciale", ""),
+        },
+    )
+
+
+@app.get("/demo/result/{token}/pdf")
+async def demo_result_pdf(token: str, db: AsyncSession = Depends(get_db)):
+    r = await db.execute(select(Lead).where(Lead.unsub_token == token))
+    lead = r.scalar_one_or_none()
+    if lead is None or not lead.demo_input:
+        raise HTTPException(404, "Documenti non disponibili")
+    try:
+        data = _json.loads(lead.demo_input)
+    except Exception:
+        raise HTTPException(404, "Dati corrotti")
+
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+    from reportlab.lib.enums import TA_LEFT
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=2 * cm, rightMargin=2 * cm,
+        topMargin=2 * cm, bottomMargin=2 * cm,
+        title=f"VYNEX — 3 documenti per {lead.full_name or lead.email}",
+        author="VYNEX",
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "VynexTitle", parent=styles["Heading1"],
+        fontSize=22, leading=28, textColor=colors.HexColor("#0f172a"),
+        spaceAfter=4, fontName="Helvetica-Bold",
+    )
+    sub_style = ParagraphStyle(
+        "VynexSub", parent=styles["Normal"],
+        fontSize=10, textColor=colors.HexColor("#64748b"),
+        spaceAfter=18,
+    )
+    section_style = ParagraphStyle(
+        "VynexSection", parent=styles["Heading2"],
+        fontSize=14, leading=18, textColor=colors.HexColor("#1e40af"),
+        spaceBefore=8, spaceAfter=10, fontName="Helvetica-Bold",
+    )
+    body_style = ParagraphStyle(
+        "VynexBody", parent=styles["Normal"],
+        fontSize=10.5, leading=16, textColor=colors.HexColor("#1e293b"),
+        alignment=TA_LEFT, spaceAfter=4,
+    )
+
+    def _paragraphs(text: str) -> list:
+        result = []
+        for raw in (text or "").split("\n"):
+            line = raw.strip()
+            if not line:
+                result.append(Spacer(1, 6))
+                continue
+            safe = line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            result.append(Paragraph(safe, body_style))
+        return result
+
+    flow = []
+    flow.append(Paragraph("VYNEX", title_style))
+    flow.append(Paragraph(
+        f"3 documenti generati per <b>{lead.full_name or lead.email}</b> · "
+        f"{datetime.utcnow().strftime('%d/%m/%Y')}",
+        sub_style,
+    ))
+
+    flow.append(Paragraph("Report di visita", section_style))
+    flow.extend(_paragraphs(data.get("report_visita", "")))
+    flow.append(PageBreak())
+
+    flow.append(Paragraph("Email di follow-up", section_style))
+    flow.extend(_paragraphs(data.get("email_followup", "")))
+    flow.append(PageBreak())
+
+    flow.append(Paragraph("Offerta commerciale", section_style))
+    flow.extend(_paragraphs(data.get("offerta_commerciale", "")))
+
+    flow.append(Spacer(1, 24))
+    flow.append(Paragraph(
+        '<font color="#64748b" size="9">Generato da VYNEX — '
+        '<a href="https://vynex.it">vynex.it</a></font>',
+        body_style,
+    ))
+
+    doc.build(flow)
+    pdf = buf.getvalue()
+    buf.close()
+
+    filename = f"vynex-{(lead.full_name or lead.email).split(' ')[0].lower()}-{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
         },
     )
 
