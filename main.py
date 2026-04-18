@@ -12,6 +12,7 @@ import hmac
 import logging
 import os
 import io
+import re
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,7 +20,7 @@ load_dotenv()
 from email_validator import validate_email, EmailNotValidError
 
 from database import get_db, init_db, AsyncSessionLocal
-from models import User, Document, Lead, EmailJob, ReferralClick, AuditLog, EmailVerificationToken
+from models import User, Document, Lead, EmailJob, ReferralClick, BlogPost, LeadSource, AuditLog, EmailVerificationToken
 from auth import (
     hash_password, verify_password, authenticate_user, create_access_token,
     get_current_user, require_user, get_user_by_email,
@@ -1166,12 +1167,13 @@ async def robots():
 
 
 @app.get("/sitemap.xml")
-async def sitemap():
+async def sitemap(db: AsyncSession = Depends(get_db)):
     base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
     pages = [
         ("/",              "1.0", "weekly"),
         ("/demo",          "0.95", "weekly"),
         ("/prezzi",        "0.9", "weekly"),
+        ("/blog",          "0.85", "weekly"),
         ("/come-funziona", "0.8", "monthly"),
         ("/chi-siamo",     "0.8", "monthly"),
         ("/registrati",    "0.7", "monthly"),
@@ -1181,11 +1183,26 @@ async def sitemap():
         ("/cookie",        "0.3", "yearly"),
     ]
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    items = "".join(
+    items_list = [
         f"<url><loc>{base}{u}</loc><lastmod>{today}</lastmod>"
         f"<changefreq>{freq}</changefreq><priority>{prio}</priority></url>"
         for u, prio, freq in pages
-    )
+    ]
+    try:
+        posts = await db.execute(
+            select(BlogPost)
+            .where(BlogPost.published.is_(True))
+            .order_by(BlogPost.published_at.desc())
+        )
+        for p in posts.scalars().all():
+            lm = (p.updated_at or p.published_at or datetime.utcnow()).strftime("%Y-%m-%d")
+            items_list.append(
+                f"<url><loc>{base}/blog/{p.slug}</loc><lastmod>{lm}</lastmod>"
+                f"<changefreq>monthly</changefreq><priority>0.7</priority></url>"
+            )
+    except Exception:
+        logger.exception("sitemap blog enumeration failed")
+    items = "".join(items_list)
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -2161,6 +2178,157 @@ async def admin_system_health(request: Request, db: AsyncSession = Depends(get_d
             "email": "set" if (os.getenv("RESEND_API_KEY") or os.getenv("BREVO_API_KEY")) else "missing",
         },
     }
+
+
+# ─── BLOG SEO ──────────────────────────────────────────────────────────────────
+
+@app.get("/blog", response_class=HTMLResponse)
+async def blog_index(request: Request, db: AsyncSession = Depends(get_db)):
+    q = await db.execute(
+        select(BlogPost)
+        .where(BlogPost.published.is_(True))
+        .order_by(BlogPost.published_at.desc())
+        .limit(50)
+    )
+    posts = q.scalars().all()
+    return templates.TemplateResponse(
+        "blog_index.html", {"request": request, "posts": posts}
+    )
+
+
+@app.get("/blog/{slug}", response_class=HTMLResponse)
+async def blog_article(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
+    q = await db.execute(
+        select(BlogPost).where(BlogPost.slug == slug).where(BlogPost.published.is_(True))
+    )
+    post = q.scalar_one_or_none()
+    if post is None:
+        return templates.TemplateResponse(
+            "404.html", {"request": request}, status_code=404
+        )
+    return templates.TemplateResponse(
+        "blog_article.html", {"request": request, "post": post}
+    )
+
+
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slugify(title: str) -> str:
+    s = _SLUG_RE.sub("-", (title or "").lower().strip()).strip("-")
+    return s[:100] or "articolo"
+
+
+@app.post("/api/admin/blog/generate")
+async def admin_blog_generate(request: Request, db: AsyncSession = Depends(get_db)):
+    """Genera un articolo SEO via Claude Haiku su una keyword long-tail.
+
+    Body JSON: {"keyword": "...", "audience": "...", "angle": "..."}
+    """
+    _require_admin(request)
+    payload = await request.json()
+    keyword = (payload.get("keyword") or "").strip()[:200]
+    audience = (payload.get("audience") or "agenti di commercio italiani").strip()[:200]
+    angle = (payload.get("angle") or "guida pratica con esempi concreti").strip()[:200]
+    if not keyword:
+        raise HTTPException(400, "keyword richiesta")
+
+    import anthropic
+    client = anthropic.AsyncAnthropic()
+    prompt = f"""Scrivi un articolo SEO in italiano professionale per il blog di VYNEX (SaaS AI per agenti commerciali italiani).
+
+Keyword principale: "{keyword}"
+Audience: {audience}
+Angolo: {angle}
+
+Requisiti OBBLIGATORI:
+- Lingua: italiano professionale nativo
+- Lunghezza: 900-1400 parole
+- Struttura: H2 + H3 + paragrafi + 1-2 liste puntate
+- Tono: concreto, utile, zero marketing fluff
+- Target SEO: long-tail per "{keyword}"
+- Includi almeno 2 esempi concreti di agente italiano (nomi realistici, numeri, settore)
+- Chiudi con CTA soft verso /demo o /registrati
+
+Rispondi SOLO con JSON di questa struttura esatta:
+{{
+  "title": "titolo SEO ottimizzato (50-65 char)",
+  "meta_description": "meta description SEO (140-160 char)",
+  "hero_subtitle": "sottotitolo hero pagina (80-140 char)",
+  "body_html": "<h2>...</h2><p>...</p>..." (HTML puro, no markdown, classi CSS inline minime),
+  "tags": ["tag1", "tag2", "tag3"],
+  "reading_minutes": 6
+}}"""
+
+    try:
+        msg = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = msg.content[0].text
+    except Exception as exc:
+        logger.exception("blog generate: Anthropic call failed")
+        raise HTTPException(502, f"AI error: {exc}")
+
+    import re as _re, json as _json_m
+    m = _re.search(r"\{.*\}", text, _re.S)
+    if not m:
+        raise HTTPException(502, "AI response not JSON")
+    try:
+        data = _json_m.loads(m.group(0))
+    except Exception as exc:
+        raise HTTPException(502, f"AI JSON parse failed: {exc}")
+
+    title = (data.get("title") or keyword.title())[:200]
+    slug_base = _slugify(title)
+    # Ensure unique
+    slug = slug_base
+    suffix = 1
+    while True:
+        exists = await db.execute(select(BlogPost.id).where(BlogPost.slug == slug))
+        if exists.scalar_one_or_none() is None:
+            break
+        suffix += 1
+        slug = f"{slug_base}-{suffix}"[:120]
+
+    post = BlogPost(
+        slug=slug,
+        title=title,
+        meta_description=(data.get("meta_description") or "")[:300],
+        hero_subtitle=(data.get("hero_subtitle") or "")[:300] or None,
+        body_html=data.get("body_html") or "<p>(vuoto)</p>",
+        keyword_primary=keyword[:120],
+        tags_csv=",".join(data.get("tags") or [])[:255],
+        published=True,
+        published_at=datetime.utcnow(),
+        reading_minutes=int(data.get("reading_minutes") or 5),
+    )
+    db.add(post)
+    await db.commit()
+    return {
+        "slug": slug,
+        "title": title,
+        "url": f"{os.getenv('BASE_URL', '').rstrip('/')}/blog/{slug}",
+    }
+
+
+@app.get("/api/admin/blog/list")
+async def admin_blog_list(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    q = await db.execute(
+        select(BlogPost).order_by(BlogPost.published_at.desc()).limit(100)
+    )
+    return [
+        {
+            "slug": p.slug,
+            "title": p.title,
+            "published": p.published,
+            "published_at": p.published_at.isoformat() if p.published_at else None,
+            "keyword": p.keyword_primary,
+        }
+        for p in q.scalars().all()
+    ]
 
 
 @app.exception_handler(404)

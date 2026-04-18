@@ -81,6 +81,9 @@ _PG_MIGRATIONS = [
     "CREATE INDEX IF NOT EXISTS ix_email_verification_tokens_expires ON email_verification_tokens (expires_at)",
     "CREATE INDEX IF NOT EXISTS ix_documents_deleted_at ON documents (deleted_at) WHERE deleted_at IS NOT NULL",
     "CREATE INDEX IF NOT EXISTS ix_users_deleted_at ON users (deleted_at) WHERE deleted_at IS NOT NULL",
+    # Blog SEO + UTM tracking — 2026-04-18 sera
+    "CREATE INDEX IF NOT EXISTS ix_blog_posts_published ON blog_posts (published, published_at)",
+    "CREATE INDEX IF NOT EXISTS ix_lead_sources_utm ON lead_sources (utm_source, utm_campaign)",
 ]
 
 
