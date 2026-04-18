@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Ritrova i tuoi documenti VYNEX{% endblock %}
+{% block description %}Hai provato la demo VYNEX ma hai perso il link? Inserisci la tua email e te lo rimandiamo.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block body %}
+{% include 'partials/nav.html' ignore missing %}
+
+<main style="max-width:560px;margin:0 auto;padding:80px 24px 120px">
+  <div style="text-align:center;margin-bottom:36px">
+    <h1 style="font-size:32px;font-weight:800;color:#f1f5f9;line-height:1.2;margin:0 0 16px">Ritrova i tuoi 3 documenti</h1>
+    <p style="color:#94a3b8;font-size:16px;line-height:1.6;margin:0 auto;max-width:480px">Hai provato la demo e non trovi più il link? Inserisci l'email che hai usato — ti rimandiamo subito il link privato (valido 7 giorni dall'originale).</p>
+  </div>
+
+  {% if message %}
+    <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;margin-bottom:24px;color:#86efac">{{ message }}</div>
+  {% endif %}
+  {% if error %}
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;margin-bottom:24px;color:#fca5a5">{{ error }}</div>
+  {% endif %}
+
+  <form action="/demo/recovery" method="POST" style="background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.15);border-radius:16px;padding:28px">
+    <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">La tua email</label>
+    <input type="email" name="email" required placeholder="mario.rossi@esempio.it"
+           style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:20px">
+    <button type="submit" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer">Invia il link</button>
+    <p style="color:#64748b;font-size:12px;text-align:center;margin:14px 0 0">Se l'email è nel nostro sistema, ricevi il link entro 1 minuto.</p>
+  </form>
+
+  <div style="margin-top:40px;text-align:center;color:#64748b;font-size:13px">
+    Non hai mai provato la demo? <a href="/demo" style="color:#60a5fa;text-decoration:none">Vai alla demo →</a>
+  </div>
+</main>
+{% endblock %}

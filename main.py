@@ -43,6 +43,7 @@ from stripe_handler import (
 from rate_limit import limiter, rate_limit_exceeded_handler, RateLimitExceeded
 from emailer import (
     send_welcome_email, send_password_reset_email, send_verification_email,
+    send_demo_recovery_email,
 )
 from logging_setup import configure_logging, RequestIdMiddleware, user_id_var
 from oauth_google import (
@@ -1569,9 +1570,69 @@ _GIF_1x1 = bytes([
 
 @app.get("/demo", response_class=HTMLResponse)
 async def demo_page(request: Request):
-    return templates.TemplateResponse(
+    draft = {"email": "", "full_name": "", "company": "", "input_text": ""}
+    raw = request.cookies.get("vynex_demo_draft", "")
+    if raw:
+        try:
+            parsed = _json.loads(raw)
+            if isinstance(parsed, dict):
+                for k in draft:
+                    v = parsed.get(k) or ""
+                    if isinstance(v, str):
+                        draft[k] = v[:2100]
+        except Exception:
+            pass
+    response = templates.TemplateResponse(
         "demo.html",
-        {"request": request, "error": request.query_params.get("error", "")},
+        {
+            "request": request,
+            "error": request.query_params.get("error", ""),
+            "draft": draft,
+        },
+    )
+    return response
+
+
+@app.get("/demo/recovery", response_class=HTMLResponse)
+async def demo_recovery_page(request: Request):
+    return templates.TemplateResponse(
+        "demo_recovery.html",
+        {
+            "request": request,
+            "error": request.query_params.get("error", ""),
+            "message": request.query_params.get("message", ""),
+        },
+    )
+
+
+@app.post("/demo/recovery")
+@limiter.limit("5/hour")
+async def api_demo_recovery(
+    request: Request,
+    email: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    from urllib.parse import quote_plus
+    try:
+        valid = validate_email(email, check_deliverability=False)
+        email_norm = valid.normalized.lower()
+    except EmailNotValidError:
+        return RedirectResponse("/demo/recovery?error=Email+non+valida", status_code=302)
+
+    r = await db.execute(select(Lead).where(Lead.email == email_norm))
+    lead = r.scalar_one_or_none()
+
+    # Always reply with the same message — non-enumeration.
+    generic_ok = "Se l'email e' nel nostro sistema, ricevi il link entro 1 minuto."
+    if lead is not None and lead.demo_input and not lead.unsubscribed:
+        try:
+            base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+            link = f"{base}/demo/result/{lead.unsub_token}"
+            await send_demo_recovery_email(lead.email, lead.full_name or "", link)
+        except Exception:
+            logger.exception("demo recovery email failed lead=%s", lead.id)
+    return RedirectResponse(
+        f"/demo/recovery?message={quote_plus(generic_ok)}", status_code=302
     )
 
 
@@ -1587,20 +1648,37 @@ async def api_demo(
     website: str = Form(""),
     db: AsyncSession = Depends(get_db),
 ):
+    def _draft_cookie() -> str:
+        return _json.dumps({
+            "email": (email or "")[:255],
+            "full_name": (full_name or "")[:120],
+            "company": (company or "")[:120],
+            "input_text": (input_text or "")[:2000],
+        })
+
+    def _preserve_redirect(url: str) -> RedirectResponse:
+        resp = RedirectResponse(url, status_code=302)
+        resp.set_cookie(
+            "vynex_demo_draft", _draft_cookie(),
+            httponly=True, secure=_COOKIE_SECURE, samesite="lax",
+            max_age=60 * 60,  # 1h
+        )
+        return resp
+
     if website:
         # honeypot: silent drop (non dire al bot che l'abbiamo capito)
         return RedirectResponse("/demo?error=Errore+di+validazione", status_code=302)
     if accept_terms != "on":
-        return RedirectResponse("/demo?error=Devi+accettare+la+privacy+policy", status_code=302)
+        return _preserve_redirect("/demo?error=Devi+accettare+la+privacy+policy")
     try:
         valid = validate_email(email, check_deliverability=False)
         email_norm = valid.normalized.lower()
     except EmailNotValidError:
-        return RedirectResponse("/demo?error=Email+non+valida", status_code=302)
+        return _preserve_redirect("/demo?error=Email+non+valida")
     if len(input_text.strip()) < 30:
-        return RedirectResponse("/demo?error=Descrivi+la+visita+in+almeno+30+caratteri", status_code=302)
+        return _preserve_redirect("/demo?error=Descrivi+la+visita+in+almeno+30+caratteri")
     if len(full_name.strip()) < 2:
-        return RedirectResponse("/demo?error=Nome+non+valido", status_code=302)
+        return _preserve_redirect("/demo?error=Nome+non+valido")
 
     try:
         docs = await genera_documenti(
@@ -1610,9 +1688,8 @@ async def api_demo(
         )
     except Exception:
         logger.exception("demo generation failed")
-        return RedirectResponse(
-            "/demo?error=Generazione+non+riuscita.+Riprova+tra+1+minuto",
-            status_code=302,
+        return _preserve_redirect(
+            "/demo?error=Generazione+non+riuscita.+Riprova+tra+1+minuto"
         )
 
     lead, _created = await upsert_lead(
@@ -1638,7 +1715,10 @@ async def api_demo(
     except Exception:
         logger.exception("demo sequence enroll failed lead=%s", lead.id)
 
-    return RedirectResponse(f"/demo/result/{lead.unsub_token}", status_code=302)
+    response = RedirectResponse(f"/demo/result/{lead.unsub_token}", status_code=302)
+    # Clear the draft cookie on success so next visit loads a clean form.
+    response.delete_cookie("vynex_demo_draft")
+    return response
 
 
 @app.get("/demo/result/{token}", response_class=HTMLResponse)
