@@ -405,6 +405,28 @@
     </div>
 </section>
 
+<!-- LEAD MAGNET -->
+<section style="padding:80px 24px;max-width:880px;margin:0 auto">
+  <div style="background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08));border:1px solid rgba(96,165,250,0.25);border-radius:20px;padding:48px 40px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center">
+    <div>
+      <div style="display:inline-block;padding:6px 14px;border:1px solid rgba(96,165,250,0.3);border-radius:999px;color:#60a5fa;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-bottom:16px">PDF GRATIS</div>
+      <h2 style="font-size:28px;font-weight:800;color:#f1f5f9;line-height:1.25;margin:0 0 12px">La visita commerciale perfetta in 20 punti.</h2>
+      <p style="color:#cbd5e1;line-height:1.7;font-size:15px;margin:0 0 24px">Checklist testata su reti vendita italiane: cosa fare prima, durante e dopo la visita. 3 pagine, scaricabile subito.</p>
+      <form action="/api/lead-magnet/checklist-visita" method="POST" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start">
+        <input type="email" name="email" required placeholder="La tua email"
+               style="flex:1;min-width:220px;padding:12px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:14px">
+        <input type="hidden" name="full_name" value="">
+        <button type="submit" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 22px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">Scarica PDF →</button>
+        <label style="display:flex;align-items:flex-start;gap:8px;color:#64748b;font-size:12px;line-height:1.5;cursor:pointer;flex-basis:100%;margin-top:4px">
+          <input type="checkbox" name="accept_terms" required style="margin-top:2px;accent-color:#60a5fa">
+          <span>Accetto la <a href="/privacy" style="color:#60a5fa">privacy</a>. Zero spam, niente carta.</span>
+        </label>
+      </form>
+    </div>
+    <div style="font-size:120px;line-height:1;opacity:0.7">📋</div>
+  </div>
+</section>
+
 <!-- TRUST BADGES -->
 <section style="padding:60px 24px;background:rgba(15,23,42,0.4);border-top:1px solid #1e293b;border-bottom:1px solid #1e293b">
   <div style="max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px;text-align:center">

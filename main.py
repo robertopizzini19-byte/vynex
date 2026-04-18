@@ -2377,6 +2377,165 @@ Chiama lo strumento save_blog_post con tutti i campi compilati."""
     }
 
 
+# ─── LEAD MAGNET ──────────────────────────────────────────────────────────────
+
+_CHECKLIST_CONTENT = {
+    "title": "Checklist 20 punti: la visita commerciale perfetta",
+    "subtitle": "Dall'agenda pre-visita al follow-up, cosa fare prima/durante/dopo — validato su reti vendita italiane.",
+    "sections": [
+        {
+            "heading": "PRIMA DELLA VISITA",
+            "items": [
+                "Rileggi il fascicolo cliente: storico ordini, ultimi 3 contatti, eventuali insoluti aperti.",
+                "Definisci UN solo obiettivo SMART per la visita (es. presentare linea primavera, chiudere rinnovo).",
+                "Prepara 2-3 ipotesi di offerta con condizioni alternative (prezzo vs pagamento vs volumi).",
+                "Controlla la posizione geografica e il percorso — arriva 10 minuti prima, entra 2 minuti prima.",
+                "Pianifica il tempo: 15% introduzione, 40% ascolto, 30% proposta, 15% chiusura.",
+            ],
+        },
+        {
+            "heading": "DURANTE LA VISITA",
+            "items": [
+                "Apri chiedendo un dato concreto: 'Come va il magazzino di [prodotto]?' — subito pain rilevato.",
+                "Rileva il budget disponibile PRIMA di parlare di prezzi. 'Che budget avete previsto quest'anno per…?'",
+                "Prendi nota di almeno 3 dati quantitativi: prezzo competitor, volumi attuali, tempi di riassortimento.",
+                "Identifica chi decide davvero (non sempre coincide con chi riceve la visita).",
+                "Quantifica il pain: 'Quanto vi costa questo problema al mese?' — rende tangibile la tua soluzione.",
+                "Proponi sempre 2 opzioni (no 1 sola, no 4+). Il cervello umano sceglie meglio con 2.",
+                "Concorda un prossimo step SPECIFICO con data e ora, non 'ci sentiamo'.",
+                "Chiudi con domanda condizionale: 'Se le condizioni fossero X, firmereste oggi?'",
+                "Lascia sempre 1 documento fisico (brochure, catalogo, sample): materializza il ricordo della visita.",
+                "Prendi note visibili durante il colloquio — il cliente si sente ascoltato e ti prende più seriamente.",
+            ],
+        },
+        {
+            "heading": "DOPO LA VISITA",
+            "items": [
+                "Entro 30 minuti: scrivi 3 bullet point sul telefono (chi, cosa ha detto, next step).",
+                "Entro 2 ore: invia email di follow-up con riepilogo dei punti discussi e conferma prossimo step.",
+                "Entro 24 ore: report al mandante se sei plurimandatario (serve per tracciabilità e continuità).",
+                "Entro 48 ore: invia la proposta scritta se richiesta — più aspetti, più cala il tasso di risposta.",
+                "Entro 7 giorni: chiamata di follow-up se nessuna risposta. Max 3 follow-up poi archivi il lead.",
+            ],
+        },
+    ],
+}
+
+
+def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.enums import TA_LEFT
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=2 * cm, rightMargin=2 * cm,
+        topMargin=2 * cm, bottomMargin=2 * cm,
+        title=_CHECKLIST_CONTENT["title"], author="VYNEX",
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "T", parent=styles["Heading1"], fontSize=22, leading=28,
+        textColor=colors.HexColor("#0f172a"), fontName="Helvetica-Bold", spaceAfter=6,
+    )
+    sub_style = ParagraphStyle(
+        "S", parent=styles["Normal"], fontSize=11,
+        textColor=colors.HexColor("#475569"), spaceAfter=20, leading=16,
+    )
+    section_style = ParagraphStyle(
+        "Sec", parent=styles["Heading2"], fontSize=13, leading=18,
+        textColor=colors.HexColor("#1e40af"), fontName="Helvetica-Bold",
+        spaceBefore=14, spaceAfter=10, letterSpacing=1,
+    )
+    item_style = ParagraphStyle(
+        "It", parent=styles["Normal"], fontSize=10.5, leading=15.5,
+        textColor=colors.HexColor("#1e293b"), alignment=TA_LEFT,
+        leftIndent=18, firstLineIndent=-18, spaceAfter=6,
+    )
+    flow = [
+        Paragraph("VYNEX — Checklist per agenti commerciali", sub_style),
+        Paragraph(_CHECKLIST_CONTENT["title"], title_style),
+        Paragraph(_CHECKLIST_CONTENT["subtitle"], sub_style),
+    ]
+    n = 0
+    for section in _CHECKLIST_CONTENT["sections"]:
+        flow.append(Paragraph(section["heading"], section_style))
+        for item in section["items"]:
+            n += 1
+            safe = item.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            flow.append(Paragraph(
+                f'<b><font color="#1e40af">{n:02d}.</font></b>  {safe}', item_style,
+            ))
+    flow.append(Spacer(1, 24))
+    if lead_name:
+        flow.append(Paragraph(
+            f'<font color="#64748b" size="9">Preparata per {lead_name} · {datetime.utcnow().strftime("%d/%m/%Y")} · vynex.it</font>',
+            sub_style,
+        ))
+    else:
+        flow.append(Paragraph(
+            '<font color="#64748b" size="9">Generato da VYNEX · vynex.it</font>',
+            sub_style,
+        ))
+    doc.build(flow)
+    pdf = buf.getvalue()
+    buf.close()
+    return pdf
+
+
+@app.get("/lead-magnet/checklist-visita.pdf")
+async def lead_magnet_checklist_pdf():
+    pdf = _render_checklist_pdf()
+    return Response(
+        content=pdf, media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="vynex-checklist-visita-commerciale.pdf"',
+            "Cache-Control": "public, max-age=86400",
+        },
+    )
+
+
+@app.post("/api/lead-magnet/checklist-visita")
+@limiter.limit("10/hour")
+async def api_lead_magnet_checklist(
+    request: Request,
+    email: str = Form(...),
+    full_name: str = Form(""),
+    accept_terms: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+):
+    if accept_terms != "on":
+        return RedirectResponse("/?error=Devi+accettare+la+privacy+policy", status_code=302)
+    try:
+        valid = validate_email(email, check_deliverability=False)
+        email_norm = valid.normalized.lower()
+    except EmailNotValidError:
+        return RedirectResponse("/?error=Email+non+valida", status_code=302)
+
+    try:
+        lead, _c = await upsert_lead(
+            db, email=email_norm,
+            full_name=(full_name or "").strip() or None,
+            company=None, source="lead_magnet",
+            notes="checklist-visita",
+        )
+        await save_source_attribution(
+            db, lead_id=lead.id,
+            utm_cookie=request.cookies.get("vynex_utm"),
+            ip=(request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else ""))[:45],
+            user_agent=request.headers.get("user-agent", "")[:500],
+        )
+    except Exception:
+        logger.exception("lead_magnet capture failed")
+
+    # Redirect direct al PDF — download immediato
+    return RedirectResponse("/lead-magnet/checklist-visita.pdf", status_code=302)
+
+
 @app.post("/api/admin/blog/unpublish/{slug}")
 async def admin_blog_unpublish(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Nasconde articolo dal pubblico (torna 404). Lasciato in DB per history."""
