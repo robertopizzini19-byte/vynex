@@ -66,8 +66,10 @@
     {% block ld_json %}{% endblock %}
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/enrichments.css">
 </head>
 <body>
     {% block body %}{% endblock %}
@@ -83,6 +85,18 @@
 
     {% include 'partials/exit_intent.html' ignore missing %}
 
+    <script>
+    // Scroll fade-in with IntersectionObserver
+    (function(){
+      if (!('IntersectionObserver' in window)) return;
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting) { e.target.classList.add('vnx-visible'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+      document.querySelectorAll('.vnx-fade-in').forEach(function(el){ io.observe(el); });
+    })();
+    </script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="/static/app.js"></script>
     {% block scripts %}{% endblock %}
