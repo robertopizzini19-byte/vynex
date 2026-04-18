@@ -17,6 +17,37 @@ client = anthropic.AsyncAnthropic(
     timeout=ANTHROPIC_TIMEOUT_S,
 )
 
+
+class _CircuitBreaker:
+    THRESHOLD = 5
+    RECOVERY_S = 120
+
+    def __init__(self):
+        self._failures = 0
+        self._open_until = 0.0
+
+    def record_failure(self):
+        self._failures += 1
+        if self._failures >= self.THRESHOLD:
+            self._open_until = time.time() + self.RECOVERY_S
+            logger.warning("circuit breaker OPEN — Anthropic down, recovery in %ds", self.RECOVERY_S)
+
+    def record_success(self):
+        self._failures = 0
+        self._open_until = 0.0
+
+    @property
+    def is_open(self) -> bool:
+        if self._open_until and time.time() < self._open_until:
+            return True
+        if self._open_until and time.time() >= self._open_until:
+            self._open_until = 0.0
+            self._failures = max(0, self.THRESHOLD - 1)
+        return False
+
+
+_breaker = _CircuitBreaker()
+
 SYSTEM_PROMPT = """Sei un assistente specializzato per agenti di commercio italiani.
 Devi generare documenti professionali in italiano perfetto, formale ma umano.
 Conosci la terminologia commerciale italiana, i termini contrattuali, le pratiche di vendita B2B.
@@ -42,18 +73,24 @@ _RETRYABLE = (
 
 
 async def _call_claude(prompt: str, max_tokens: int = 2048):
-    """Calls Claude with retry+exponential backoff. Returns the message object."""
+    """Calls Claude with circuit breaker + retry + exponential backoff."""
+    if _breaker.is_open:
+        raise RuntimeError("Servizio AI temporaneamente non disponibile. Riprova tra 2 minuti.")
+
     last_exc: Exception | None = None
     for attempt in range(MAX_RETRIES):
         try:
-            return await client.messages.create(
+            result = await client.messages.create(
                 model=MODEL,
                 max_tokens=max_tokens,
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": prompt}],
             )
+            _breaker.record_success()
+            return result
         except _RETRYABLE as exc:
             last_exc = exc
+            _breaker.record_failure()
             if attempt == MAX_RETRIES - 1:
                 logger.error("Anthropic call failed after %d attempts: %s", MAX_RETRIES, exc)
                 raise

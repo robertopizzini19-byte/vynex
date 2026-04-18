@@ -71,6 +71,16 @@ _PG_MIGRATIONS = [
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_referral_code ON users (referral_code)",
     "CREATE INDEX IF NOT EXISTS ix_users_referred_by_id ON users (referred_by_id)",
     "CREATE INDEX IF NOT EXISTS ix_email_jobs_pending ON email_jobs (scheduled_for, sent_at)",
+    # Retry engine (sessione #28)
+    "ALTER TABLE email_jobs ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE email_jobs ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMP",
+    "CREATE INDEX IF NOT EXISTS ix_email_jobs_retry ON email_jobs (next_retry_at, sent_at)",
+    "CREATE INDEX IF NOT EXISTS ix_email_jobs_lead_campaign ON email_jobs (lead_id, campaign_key)",
+    "CREATE INDEX IF NOT EXISTS ix_email_jobs_user_campaign ON email_jobs (user_id, campaign_key)",
+    # Cleanup performance indexes
+    "CREATE INDEX IF NOT EXISTS ix_email_verification_tokens_expires ON email_verification_tokens (expires_at)",
+    "CREATE INDEX IF NOT EXISTS ix_documents_deleted_at ON documents (deleted_at) WHERE deleted_at IS NOT NULL",
+    "CREATE INDEX IF NOT EXISTS ix_users_deleted_at ON users (deleted_at) WHERE deleted_at IS NOT NULL",
 ]
 
 

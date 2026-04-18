@@ -19,7 +19,7 @@ load_dotenv()
 from email_validator import validate_email, EmailNotValidError
 
 from database import get_db, init_db, AsyncSessionLocal
-from models import User, Document, Lead, EmailJob, ReferralClick
+from models import User, Document, Lead, EmailJob, ReferralClick, AuditLog, EmailVerificationToken
 from auth import (
     hash_password, verify_password, authenticate_user, create_access_token,
     get_current_user, require_user, get_user_by_email,
@@ -398,15 +398,24 @@ async def api_login(
     password: str = Form(...),
     db: AsyncSession = Depends(get_db)
 ):
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or (request.client.host if request.client else "")
+    )[:45]
     user, reason = await authenticate_user(db, email, password)
     if not user:
+        logger.warning("login failed: email=%s reason=%s ip=%s", email[:50], reason, client_ip)
         if reason == "locked":
+            db.add(AuditLog(action="login_locked", detail=f"email={email[:255]}", ip=client_ip))
+            await db.commit()
             return RedirectResponse("/login?error=Account+temporaneamente+bloccato.+Riprova+tra+15+minuti", status_code=302)
         if reason == "deleted":
             return RedirectResponse("/login?error=Account+eliminato", status_code=302)
         if reason == "inactive":
             return RedirectResponse("/login?error=Account+disattivato", status_code=302)
         return RedirectResponse("/login?error=Email+o+password+non+corretti", status_code=302)
+    db.add(AuditLog(user_id=user.id, action="login", ip=client_ip))
+    await db.commit()
     token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
     return redirect_with_cookie("/dashboard", token)
 
@@ -440,7 +449,7 @@ async def api_register(
         from urllib.parse import quote_plus
         return RedirectResponse(f"/registrati?error={quote_plus(msg)}", status_code=302)
 
-    if not full_name.strip() or len(full_name.strip()) < 2:
+    if not full_name.strip() or len(full_name.strip()) < 2 or len(full_name.strip()) > 120:
         return RedirectResponse("/registrati?error=Nome+non+valido", status_code=302)
 
     client_ip = (
@@ -461,6 +470,9 @@ async def api_register(
     db.add(user)
     await db.commit()
     await db.refresh(user)
+
+    db.add(AuditLog(user_id=user.id, action="signup", detail=f"email={user.email}", ip=client_ip))
+    await db.commit()
 
     try:
         await send_welcome_email(user.email, user.full_name)
@@ -784,6 +796,7 @@ async def api_delete_account(
             logger.exception("stripe subscription delete failed")
 
     now = datetime.utcnow()
+    original_email = user.email
     user.deleted_at = now
     user.is_active = False
     user.token_version = (user.token_version or 0) + 1
@@ -793,6 +806,11 @@ async def api_delete_account(
         .where(Document.user_id == user.id)
         .values(deleted_at=now)
     )
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or (request.client.host if request.client else "")
+    )[:45]
+    db.add(AuditLog(user_id=user.id, action="account_deleted", detail=f"email={original_email}", ip=client_ip))
     await db.commit()
 
     response = RedirectResponse("/?deleted=1", status_code=302)
@@ -1062,6 +1080,7 @@ async def api_rigenera(
 # ─── STRIPE ───────────────────────────────────────────────────────────────────
 
 @app.get("/checkout/{plan}")
+@limiter.limit("10/hour")
 async def checkout(
     plan: str,
     db: AsyncSession = Depends(get_db),
@@ -1148,9 +1167,10 @@ async def sitemap():
     base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
     pages = [
         ("/",              "1.0", "weekly"),
+        ("/demo",          "0.95", "weekly"),
         ("/prezzi",        "0.9", "weekly"),
-        ("/chi-siamo",     "0.8", "monthly"),
         ("/come-funziona", "0.8", "monthly"),
+        ("/chi-siamo",     "0.8", "monthly"),
         ("/registrati",    "0.7", "monthly"),
         ("/login",         "0.5", "monthly"),
         ("/privacy",       "0.3", "yearly"),
@@ -1325,23 +1345,39 @@ async def health(db: AsyncSession = Depends(get_db)):
 
 
 @app.get("/health/deep")
-@limiter.limit("30/minute")
+@limiter.limit("10/minute")
 async def health_deep(request: Request, db: AsyncSession = Depends(get_db)):
-    """Deep health: DB + Anthropic + Stripe + Resend reachability."""
-    checks: dict = {}
+    """Deep health: DB connectivity check. Admin-only for full details."""
+    is_admin = False
+    admin_token = os.getenv("ADMIN_TOKEN", "")
+    header_token = (
+        request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+    )
+    if admin_token and header_token and hmac.compare_digest(header_token, admin_token):
+        is_admin = True
 
     try:
         await db.execute(select(func.count(User.id)))
-        checks["database"] = "ok"
+        db_ok = True
     except Exception as exc:
-        checks["database"] = f"error: {exc}"
+        db_ok = False
+        if is_admin:
+            logger.warning("health/deep DB error: %s", exc)
 
-    checks["anthropic_api_key"] = "set" if os.getenv("ANTHROPIC_API_KEY") else "missing"
-    checks["stripe_api_key"] = "set" if os.getenv("STRIPE_SECRET_KEY") else "missing"
-    checks["stripe_webhook_secret"] = "set" if os.getenv("STRIPE_WEBHOOK_SECRET") else "missing"
-    checks["resend_api_key"] = "set" if os.getenv("RESEND_API_KEY") else "missing"
+    if not is_admin:
+        return JSONResponse(
+            {"status": "ok" if db_ok else "degraded"},
+            status_code=200 if db_ok else 503,
+        )
 
-    all_ok = checks.get("database") == "ok" and checks.get("anthropic_api_key") == "set"
+    checks = {
+        "database": "ok" if db_ok else "error",
+        "anthropic_api_key": "set" if os.getenv("ANTHROPIC_API_KEY") else "missing",
+        "stripe_api_key": "set" if os.getenv("STRIPE_SECRET_KEY") else "missing",
+        "stripe_webhook_secret": "set" if os.getenv("STRIPE_WEBHOOK_SECRET") else "missing",
+        "resend_api_key": "set" if os.getenv("RESEND_API_KEY") else "missing",
+    }
+    all_ok = db_ok and checks.get("anthropic_api_key") == "set"
     return JSONResponse(
         {"status": "ok" if all_ok else "degraded", "checks": checks},
         status_code=200 if all_ok else 503,
@@ -1448,12 +1484,7 @@ async def api_documento_pdf(
 @limiter.limit("30/minute")
 async def admin_metrics(request: Request, db: AsyncSession = Depends(get_db)):
     """Aggregati business per il founder. Protetto da ADMIN_TOKEN header."""
-    admin_token = os.getenv("ADMIN_TOKEN", "")
-    header_token = request.headers.get("X-Admin-Token", "")
-    if not admin_token or not hmac.compare_digest(
-        header_token.encode("utf-8"), admin_token.encode("utf-8")
-    ):
-        raise HTTPException(401, "Non autorizzato")
+    _require_admin(request)
 
     from datetime import timedelta
     now = datetime.utcnow()
@@ -1636,6 +1667,7 @@ async def demo_result(token: str, request: Request, db: AsyncSession = Depends(g
 
 
 @app.get("/r/{code}")
+@limiter.limit("30/minute")
 async def referral_click_route(code: str, request: Request, db: AsyncSession = Depends(get_db)):
     code_norm = code.strip().upper()[:16]
     r = await db.execute(select(User).where(User.referral_code == code_norm))
@@ -1665,7 +1697,8 @@ async def referral_click_route(code: str, request: Request, db: AsyncSession = D
 
 
 @app.get("/e/o/{job_id}/{sig}.gif")
-async def tracking_open(job_id: int, sig: str, db: AsyncSession = Depends(get_db)):
+@limiter.limit("60/minute")
+async def tracking_open(job_id: int, sig: str, request: Request, db: AsyncSession = Depends(get_db)):
     if verify_sig(job_id, "open", sig):
         try:
             await db.execute(
@@ -1685,13 +1718,17 @@ async def tracking_open(job_id: int, sig: str, db: AsyncSession = Depends(get_db
 
 
 @app.get("/e/c/{job_id}/{sig}")
+@limiter.limit("60/minute")
 async def tracking_click(
     job_id: int, sig: str, request: Request, db: AsyncSession = Depends(get_db)
 ):
     target = request.query_params.get("u", "/")
-    if not verify_sig(job_id, "click", sig):
-        return RedirectResponse("/", status_code=302)
     if not (target.startswith("http://") or target.startswith("https://") or target.startswith("/")):
+        target = "/"
+    if not verify_sig(job_id, "click", sig, target):
+        if not verify_sig(job_id, "click", sig):
+            return RedirectResponse("/", status_code=302)
+        logger.warning("click tracking: legacy sig used job=%s, target tamper blocked", job_id)
         target = "/"
     try:
         await db.execute(
@@ -1850,6 +1887,88 @@ async def admin_acquisition_stats(request: Request, db: AsyncSession = Depends(g
 async def admin_acquisition_tick(request: Request, db: AsyncSession = Depends(get_db)):
     _require_admin(request)
     return await process_email_queue(db)
+
+
+@app.post("/api/admin/maintenance/run")
+async def admin_maintenance_run(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    from maintenance import run_all_maintenance
+    return await run_all_maintenance(db)
+
+
+@app.post("/api/admin/stripe/reconcile")
+async def admin_stripe_reconcile(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    from maintenance import reconcile_stripe_subscriptions
+    return await reconcile_stripe_subscriptions(db)
+
+
+@app.get("/api/admin/system/health")
+async def admin_system_health(request: Request, db: AsyncSession = Depends(get_db)):
+    """Unified health radar: email queue, subscriptions, cleanup backlog, services."""
+    _require_admin(request)
+    now = datetime.utcnow()
+
+    pending = (await db.execute(
+        select(func.count(EmailJob.id)).where(EmailJob.sent_at.is_(None))
+    )).scalar() or 0
+
+    retrying = (await db.execute(
+        select(func.count(EmailJob.id))
+        .where(EmailJob.sent_at.is_(None))
+        .where(EmailJob.retry_count > 0)
+    )).scalar() or 0
+
+    permanently_failed = (await db.execute(
+        select(func.count(EmailJob.id))
+        .where(EmailJob.sent_at.is_(None))
+        .where(EmailJob.error.like("MAX_RETRY%"))
+    )).scalar() or 0
+
+    past_due_users = (await db.execute(
+        select(func.count(User.id))
+        .where(User.subscription_status == "past_due")
+    )).scalar() or 0
+
+    disputed_users = (await db.execute(
+        select(func.count(User.id))
+        .where(User.is_active == False)
+        .where(User.deleted_at.is_(None))
+    )).scalar() or 0
+
+    expired_tokens = (await db.execute(
+        select(func.count(EmailVerificationToken.id))
+        .where(EmailVerificationToken.expires_at < now)
+        .where(EmailVerificationToken.used_at.is_(None))
+    )).scalar() or 0
+
+    docs_to_purge = (await db.execute(
+        select(func.count(Document.id))
+        .where(Document.deleted_at.is_not(None))
+        .where(Document.deleted_at < now - timedelta(days=30))
+    )).scalar() or 0
+
+    return {
+        "generated_at": now.isoformat() + "Z",
+        "email_queue": {
+            "pending": pending,
+            "retrying": retrying,
+            "permanently_failed": permanently_failed,
+        },
+        "subscriptions": {
+            "past_due": past_due_users,
+            "frozen_accounts": disputed_users,
+        },
+        "cleanup_backlog": {
+            "expired_tokens": expired_tokens,
+            "docs_to_purge": docs_to_purge,
+        },
+        "services": {
+            "anthropic": "set" if os.getenv("ANTHROPIC_API_KEY") else "missing",
+            "stripe": "set" if os.getenv("STRIPE_SECRET_KEY") else "missing",
+            "email": "set" if (os.getenv("RESEND_API_KEY") or os.getenv("BREVO_API_KEY")) else "missing",
+        },
+    }
 
 
 @app.exception_handler(404)
