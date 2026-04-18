@@ -40,6 +40,16 @@ logger = logging.getLogger("vynex.acquisition")
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
+
+def nps_sig(user_id: int, tag: str) -> str:
+    """HMAC signature per link NPS (shared tra main.py e scheduler)."""
+    msg = f"nps:{user_id}:{tag}".encode()
+    return hmac.new(SECRET_KEY.encode(), msg, hashlib.sha256).hexdigest()[:16]
+
+
+def nps_url(user_id: int, tag: str) -> str:
+    return f"{BASE_URL}/nps?u={user_id}&t={tag}&sig={nps_sig(user_id, tag)}"
+
 # Max invii batch per processing cycle — Resend free tier è 100/giorno,
 # un worker ogni 5 min con batch 20 dà margine ampio senza mai toccare il cap.
 MAX_SEND_PER_CYCLE = int(os.getenv("EMAIL_BATCH_SIZE", "20"))
@@ -421,6 +431,10 @@ async def process_email_queue(db: AsyncSession) -> dict:
                 "unsub_url": f"{BASE_URL}/account",  # per user, unsub = gestione account
                 "referrals_count": rc_q.scalar() or 0,
             }
+            # NPS campaign: inject HMAC-signed url
+            if job.campaign_key.startswith("user_nps_"):
+                tag = job.campaign_key.replace("user_nps_", "")
+                ctx["nps_url"] = nps_url(user.id, tag)
         else:
             counts["failed"] += 1
             continue

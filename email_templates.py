@@ -266,6 +266,58 @@ _COLD_TOUCH_3 = Campaign(
 # REFERRAL notifications
 # ──────────────────────────────────────────────────────────────────────────────
 
+_USER_NPS_T7 = Campaign(
+    key="user_nps_t7",
+    audience="user",
+    delay_hours=0,
+    subject="Come è andata la prima settimana con VYNEX?",
+    body_html=_wrap(
+        """
+        <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">Ciao {name}, una domanda veloce.</h1>
+        <p style="color:#cbd5e1;line-height:1.7">Sei con VYNEX da una settimana. Raccomanderesti lo strumento a un collega agente di commercio? Bastano 3 secondi per rispondere: da 0 a 10.</p>
+        <p style="text-align:center;margin:28px 0">{cta}</p>
+        <p style="color:#94a3b8;line-height:1.7;font-size:14px">Ogni feedback serve a farti trovare VYNEX più utile. Grazie.</p>
+        """,
+    ).replace("{cta}", _btn("{nps_url}", "Dammi il mio voto (1 click)")),
+)
+
+_USER_NPS_T30 = Campaign(
+    key="user_nps_t30",
+    audience="user",
+    delay_hours=0,
+    subject="Un mese di VYNEX — raccomanderesti?",
+    body_html=_wrap(
+        """
+        <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">Ciao {name}, dopo un mese con VYNEX.</h1>
+        <p style="color:#cbd5e1;line-height:1.7">Hai usato VYNEX per un mese intero. A freddo: da 0 a 10, lo raccomanderesti a un collega agente italiano?</p>
+        <p style="text-align:center;margin:28px 0">{cta}</p>
+        <p style="color:#94a3b8;line-height:1.7;font-size:14px">Un click + 1 frase di commento ci aiuta più di qualsiasi altra cosa. Niente venditori, niente call di 30 minuti.</p>
+        """,
+    ).replace("{cta}", _btn("{nps_url}", "Dai il tuo voto")),
+)
+
+_USER_WINBACK = Campaign(
+    key="user_winback",
+    audience="user",
+    delay_hours=0,
+    subject="{name}, tutto ok? Ci sei ancora?",
+    body_html=_wrap(
+        """
+        <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">Ciao {name},</h1>
+        <p style="color:#cbd5e1;line-height:1.7">Il tuo account Pro VYNEX è attivo ma non hai generato documenti nelle ultime 3 settimane. Capisco — la vita dell'agente è imprevedibile.</p>
+        <p style="color:#cbd5e1;line-height:1.7">Due opzioni rapide:</p>
+        <ul style="color:#cbd5e1;line-height:1.8">
+          <li><strong>Se vuoi continuare:</strong> apri {base_url}/genera e testa col codice <code style="background:#1e293b;padding:3px 8px;border-radius:4px;color:#60a5fa">TORNA30</code> — 30 giorni gratis bonus sul tuo prossimo addebito.</li>
+          <li><strong>Se non ti serve più:</strong> puoi disdire in 1 click dal portale fatturazione. Nessun problema, nessuna domanda.</li>
+        </ul>
+        <p style="text-align:center;margin:28px 0">{cta}</p>
+        <p style="color:#94a3b8;line-height:1.7;font-size:14px">Se vuoi darmi feedback su cosa non funziona per te, rispondi a questa email. Ci tengo davvero.</p>
+        <p style="color:#94a3b8;line-height:1.7;font-size:14px">Roberto</p>
+        """,
+    ).replace("{cta}", _btn("{base_url}/genera", "Apri generatore")),
+)
+
+
 _REFERRAL_CONVERTED = Campaign(
     key="referral_converted",
     audience="user",
@@ -300,6 +352,9 @@ CAMPAIGNS: dict[str, Campaign] = {
         _COLD_TOUCH_1,
         _COLD_TOUCH_2,
         _COLD_TOUCH_3,
+        _USER_NPS_T7,
+        _USER_NPS_T30,
+        _USER_WINBACK,
         _REFERRAL_CONVERTED,
     ]
 }
