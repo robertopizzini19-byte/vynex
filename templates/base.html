@@ -79,6 +79,8 @@
         <button type="button" class="btn-primary btn-sm" id="cookie-accept">Ho capito</button>
     </div>
 
+    {% include 'partials/exit_intent.html' ignore missing %}
+
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="/static/app.js"></script>
     {% block scripts %}{% endblock %}

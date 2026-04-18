@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import Lead, EmailJob, User, Document
+from models import Lead, EmailJob, User, Document, LeadSource
 from email_templates import (
     CAMPAIGNS,
     SEQUENCE_LEAD_DEMO,
@@ -93,6 +93,60 @@ def unsub_token() -> str:
 # ──────────────────────────────────────────────────────────────────────────────
 # Lead lifecycle
 # ──────────────────────────────────────────────────────────────────────────────
+
+async def save_source_attribution(
+    db: AsyncSession,
+    *,
+    lead_id: int | None = None,
+    user_id: int | None = None,
+    utm_cookie: str | None = None,
+    ip: str | None = None,
+    user_agent: str | None = None,
+) -> None:
+    """Crea una riga LeadSource se il cookie UTM ha qualcosa. Idempotent: se gia'
+    esiste una riga con stessa lead_id/user_id non crea duplicato."""
+    if not utm_cookie:
+        return
+    try:
+        import json as _j
+        data = _j.loads(utm_cookie)
+        if not isinstance(data, dict):
+            return
+    except Exception:
+        return
+
+    if not any(data.get(k) for k in ("utm_source", "utm_campaign", "first_referer")):
+        return
+
+    if lead_id is not None:
+        existing = await db.execute(
+            select(LeadSource.id).where(LeadSource.lead_id == lead_id).limit(1)
+        )
+        if existing.scalar_one_or_none() is not None:
+            return
+    if user_id is not None:
+        existing = await db.execute(
+            select(LeadSource.id).where(LeadSource.user_id == user_id).limit(1)
+        )
+        if existing.scalar_one_or_none() is not None:
+            return
+
+    row = LeadSource(
+        lead_id=lead_id,
+        user_id=user_id,
+        utm_source=(data.get("utm_source") or "")[:120] or None,
+        utm_medium=(data.get("utm_medium") or "")[:120] or None,
+        utm_campaign=(data.get("utm_campaign") or "")[:120] or None,
+        utm_term=(data.get("utm_term") or "")[:120] or None,
+        utm_content=(data.get("utm_content") or "")[:120] or None,
+        first_referer=(data.get("first_referer") or "")[:500] or None,
+        first_landing=(data.get("first_landing") or "")[:500] or None,
+        ip=ip,
+        user_agent=user_agent,
+    )
+    db.add(row)
+    await db.commit()
+
 
 async def upsert_lead(
     db: AsyncSession,

@@ -51,10 +51,29 @@
   <div style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.1));border:1px solid rgba(96,165,250,0.3);border-radius:20px;padding:40px;text-align:center">
     <h3 style="font-size:26px;color:#f1f5f9;font-weight:800;margin:0 0 12px;line-height:1.3">Ti è piaciuto il risultato?</h3>
     <p style="color:#cbd5e1;font-size:16px;line-height:1.7;margin:0 auto 28px;max-width:560px">Crea un account gratuito e ottieni <strong style="color:#f1f5f9">10 documenti/mese per sempre</strong>, senza carta. Bastano 30 secondi.</p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a href="/registrati" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.3px">Attiva account gratuito →</a>
-      <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ canonical_base }}/demo" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:rgba(15,23,42,0.8);border:1px solid #334155;color:#f1f5f9;padding:16px 24px;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px">🔗 Condividi su LinkedIn</a>
+    <a href="/registrati" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.3px;margin-bottom:20px">Attiva account gratuito →</a>
+    <div style="color:#64748b;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin:24px 0 12px">Condividi la demo</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ canonical_base }}/demo" target="_blank" rel="noopener" aria-label="LinkedIn" style="display:inline-flex;align-items:center;gap:8px;background:rgba(10,102,194,0.15);border:1px solid rgba(10,102,194,0.4);color:#60a5fa;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">in LinkedIn</a>
+      <a href="https://twitter.com/intent/tweet?text=Ho%20provato%20VYNEX%20%E2%80%94%203%20documenti%20commerciali%20in%2030%20secondi%20con%20l'AI.%20Provalo%20gratis%20su&url={{ canonical_base }}/demo" target="_blank" rel="noopener" aria-label="X/Twitter" style="display:inline-flex;align-items:center;gap:8px;background:rgba(29,155,240,0.12);border:1px solid rgba(29,155,240,0.4);color:#60a5fa;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">X Twitter</a>
+      <a href="https://wa.me/?text=Ho%20appena%20provato%20VYNEX%20%E2%80%94%203%20documenti%20commerciali%20generati%20in%2030%20secondi%20{{ canonical_base }}/demo" target="_blank" rel="noopener" aria-label="WhatsApp" style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.4);color:#4ade80;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">WhatsApp</a>
+      <a href="mailto:?subject=VYNEX%20%E2%80%94%20AI%20per%20agenti%20commerciali&body=Ciao%2C%0A%0Aho%20provato%20questo%20tool%20italiano%20che%20genera%203%20documenti%20commerciali%20(report%2C%20follow-up%2C%20offerta)%20in%2030%20secondi%20da%20una%20descrizione%20di%20visita.%20%0A%0ATestalo%20gratis%3A%20{{ canonical_base }}/demo%0A" aria-label="Email" style="display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.4);color:#cbd5e1;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">@ Email</a>
+      <button type="button" id="share-copy" data-link="{{ canonical_base }}/demo" aria-label="Copia link" style="display:inline-flex;align-items:center;gap:8px;background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.4);color:#cbd5e1;padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer">🔗 Copia link</button>
     </div>
+    <script>
+      (function(){
+        var btn = document.getElementById('share-copy');
+        if (!btn) return;
+        btn.addEventListener('click', function(){
+          var link = btn.getAttribute('data-link');
+          var orig = btn.innerText;
+          if (navigator.clipboard) navigator.clipboard.writeText(link).then(function(){
+            btn.innerText = 'Copiato ✓';
+            setTimeout(function(){ btn.innerText = orig; }, 1800);
+          });
+        });
+      })();
+    </script>
   </div>
 
   <p style="text-align:center;color:#64748b;font-size:12px;margin-top:32px">Questo link è privato e valido 7 giorni. Puoi sempre <a href="/unsubscribe/{{ lead_unsub_token }}" style="color:#64748b">disiscriverti dalle email VYNEX</a>.</p>

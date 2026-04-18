@@ -1,0 +1,63 @@
+<nav style="position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:rgba(4,6,15,0.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(30,41,59,0.6)">
+  <a href="/" style="text-decoration:none;display:flex;align-items:center">
+    <span style="font-size:20px;font-weight:800;letter-spacing:3px;color:#60a5fa">VYNEX</span>
+  </a>
+
+  <div id="nav-links-desktop" style="display:flex;gap:28px;align-items:center">
+    <a href="/come-funziona" style="color:#cbd5e1;text-decoration:none;font-size:14px;font-weight:500">Come funziona</a>
+    <a href="/prezzi" style="color:#cbd5e1;text-decoration:none;font-size:14px;font-weight:500">Prezzi</a>
+    <a href="/demo" style="color:#cbd5e1;text-decoration:none;font-size:14px;font-weight:500">Demo gratis</a>
+    <a href="/blog" style="color:#cbd5e1;text-decoration:none;font-size:14px;font-weight:500">Blog</a>
+    <a href="/chi-siamo" style="color:#cbd5e1;text-decoration:none;font-size:14px;font-weight:500">Chi siamo</a>
+  </div>
+
+  <div id="nav-actions-desktop" style="display:flex;gap:10px;align-items:center">
+    <a href="/login" style="color:#cbd5e1;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:500">Accedi</a>
+    <a href="/registrati" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600">Inizia gratis</a>
+  </div>
+
+  <button id="nav-burger" type="button" aria-label="Apri menu" style="display:none;background:none;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f1f5f9;cursor:pointer">
+    <span style="display:block;width:18px;height:2px;background:#f1f5f9;margin:3px 0"></span>
+    <span style="display:block;width:18px;height:2px;background:#f1f5f9;margin:3px 0"></span>
+    <span style="display:block;width:18px;height:2px;background:#f1f5f9;margin:3px 0"></span>
+  </button>
+</nav>
+
+<div id="nav-mobile-menu" style="display:none;position:fixed;top:60px;right:0;left:0;background:rgba(4,6,15,0.98);z-index:99;padding:20px 24px;border-bottom:1px solid #1e293b">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <a href="/come-funziona" style="color:#f1f5f9;text-decoration:none;padding:14px 0;border-bottom:1px solid #1e293b;font-size:16px;font-weight:500">Come funziona</a>
+    <a href="/prezzi" style="color:#f1f5f9;text-decoration:none;padding:14px 0;border-bottom:1px solid #1e293b;font-size:16px;font-weight:500">Prezzi</a>
+    <a href="/demo" style="color:#f1f5f9;text-decoration:none;padding:14px 0;border-bottom:1px solid #1e293b;font-size:16px;font-weight:500">Demo gratis</a>
+    <a href="/blog" style="color:#f1f5f9;text-decoration:none;padding:14px 0;border-bottom:1px solid #1e293b;font-size:16px;font-weight:500">Blog</a>
+    <a href="/chi-siamo" style="color:#f1f5f9;text-decoration:none;padding:14px 0;border-bottom:1px solid #1e293b;font-size:16px;font-weight:500">Chi siamo</a>
+    <a href="/login" style="color:#f1f5f9;text-decoration:none;padding:14px 0;border-bottom:1px solid #1e293b;font-size:16px;font-weight:500">Accedi</a>
+    <a href="/registrati" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;text-decoration:none;padding:14px 20px;border-radius:10px;font-size:16px;font-weight:700;margin-top:12px;text-align:center">Inizia gratis →</a>
+  </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+  #nav-links-desktop, #nav-actions-desktop { display: none !important; }
+  #nav-burger { display: block !important; }
+}
+</style>
+
+<script>
+(function(){
+  var burger = document.getElementById('nav-burger');
+  var menu = document.getElementById('nav-mobile-menu');
+  if (!burger || !menu) return;
+  var open = false;
+  burger.addEventListener('click', function(){
+    open = !open;
+    menu.style.display = open ? 'block' : 'none';
+    burger.setAttribute('aria-label', open ? 'Chiudi menu' : 'Apri menu');
+  });
+  document.addEventListener('click', function(e){
+    if (open && !menu.contains(e.target) && !burger.contains(e.target)) {
+      open = false;
+      menu.style.display = 'none';
+    }
+  });
+})();
+</script>
