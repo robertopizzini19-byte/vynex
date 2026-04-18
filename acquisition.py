@@ -392,6 +392,59 @@ async def post_signup_setup(
     except Exception:
         logger.exception("enroll_user_in_sequence failed user=%s", user.id)
 
+    try:
+        await migrate_demo_to_account(db, user)
+    except Exception:
+        logger.exception("migrate_demo_to_account failed user=%s", user.id)
+
+
+async def migrate_demo_to_account(db: AsyncSession, user: User) -> int:
+    """Se esiste un Lead con stessa email che ha provato /demo, crea i 3 Document
+    nell'account appena registrato. Cosi l'utente, al primo accesso in dashboard,
+    ritrova subito i documenti che aveva generato in demo. Idempotente: se esiste
+    gia' un doc con stesso input_text per questo user, salta.
+    """
+    import json as _json_mod
+    lr = await db.execute(select(Lead).where(Lead.email == user.email))
+    lead = lr.scalar_one_or_none()
+    if lead is None or not lead.demo_input:
+        return 0
+
+    try:
+        payload = _json_mod.loads(lead.demo_input)
+    except Exception:
+        logger.exception("migrate_demo: invalid demo_input lead=%s", lead.id)
+        return 0
+
+    input_text = (payload.get("input") or "")[:2000]
+    if not input_text:
+        return 0
+
+    existing = await db.execute(
+        select(Document.id)
+        .where(Document.user_id == user.id)
+        .where(Document.input_text == input_text)
+        .limit(1)
+    )
+    if existing.scalar_one_or_none() is not None:
+        return 0
+
+    doc = Document(
+        user_id=user.id,
+        input_text=input_text,
+        report_visita=payload.get("report_visita") or "",
+        email_followup=payload.get("email_followup") or "",
+        offerta_commerciale=payload.get("offerta_commerciale") or "",
+        cliente_nome=(payload.get("cliente_nome") or "")[:255] or None,
+        azienda_cliente=(payload.get("azienda_cliente") or "")[:255] or None,
+    )
+    db.add(doc)
+    if lead.status != "converted":
+        lead.status = "converted"
+    await db.commit()
+    logger.info("migrated demo lead=%s to user=%s as document", lead.id, user.id)
+    return 1
+
 
 async def on_user_converted_to_paid(db: AsyncSession, user: User) -> None:
     """Chiamato quando user diventa paying. Se era stato referral-ato, notifica

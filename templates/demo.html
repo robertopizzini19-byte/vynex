@@ -20,19 +20,29 @@
   <form id="demo-form" action="/api/demo" method="POST" style="background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.15);border-radius:16px;padding:32px;backdrop-filter:blur(10px)">
     <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">La tua email</label>
     <input type="email" name="email" required placeholder="mario.rossi@esempio.it"
+           value="{{ draft.email if draft else '' }}"
            style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:24px">
 
     <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">Il tuo nome</label>
     <input type="text" name="full_name" required placeholder="Mario Rossi" maxlength="120"
+           value="{{ draft.full_name if draft else '' }}"
            style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:24px">
 
     <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">Azienda (opzionale)</label>
     <input type="text" name="company" placeholder="Rossi Srl" maxlength="120"
+           value="{{ draft.company if draft else '' }}"
            style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:16px;margin-bottom:24px">
 
-    <label style="display:block;color:#cbd5e1;font-size:14px;font-weight:600;margin-bottom:8px">Racconta una visita commerciale (2-4 righe)</label>
-    <textarea name="input_text" required rows="6" maxlength="2000" placeholder="Oggi ho visitato Tecnoservice Srl, referente Ing. Bianchi. Cercano un partner per forniture industriali ricorrenti. Competitor attuale: Bergamo Industriale. Budget indicato: 15K/anno. Prossimo step: invio offerta entro venerdì."
-              style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:15px;line-height:1.6;margin-bottom:20px;resize:vertical;font-family:inherit"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px;flex-wrap:wrap">
+      <label style="color:#cbd5e1;font-size:14px;font-weight:600;margin:0">Racconta una visita commerciale (2-4 righe)</label>
+      <button type="button" id="demo-example" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Usa esempio</button>
+    </div>
+    <textarea id="demo-input" name="input_text" required rows="6" maxlength="2000" placeholder="Oggi ho visitato Tecnoservice Srl, referente Ing. Bianchi. Cercano un partner per forniture industriali ricorrenti. Competitor attuale: Bergamo Industriale. Budget indicato: 15K/anno. Prossimo step: invio offerta entro venerdì."
+              style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:15px;line-height:1.6;margin-bottom:8px;resize:vertical;font-family:inherit">{{ draft.input_text if draft else '' }}</textarea>
+    <div style="display:flex;justify-content:space-between;color:#64748b;font-size:12px;margin-bottom:20px">
+      <span id="demo-hint">Più dettagli → documenti più precisi. Includi nome cliente, azienda, budget, next step.</span>
+      <span><span id="demo-char">0</span>/2000</span>
+    </div>
 
     <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px">
 
@@ -50,8 +60,9 @@
     </p>
   </form>
 
-  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1e293b;text-align:center;color:#64748b;font-size:13px">
-    Già hai un account VYNEX? <a href="/login" style="color:#60a5fa;text-decoration:none">Accedi →</a>
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1e293b;text-align:center;color:#64748b;font-size:13px;display:flex;flex-direction:column;gap:8px">
+    <div>Già hai un account VYNEX? <a href="/login" style="color:#60a5fa;text-decoration:none">Accedi →</a></div>
+    <div>Hai già provato la demo ma non trovi il link? <a href="/demo/recovery" style="color:#60a5fa;text-decoration:none">Rimandamelo →</a></div>
   </div>
 </main>
 
@@ -77,7 +88,29 @@
   var tipEl = document.getElementById('demo-loading-tip');
   var titleEl = document.getElementById('demo-loading-title');
   var elapsedEl = document.getElementById('demo-loading-elapsed');
+  var inputTxt = document.getElementById('demo-input');
+  var charEl = document.getElementById('demo-char');
+  var hintEl = document.getElementById('demo-hint');
+  var exBtn = document.getElementById('demo-example');
   if (!form) return;
+
+  var EXAMPLE = "Oggi 18/04 visita a Mario Rossi, titolare della Ferramenta Bianchi a Bergamo. Settore: utensileria industriale. Catalogo primavera 2026 - interessato alla linea trapani cordless Makita e avvitatori Bosch. Proposto sconto 10% primo ordine + pagamento 30 gg fine mese. Budget indicato: 8.000 euro trimestrali. Obiezione: teme tempi consegna lunghi, rassicurato con 48h stock. Next step: invio offerta scritta entro venerdi + richiama martedi 22/04.";
+
+  function updateChar(){
+    var n = inputTxt.value.length;
+    charEl.innerText = n;
+    if (n < 30) { hintEl.innerText = 'Ancora ' + (30 - n) + ' caratteri per generare. Includi nome cliente + azienda.'; hintEl.style.color = '#fca5a5'; }
+    else if (n < 120) { hintEl.innerText = 'Aggiungi settore, budget e next step per un risultato piu preciso.'; hintEl.style.color = '#fbbf24'; }
+    else { hintEl.innerText = 'Perfetto. Piu dettagli metti, piu i 3 documenti saranno precisi.'; hintEl.style.color = '#4ade80'; }
+  }
+  inputTxt.addEventListener('input', updateChar);
+  updateChar();
+
+  if (exBtn) exBtn.addEventListener('click', function(){
+    inputTxt.value = EXAMPLE;
+    inputTxt.focus();
+    updateChar();
+  });
 
   var tips = [
     { title: 'Sto generando i tuoi 3 documenti…', tip: 'Claude Haiku 4.5 sta leggendo la tua descrizione e costruendo il report professionale.' },
@@ -88,6 +121,7 @@
 
   form.addEventListener('submit', function(e){
     if (!form.checkValidity()) return;
+    if (inputTxt.value.trim().length < 30) { return; }
     overlay.style.display = 'flex';
     btn.disabled = true;
     btn.style.opacity = '0.6';

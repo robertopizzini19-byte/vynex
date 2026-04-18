@@ -105,6 +105,17 @@ async def send_welcome_email(to: str, name: str) -> bool:
     return await _send(to, "Benvenuto su VYNEX", _wrap(body))
 
 
+async def send_demo_recovery_email(to: str, name: str, result_link: str) -> bool:
+    first = name.split()[0] if name else "ciao"
+    body = f"""
+    <h1 style="font-size:22px;color:#f1f5f9">I tuoi 3 documenti VYNEX</h1>
+    <p style="color:#94a3b8;line-height:1.7">Ciao {first}, ecco il link privato per rivedere i documenti che hai generato su VYNEX. Valido 7 giorni.</p>
+    <p><a href="{result_link}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Apri i documenti</a></p>
+    <p style="color:#64748b;font-size:12px;line-height:1.6">Se non hai mai usato VYNEX, ignora questa email.</p>
+    """
+    return await _send(to, "I tuoi documenti VYNEX — link di accesso", _wrap(body))
+
+
 async def send_password_reset_email(to: str, name: str, reset_link: str) -> bool:
     body = f"""
     <h1 style="font-size:22px;color:#f1f5f9">Reset password VYNEX</h1>
