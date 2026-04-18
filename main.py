@@ -139,7 +139,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
-_CSRF_EXEMPT_PATHS = ("/webhook/stripe", "/auth/google/verify")
+_CSRF_EXEMPT_PATHS = ("/webhook/stripe", "/auth/google/verify", "/api/admin/")
 _CSRF_SAFE_METHODS = ("GET", "HEAD", "OPTIONS", "TRACE")
 
 
