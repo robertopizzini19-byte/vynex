@@ -2249,36 +2249,46 @@ Requisiti OBBLIGATORI:
 - Target SEO: long-tail per "{keyword}"
 - Includi almeno 2 esempi concreti di agente italiano (nomi realistici, numeri, settore)
 - Chiudi con CTA soft verso /demo o /registrati
+- body_html: HTML puro (no markdown). Tag consentiti: h2, h3, p, ul, ol, li, strong, em, a, blockquote.
 
-Rispondi SOLO con JSON di questa struttura esatta:
-{{
-  "title": "titolo SEO ottimizzato (50-65 char)",
-  "meta_description": "meta description SEO (140-160 char)",
-  "hero_subtitle": "sottotitolo hero pagina (80-140 char)",
-  "body_html": "<h2>...</h2><p>...</p>..." (HTML puro, no markdown, classi CSS inline minime),
-  "tags": ["tag1", "tag2", "tag3"],
-  "reading_minutes": 6
-}}"""
+Chiama lo strumento save_blog_post con tutti i campi compilati."""
+
+    tools = [{
+        "name": "save_blog_post",
+        "description": "Salva l'articolo blog generato nel database.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Titolo SEO (50-65 char)"},
+                "meta_description": {"type": "string", "description": "Meta description SEO (140-160 char)"},
+                "hero_subtitle": {"type": "string", "description": "Sottotitolo hero (80-140 char)"},
+                "body_html": {"type": "string", "description": "Body HTML puro dell'articolo (900-1400 parole)"},
+                "tags": {"type": "array", "items": {"type": "string"}, "description": "3-6 tag"},
+                "reading_minutes": {"type": "integer", "description": "Tempo lettura in minuti (3-10)"},
+            },
+            "required": ["title", "meta_description", "body_html", "tags", "reading_minutes"],
+        },
+    }]
 
     try:
         msg = await client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=4096,
+            tools=tools,
+            tool_choice={"type": "tool", "name": "save_blog_post"},
             messages=[{"role": "user", "content": prompt}],
         )
-        text = msg.content[0].text
     except Exception as exc:
         logger.exception("blog generate: Anthropic call failed")
         raise HTTPException(502, f"AI error: {exc}")
 
-    import re as _re, json as _json_m
-    m = _re.search(r"\{.*\}", text, _re.S)
-    if not m:
-        raise HTTPException(502, "AI response not JSON")
-    try:
-        data = _json_m.loads(m.group(0))
-    except Exception as exc:
-        raise HTTPException(502, f"AI JSON parse failed: {exc}")
+    data = None
+    for block in msg.content:
+        if getattr(block, "type", None) == "tool_use" and block.name == "save_blog_post":
+            data = block.input
+            break
+    if data is None:
+        raise HTTPException(502, "AI did not invoke save_blog_post tool")
 
     title = (data.get("title") or keyword.title())[:200]
     slug_base = _slugify(title)
