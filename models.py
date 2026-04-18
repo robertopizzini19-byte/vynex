@@ -180,9 +180,24 @@ class EmailJob(Base):
     error = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    retry_count = Column(Integer, default=0, nullable=False)
+    next_retry_at = Column(DateTime, nullable=True)
+
     __table_args__ = (
         Index("ix_email_jobs_pending", "scheduled_for", "sent_at"),
+        Index("ix_email_jobs_retry", "next_retry_at", "sent_at"),
     )
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    action = Column(String(64), nullable=False, index=True)
+    detail = Column(Text, nullable=True)
+    ip = Column(String(45), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
 class ReferralClick(Base):

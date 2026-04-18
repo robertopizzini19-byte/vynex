@@ -137,7 +137,7 @@ _LEAD_FINAL_OFFER = Campaign(
         """
         <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">Ultima spinta, {name}.</h1>
         <p style="color:#cbd5e1;line-height:1.7">Hai provato VYNEX. Sai che funziona. So che l'ostacolo è quel passo di attivare l'account.</p>
-        <p style="color:#cbd5e1;line-height:1.7">Ti sblocco il primo mese Pro a <strong>€31,20 invece di €39</strong> con il codice <code style="background:#1e293b;padding:4px 8px;border-radius:4px;color:#60a5fa">BENVENUTO20</code>. Scade tra 48 ore.</p>
+        <p style="color:#cbd5e1;line-height:1.7">Ti sblocco il primo mese Pro a <strong>€39,20 invece di €49</strong> con il codice <code style="background:#1e293b;padding:4px 8px;border-radius:4px;color:#60a5fa">BENVENUTO20</code>. Scade tra 48 ore.</p>
         <p style="text-align:center;margin:28px 0">{cta}</p>
         <p style="color:#94a3b8;line-height:1.7;font-size:14px">Puoi disdire in un click dal portale fatturazione. Nessuna trappola. Solo 30 giorni con documenti illimitati per vedere cosa cambia nel tuo lavoro.</p>
         """,
@@ -193,7 +193,7 @@ _USER_UPGRADE_NUDGE = Campaign(
         """
         <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">Se usi 10 documenti al mese, ne stai lasciando 30 a terra.</h1>
         <p style="color:#cbd5e1;line-height:1.7">Un agente in attività reale fa 8-12 visite/settimana. A questo ritmo il piano Free copre meno di 3 giorni lavorativi.</p>
-        <p style="color:#cbd5e1;line-height:1.7">Il piano Pro sblocca documenti illimitati, a €39/mese. Se in 30 giorni non chiudi <em>almeno un contratto</em> che altrimenti non avresti chiuso, disdici e basta.</p>
+        <p style="color:#cbd5e1;line-height:1.7">Il piano Pro sblocca documenti illimitati, a €49/mese. Se in 30 giorni non chiudi <em>almeno un contratto</em> che altrimenti non avresti chiuso, disdici e basta.</p>
         <p style="text-align:center;margin:28px 0">{cta}</p>
         """,
     ).replace("{cta}", _btn("{base_url}/prezzi", "Passa a Pro")),

@@ -42,7 +42,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
 # Max invii batch per processing cycle — Resend free tier è 100/giorno,
 # un worker ogni 5 min con batch 20 dà margine ampio senza mai toccare il cap.
-MAX_SEND_PER_CYCLE = 20
+MAX_SEND_PER_CYCLE = int(os.getenv("EMAIL_BATCH_SIZE", "20"))
+
+MAX_RETRY = 3
+RETRY_BACKOFF_MINUTES = [15, 60, 240]
 
 # Soglia minima tra invii consecutivi allo stesso lead — evita "burst"
 # percepiti come spam anche se la sequenza logicamente consente delay_hours=0.
@@ -53,13 +56,13 @@ MIN_INTERVAL_PER_RECIPIENT_SEC = 30
 # HMAC signing per tracking pixel/click (anti-enumeration)
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _sig(job_id: int, purpose: str) -> str:
-    msg = f"{purpose}:{job_id}".encode()
-    return hmac.new(SECRET_KEY.encode(), msg, hashlib.sha256).hexdigest()[:16]
+def _sig(job_id: int, purpose: str, extra: str = "") -> str:
+    msg = f"{purpose}:{job_id}:{extra}".encode()
+    return hmac.new(SECRET_KEY.encode(), msg, hashlib.sha256).hexdigest()[:32]
 
 
-def verify_sig(job_id: int, purpose: str, sig: str) -> bool:
-    return hmac.compare_digest(_sig(job_id, purpose), sig)
+def verify_sig(job_id: int, purpose: str, sig: str, extra: str = "") -> bool:
+    return hmac.compare_digest(_sig(job_id, purpose, extra), sig)
 
 
 def tracking_pixel_url(job_id: int) -> str:
@@ -68,7 +71,8 @@ def tracking_pixel_url(job_id: int) -> str:
 
 def tracking_click_url(job_id: int, target: str) -> str:
     from urllib.parse import quote_plus
-    return f"{BASE_URL}/e/c/{job_id}/{_sig(job_id, 'click')}?u={quote_plus(target)}"
+    sig = _sig(job_id, "click", target)
+    return f"{BASE_URL}/e/c/{job_id}/{sig}?u={quote_plus(target)}"
 
 
 def unsubscribe_url(token: str) -> str:
@@ -207,15 +211,47 @@ async def enroll_user_in_sequence(
 # Queue processor
 # ──────────────────────────────────────────────────────────────────────────────
 
+async def _schedule_retry(
+    db: AsyncSession, job_id: int, retry_count: int, error_msg: str
+) -> bool:
+    if retry_count >= MAX_RETRY:
+        await db.execute(
+            update(EmailJob).where(EmailJob.id == job_id)
+            .values(error=f"MAX_RETRY: {error_msg}", sent_at=None)
+        )
+        return False
+    backoff_min = RETRY_BACKOFF_MINUTES[min(retry_count, len(RETRY_BACKOFF_MINUTES) - 1)]
+    next_at = datetime.utcnow() + timedelta(minutes=backoff_min)
+    await db.execute(
+        update(EmailJob).where(EmailJob.id == job_id)
+        .values(
+            sent_at=None,
+            retry_count=retry_count + 1,
+            next_retry_at=next_at,
+            error=error_msg,
+        )
+    )
+    logger.info("retry scheduled job=%s attempt=%d next_at=%s", job_id, retry_count + 1, next_at)
+    return True
+
+
 async def process_email_queue(db: AsyncSession) -> dict:
     """Scan jobs pendenti, claim via CAS, invia. Ritorna counters."""
     now = datetime.utcnow()
-    counts = {"scanned": 0, "claimed": 0, "sent": 0, "failed": 0, "skipped_unsub": 0}
+    counts = {"scanned": 0, "claimed": 0, "sent": 0, "failed": 0, "skipped_unsub": 0, "retried": 0}
 
+    from sqlalchemy import or_
     q = await db.execute(
         select(EmailJob)
         .where(EmailJob.sent_at.is_(None))
-        .where(EmailJob.scheduled_for <= now)
+        .where(or_(
+            EmailJob.scheduled_for <= now,
+            (EmailJob.next_retry_at.is_not(None)) & (EmailJob.next_retry_at <= now),
+        ))
+        .where(or_(
+            EmailJob.retry_count < MAX_RETRY,
+            EmailJob.retry_count.is_(None),
+        ))
         .order_by(EmailJob.scheduled_for.asc())
         .limit(MAX_SEND_PER_CYCLE)
     )
@@ -297,19 +333,17 @@ async def process_email_queue(db: AsyncSession) -> dict:
             ok = await send_raw(to_email, subject, html_with_pixel)
             if ok:
                 counts["sent"] += 1
-            else:
                 await db.execute(
                     update(EmailJob).where(EmailJob.id == job.id)
-                    .values(error="send failed")
+                    .values(error=None, next_retry_at=None)
                 )
-                counts["failed"] += 1
+            else:
+                retried = await _schedule_retry(db, job.id, job.retry_count or 0, "send failed")
+                counts["retried" if retried else "failed"] += 1
         except Exception as exc:
             logger.exception("process_email_queue send failed job=%s", job.id)
-            await db.execute(
-                update(EmailJob).where(EmailJob.id == job.id)
-                .values(error=str(exc)[:500])
-            )
-            counts["failed"] += 1
+            retried = await _schedule_retry(db, job.id, job.retry_count or 0, str(exc)[:500])
+            counts["retried" if retried else "failed"] += 1
 
     await db.commit()
     return counts

@@ -1,6 +1,6 @@
 """
-Email transazionali via Resend API.
-Graceful no-op se RESEND_API_KEY non settata (dev locale).
+Email transazionali — supporta Brevo (primario) e Resend (fallback).
+Graceful no-op se nessuna API key è configurata (dev locale).
 """
 import os
 import logging
@@ -9,11 +9,13 @@ import httpx
 logger = logging.getLogger("vynex.emailer")
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "VYNEX <ciao@vynex.it>")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "VYNEX <noreply@vynex.it>")
 EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "ciao@vynex.it")
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
 
 RESEND_URL = "https://api.resend.com/emails"
+BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 
 
 async def send_raw(to: str, subject: str, html: str) -> bool:
@@ -22,30 +24,56 @@ async def send_raw(to: str, subject: str, html: str) -> bool:
 
 
 async def _send(to: str, subject: str, html: str) -> bool:
-    if not RESEND_API_KEY:
-        logger.info("RESEND_API_KEY not set — skipping email to %s (%s)", to, subject)
+    if BREVO_API_KEY:
+        return await _send_brevo(to, subject, html)
+    if RESEND_API_KEY:
+        return await _send_resend(to, subject, html)
+    logger.info("No email provider configured — skipping email to %s (%s)", to, subject)
+    return False
+
+
+async def _send_brevo(to: str, subject: str, html: str) -> bool:
+    from_parts = EMAIL_FROM.split("<")
+    from_name = from_parts[0].strip() if len(from_parts) > 1 else "VYNEX"
+    from_email = from_parts[-1].rstrip(">").strip() if len(from_parts) > 1 else "noreply@vynex.it"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            res = await client.post(
+                BREVO_URL,
+                headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+                json={
+                    "sender": {"name": from_name, "email": from_email},
+                    "to": [{"email": to}],
+                    "subject": subject,
+                    "htmlContent": html,
+                    "replyTo": {"email": EMAIL_REPLY_TO},
+                },
+            )
+    except httpx.TimeoutException:
+        logger.error("Brevo timeout for %s", to)
         return False
+    except httpx.HTTPError as exc:
+        logger.error("Brevo transport error: %s", exc)
+        return False
+    if res.status_code >= 400:
+        logger.error("Brevo error %s: %s", res.status_code, res.text)
+        return False
+    return True
+
+
+async def _send_resend(to: str, subject: str, html: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.post(
                 RESEND_URL,
-                headers={
-                    "Authorization": f"Bearer {RESEND_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "from": EMAIL_FROM,
-                    "to": [to],
-                    "subject": subject,
-                    "html": html,
-                    "reply_to": EMAIL_REPLY_TO,
-                },
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                json={"from": EMAIL_FROM, "to": [to], "subject": subject, "html": html, "reply_to": EMAIL_REPLY_TO},
             )
     except httpx.TimeoutException:
-        logger.error("Resend timeout for %s (%s)", to, subject)
+        logger.error("Resend timeout for %s", to)
         return False
     except httpx.HTTPError as exc:
-        logger.error("Resend transport error for %s: %s", to, exc)
+        logger.error("Resend transport error: %s", exc)
         return False
     if res.status_code >= 400:
         logger.error("Resend error %s: %s", res.status_code, res.text)
