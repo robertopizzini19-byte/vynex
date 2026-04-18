@@ -35,6 +35,7 @@ from acquisition import (
     enroll_lead_in_sequence,
     process_email_queue,
     reset_all_retries,
+    save_source_attribution,
     verify_sig,
 )
 from email_templates import SEQUENCE_LEAD_DEMO
@@ -175,6 +176,37 @@ class OriginCSRFMiddleware(BaseHTTPMiddleware):
         )
 
 
+class UtmTrackingMiddleware(BaseHTTPMiddleware):
+    """Cattura utm_source/medium/campaign/term/content dai query params
+    e li salva in cookie vynex_utm (30 giorni) per attribution a Lead/User
+    al momento della conversione."""
+
+    _UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content")
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        try:
+            qp = request.query_params
+            found = {k: qp.get(k, "")[:120] for k in self._UTM_KEYS if qp.get(k)}
+            if found:
+                # add referer and landing on first touch
+                if "first_referer" not in found:
+                    ref = request.headers.get("referer", "")[:500]
+                    if ref and "agentia-production-fb78" not in ref and "vynex" not in ref:
+                        found["first_referer"] = ref
+                found["first_landing"] = str(request.url.path)[:500]
+                import json as _j
+                response.set_cookie(
+                    "vynex_utm", _j.dumps(found),
+                    httponly=True, secure=_COOKIE_SECURE, samesite="lax",
+                    max_age=60 * 60 * 24 * 30,
+                )
+        except Exception:
+            logger.exception("utm middleware set-cookie failed")
+        return response
+
+
+app.add_middleware(UtmTrackingMiddleware)
 app.add_middleware(OriginCSRFMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
@@ -495,6 +527,17 @@ async def api_register(
         await post_signup_setup(db, user, ref_cookie)
     except Exception:
         logger.exception("post_signup_setup failed")
+
+    try:
+        await save_source_attribution(
+            db,
+            user_id=user.id,
+            utm_cookie=request.cookies.get("vynex_utm"),
+            ip=client_ip,
+            user_agent=user_agent,
+        )
+    except Exception:
+        logger.exception("save_source_attribution signup failed user=%s", user.id)
 
     token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
     response = redirect_with_cookie("/dashboard", token)
@@ -1733,6 +1776,17 @@ async def api_demo(
     except Exception:
         logger.exception("demo sequence enroll failed lead=%s", lead.id)
 
+    try:
+        await save_source_attribution(
+            db,
+            lead_id=lead.id,
+            utm_cookie=request.cookies.get("vynex_utm"),
+            ip=(request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else ""))[:45],
+            user_agent=request.headers.get("user-agent", "")[:500],
+        )
+    except Exception:
+        logger.exception("save_source_attribution demo failed lead=%s", lead.id)
+
     response = RedirectResponse(f"/demo/result/{lead.unsub_token}", status_code=302)
     # Clear the draft cookie on success so next visit loads a clean form.
     response.delete_cookie("vynex_demo_draft")
@@ -2321,6 +2375,29 @@ Chiama lo strumento save_blog_post con tutti i campi compilati."""
         "title": title,
         "url": f"{os.getenv('BASE_URL', '').rstrip('/')}/blog/{slug}",
     }
+
+
+@app.post("/api/admin/blog/unpublish/{slug}")
+async def admin_blog_unpublish(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Nasconde articolo dal pubblico (torna 404). Lasciato in DB per history."""
+    _require_admin(request)
+    r = await db.execute(
+        update(BlogPost).where(BlogPost.slug == slug).values(published=False).returning(BlogPost.id)
+    )
+    await db.commit()
+    ok = r.scalar_one_or_none() is not None
+    return {"unpublished": ok, "slug": slug}
+
+
+@app.post("/api/admin/blog/publish/{slug}")
+async def admin_blog_publish(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    r = await db.execute(
+        update(BlogPost).where(BlogPost.slug == slug).values(published=True).returning(BlogPost.id)
+    )
+    await db.commit()
+    ok = r.scalar_one_or_none() is not None
+    return {"published": ok, "slug": slug}
 
 
 @app.get("/api/admin/blog/list")
