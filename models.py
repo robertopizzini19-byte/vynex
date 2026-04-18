@@ -200,6 +200,47 @@ class AuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+class BlogPost(Base):
+    """Articolo SEO per attirare traffico organico long-tail.
+    Generabile a mano o via POST admin /api/admin/blog/generate (Claude Haiku).
+    """
+    __tablename__ = "blog_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String(120), unique=True, index=True, nullable=False)
+    title = Column(String(200), nullable=False)
+    meta_description = Column(String(300), nullable=False)
+    hero_subtitle = Column(String(300), nullable=True)
+    body_html = Column(Text, nullable=False)
+    keyword_primary = Column(String(120), nullable=True, index=True)
+    tags_csv = Column(String(255), nullable=True)
+    published = Column(Boolean, default=True, nullable=False)
+    published_at = Column(DateTime, default=datetime.utcnow, index=True)
+    reading_minutes = Column(Integer, default=5, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class LeadSource(Base):
+    """Attribution granular delle sorgenti di traffico — utm tracking + referrer.
+    Collegato al Lead per capire quali canali portano conversioni reali."""
+    __tablename__ = "lead_sources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    utm_source = Column(String(120), nullable=True, index=True)
+    utm_medium = Column(String(120), nullable=True)
+    utm_campaign = Column(String(120), nullable=True, index=True)
+    utm_term = Column(String(120), nullable=True)
+    utm_content = Column(String(120), nullable=True)
+    first_referer = Column(String(500), nullable=True)
+    first_landing = Column(String(500), nullable=True)
+    ip = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class ReferralClick(Base):
     """Log dei click su /r/{code} prima del signup. Permette analytics anche per
     click che non convertono (p.es. quanti click → quanti signup → quanti paying)."""
