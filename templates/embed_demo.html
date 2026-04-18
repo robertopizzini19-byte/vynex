@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genera 3 documenti commerciali in 30s — VYNEX</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;padding:16px;background:#04060f;font-family:Inter,system-ui,sans-serif;color:#f1f5f9}
+h1{font-size:18px;margin:0 0 6px;font-weight:700}
+p{color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 16px}
+input,textarea{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box;font-family:inherit;margin-bottom:10px}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+button{width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer}
+label{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:#64748b;line-height:1.5;margin-bottom:12px}
+label input{width:auto;margin-top:2px}
+a{color:#60a5fa;text-decoration:none}
+.footer{margin-top:12px;text-align:center;color:#64748b;font-size:10px}
+.err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:8px 10px;color:#fca5a5;font-size:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<h1>Prova VYNEX gratis</h1>
+<p>Descrivi una visita commerciale. Ricevi <strong style="color:#fff">3 documenti</strong> — report, email, offerta — in 30 secondi.</p>
+
+{% if error %}<div class="err">{{ error }}</div>{% endif %}
+
+<form action="/api/demo" method="POST" target="_top">
+  <input type="email" name="email" required placeholder="La tua email">
+  <input type="text" name="full_name" required placeholder="Il tuo nome" maxlength="120">
+  <input type="text" name="company" placeholder="Azienda (opzionale)" maxlength="120">
+  <textarea name="input_text" required rows="4" maxlength="2000" placeholder="Racconta la visita (minimo 30 caratteri)"></textarea>
+  <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px">
+  <label>
+    <input type="checkbox" name="accept_terms" required>
+    <span>Accetto la <a href="{{ canonical_base }}/privacy" target="_blank">privacy</a>.</span>
+  </label>
+  <button type="submit">Genera 3 documenti →</button>
+</form>
+
+<div class="footer">
+  Powered by <a href="{{ canonical_base }}/demo" target="_top"><strong>VYNEX</strong></a> · AI per agenti commerciali italiani
+</div>
+</body>
+</html>

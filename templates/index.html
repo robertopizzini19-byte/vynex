@@ -99,6 +99,17 @@
                 <span class="hero-label-dot"></span>
                 AI per agenti commerciali italiani
             </div>
+            {% if ab_variant == 'B' %}
+            <h1 class="hero-title">
+                Smetti di scrivere<br>
+                <span class="highlight">report.</span><br>
+                L'AI lo fa in 30s.
+            </h1>
+            <p class="hero-sub">
+                Parli. VYNEX scrive. Report di visita, email di follow-up e offerta commerciale
+                generati in italiano professionale — pronti da inviare al cliente o al mandante.
+            </p>
+            {% else %}
             <h1 class="hero-title">
                 Ogni visita diventa<br>
                 <span class="highlight">3 documenti</span><br>
@@ -109,6 +120,7 @@
                 VYNEX genera report professionale, email di follow-up e offerta commerciale —
                 pronti da inviare, sempre in italiano perfetto.
             </p>
+            {% endif %}
             <div class="hero-actions">
                 <a href="/demo" class="btn-primary btn-lg">Prova senza account →</a>
                 <a href="/registrati" class="btn-ghost">Crea account gratis</a>

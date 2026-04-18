@@ -123,7 +123,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        # /embed/* deve poter essere iframmato da siti partner → no X-Frame-Options
+        if request.url.path.startswith("/embed"):
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"  # soft — permette altri domini via CSP
+        else:
+            response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         response.headers["Content-Security-Policy"] = (
@@ -137,6 +141,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "base-uri 'self'; form-action 'self' https://checkout.stripe.com; "
             "frame-ancestors 'none'"
         )
+        # Override per /embed/*: permetti embedding da qualsiasi origine
+        if request.url.path.startswith("/embed"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "img-src 'self' data:; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "script-src 'self' 'unsafe-inline'; "
+                "base-uri 'self'; form-action 'self'; "
+                "frame-ancestors *"  # iframe da qualsiasi dominio
+            )
         return response
 
 
@@ -250,7 +265,59 @@ async def homepage(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("index.html", {"request": request})
+    # A/B testing hero — cookie 30d, variant A/B 50/50 random al primo hit
+    import secrets as _sec
+    ab = request.cookies.get("vynex_ab_hero", "")
+    if ab not in ("A", "B"):
+        ab = "B" if (_sec.randbits(1) == 1) else "A"
+    response = templates.TemplateResponse(
+        "index.html", {"request": request, "ab_variant": ab}
+    )
+    response.set_cookie(
+        "vynex_ab_hero", ab,
+        httponly=False, secure=_COOKIE_SECURE, samesite="lax",
+        max_age=60 * 60 * 24 * 30,
+    )
+    return response
+
+
+@app.get("/embed/demo", response_class=HTMLResponse)
+async def embed_demo(request: Request):
+    """Widget iframe-safe per embedding su siti terzi (partner, blog)."""
+    return templates.TemplateResponse(
+        "embed_demo.html",
+        {"request": request, "error": request.query_params.get("error", "")},
+    )
+
+
+@app.get("/embed", response_class=HTMLResponse)
+async def embed_docs(request: Request):
+    """Documentazione copy-paste codice iframe per partner."""
+    base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+    html = f"""<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<title>Embed VYNEX — widget demo per siti partner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{{font-family:Inter,sans-serif;background:#04060f;color:#f1f5f9;max-width:720px;margin:0 auto;padding:60px 24px;line-height:1.6}}
+code{{background:#1e293b;padding:12px 16px;border-radius:8px;display:block;color:#60a5fa;font-size:13px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}}
+h1{{font-size:32px;font-weight:800}}h2{{font-size:20px;margin-top:32px}}p{{color:#cbd5e1}}a{{color:#60a5fa}}</style></head><body>
+<h1>Embed il widget VYNEX sul tuo sito</h1>
+<p>Integra la demo di VYNEX su qualsiasi pagina web con un iframe. I lead generati
+vengono automaticamente attribuiti alla tua fonte via UTM. Zero SDK, zero JS.</p>
+<h2>Codice embed (copia-incolla)</h2>
+<code>&lt;iframe src="{base}/embed/demo?utm_source=partner&amp;utm_campaign=embed"
+  width="100%" height="640" style="border:1px solid #1e293b;border-radius:12px"
+  title="VYNEX Demo"&gt;&lt;/iframe&gt;</code>
+<h2>Parametri UTM personalizzati</h2>
+<p>Sostituisci <code style="display:inline;padding:2px 6px">utm_source=partner</code>
+con il tuo ID traffico. Esempio:</p>
+<code>{base}/embed/demo?utm_source=iltuoblog.it&amp;utm_medium=sidebar&amp;utm_campaign=nov2026</code>
+<h2>Responsive</h2>
+<p>Il widget si adatta da 300px a 800px di larghezza. Altezza consigliata: 640-700px.</p>
+<h2>Referenze</h2>
+<p><a href="{base}/">Home VYNEX</a> · <a href="{base}/demo">Demo full-page</a> ·
+<a href="mailto:ciao@vynex.it">Supporto partner</a></p>
+</body></html>"""
+    return HTMLResponse(html)
 
 
 @app.get("/prezzi", response_class=HTMLResponse)
