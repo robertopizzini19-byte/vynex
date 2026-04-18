@@ -211,13 +211,44 @@ async def enroll_user_in_sequence(
 # Queue processor
 # ──────────────────────────────────────────────────────────────────────────────
 
+_PROVIDER_SUSPENDED_MARKERS = (
+    "not yet activated",
+    "permission_denied",
+    "account is not activated",
+    "smtp account",
+)
+
+
+def _is_provider_suspended(error_msg: str) -> bool:
+    """True se l'errore indica che il provider (Brevo/Resend) ha sospeso l'account
+    globalmente, non un problema specifico del job. In quel caso non consumiamo
+    MAX_RETRY inutilmente: basta aspettare che l'admin attivi il provider."""
+    m = (error_msg or "").lower()
+    return any(marker in m for marker in _PROVIDER_SUSPENDED_MARKERS)
+
+
 async def _schedule_retry(
     db: AsyncSession, job_id: int, retry_count: int, error_msg: str
 ) -> bool:
+    # Se il provider e' sospeso, non incrementare retry_count (non spreca i 3 tentativi)
+    # e schedula un soft retry lungo (1h) — al prossimo cycle dopo activation ripartono.
+    if _is_provider_suspended(error_msg):
+        next_at = datetime.utcnow() + timedelta(hours=1)
+        await db.execute(
+            update(EmailJob).where(EmailJob.id == job_id)
+            .values(
+                sent_at=None,
+                next_retry_at=next_at,
+                error=f"PROVIDER_SUSPENDED: {error_msg}"[:500],
+            )
+        )
+        logger.warning("provider suspended, soft retry in 1h job=%s", job_id)
+        return True
+
     if retry_count >= MAX_RETRY:
         await db.execute(
             update(EmailJob).where(EmailJob.id == job_id)
-            .values(error=f"MAX_RETRY: {error_msg}", sent_at=None)
+            .values(error=f"MAX_RETRY: {error_msg}"[:500], sent_at=None)
         )
         return False
     backoff_min = RETRY_BACKOFF_MINUTES[min(retry_count, len(RETRY_BACKOFF_MINUTES) - 1)]
@@ -228,11 +259,25 @@ async def _schedule_retry(
             sent_at=None,
             retry_count=retry_count + 1,
             next_retry_at=next_at,
-            error=error_msg,
+            error=error_msg[:500],
         )
     )
     logger.info("retry scheduled job=%s attempt=%d next_at=%s", job_id, retry_count + 1, next_at)
     return True
+
+
+async def reset_all_retries(db: AsyncSession) -> int:
+    """Reset tutti i job non ancora spediti: azzera retry_count, next_retry_at, error.
+    Usato quando l'admin attiva il provider email e vuole riprocessare subito tutto."""
+    result = await db.execute(
+        update(EmailJob)
+        .where(EmailJob.sent_at.is_(None))
+        .values(retry_count=0, next_retry_at=None, error=None)
+    )
+    await db.commit()
+    count = result.rowcount or 0
+    logger.info("reset_all_retries: %d jobs unlocked", count)
+    return count
 
 
 async def process_email_queue(db: AsyncSession) -> dict:
