@@ -20,7 +20,7 @@ load_dotenv()
 from email_validator import validate_email, EmailNotValidError
 
 from database import get_db, init_db, AsyncSessionLocal
-from models import User, Document, Lead, EmailJob, ReferralClick, BlogPost, LeadSource, AuditLog, EmailVerificationToken
+from models import User, Document, Lead, EmailJob, ReferralClick, BlogPost, LeadSource, NPSResponse, APIKey, AuditLog, EmailVerificationToken
 from auth import (
     hash_password, verify_password, authenticate_user, create_access_token,
     get_current_user, require_user, get_user_by_email,
@@ -2441,6 +2441,288 @@ Chiama lo strumento save_blog_post con tutti i campi compilati."""
         "slug": slug,
         "title": title,
         "url": f"{os.getenv('BASE_URL', '').rstrip('/')}/blog/{slug}",
+    }
+
+
+# ─── API v1 PUBBLICA ──────────────────────────────────────────────────────────
+
+def _api_key_hash(key: str) -> str:
+    import hashlib
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+async def _auth_api_key(request: Request, db: AsyncSession) -> User:
+    raw = request.headers.get("x-api-key", "").strip()
+    if not raw or not raw.startswith("vx_"):
+        raise HTTPException(401, "X-API-Key mancante o non valida")
+    h = _api_key_hash(raw)
+    r = await db.execute(
+        select(APIKey).where(APIKey.key_hash == h).where(APIKey.revoked_at.is_(None))
+    )
+    api_key = r.scalar_one_or_none()
+    if api_key is None:
+        raise HTTPException(401, "API key non valida o revocata")
+    api_key.last_used_at = datetime.utcnow()
+    await db.commit()
+    ur = await db.execute(select(User).where(User.id == api_key.user_id))
+    user = ur.scalar_one_or_none()
+    if user is None or user.deleted_at is not None or not user.is_active:
+        raise HTTPException(403, "Utente disabilitato")
+    return user
+
+
+@app.post("/api/v1/documents/generate")
+@limiter.limit("60/minute")
+async def api_v1_generate(request: Request, db: AsyncSession = Depends(get_db)):
+    """Genera 3 documenti commerciali — API pubblica v1.
+
+    Headers:
+      X-API-Key: vx_<secret>
+
+    Body JSON:
+      {
+        "input_text": "descrizione visita (30-2000 char)",
+        "nome_agente": "Mario Rossi",
+        "azienda_mandante": "Acme Srl" (optional)
+      }
+
+    Response 200:
+      {
+        "document_id": 123,
+        "cliente_nome": "...",
+        "azienda_cliente": "...",
+        "report_visita": "...",
+        "email_followup": "...",
+        "offerta_commerciale": "...",
+        "tokens_used": 1234,
+        "generation_time_ms": 28000
+      }
+    """
+    user = await _auth_api_key(request, db)
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(400, "Body JSON richiesto")
+    input_text = (payload.get("input_text") or "").strip()
+    nome_agente = (payload.get("nome_agente") or user.full_name or "").strip()
+    azienda_mandante = (payload.get("azienda_mandante") or "").strip()
+    if len(input_text) < 30:
+        raise HTTPException(400, "input_text deve essere >=30 caratteri")
+    if len(input_text) > 2000:
+        raise HTTPException(400, "input_text deve essere <=2000 caratteri")
+
+    # quota check — free tier 10/mese
+    usage = await get_monthly_usage(db, user.id)
+    if user.plan == "free" and usage >= user.monthly_limit:
+        raise HTTPException(429, "Quota mensile piano Free esaurita. Upgrade a Pro.")
+
+    try:
+        docs = await genera_documenti(
+            input_text[:2000],
+            nome_agente=nome_agente[:120],
+            azienda_mandante=azienda_mandante[:120],
+        )
+    except Exception:
+        logger.exception("api/v1 generation failed user=%s", user.id)
+        raise HTTPException(502, "Generazione AI non riuscita")
+
+    doc = Document(
+        user_id=user.id,
+        input_text=input_text,
+        report_visita=docs["report_visita"],
+        email_followup=docs["email_followup"],
+        offerta_commerciale=docs["offerta_commerciale"],
+        cliente_nome=(docs.get("cliente_nome") or "")[:255] or None,
+        azienda_cliente=(docs.get("azienda_cliente") or "")[:255] or None,
+        tokens_used=docs.get("tokens_used"),
+        generation_time_ms=docs.get("generation_time_ms"),
+    )
+    db.add(doc)
+    await db.commit()
+    await db.refresh(doc)
+
+    return {
+        "document_id": doc.id,
+        "cliente_nome": doc.cliente_nome,
+        "azienda_cliente": doc.azienda_cliente,
+        "report_visita": doc.report_visita,
+        "email_followup": doc.email_followup,
+        "offerta_commerciale": doc.offerta_commerciale,
+        "tokens_used": doc.tokens_used,
+        "generation_time_ms": doc.generation_time_ms,
+    }
+
+
+@app.get("/api/v1/health")
+async def api_v1_health():
+    return {"status": "ok", "version": "1.0.0", "service": "vynex-api"}
+
+
+@app.post("/api/account/api-keys/create")
+@limiter.limit("10/hour")
+async def api_keys_create(
+    request: Request,
+    name: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    """Genera nuova API key — mostrata una sola volta in clear-text."""
+    import secrets as _sec
+    raw = "vx_" + _sec.token_urlsafe(32)
+    prefix = raw[:12]
+    key = APIKey(
+        user_id=user.id,
+        name=(name or "API Key")[:120],
+        prefix=prefix,
+        key_hash=_api_key_hash(raw),
+    )
+    db.add(key)
+    await db.commit()
+    return {"key": raw, "prefix": prefix, "name": key.name}
+
+
+@app.post("/api/account/api-keys/{key_id}/revoke")
+async def api_keys_revoke(
+    key_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    r = await db.execute(
+        update(APIKey)
+        .where(APIKey.id == key_id)
+        .where(APIKey.user_id == user.id)
+        .where(APIKey.revoked_at.is_(None))
+        .values(revoked_at=datetime.utcnow())
+        .returning(APIKey.id)
+    )
+    await db.commit()
+    return {"revoked": r.scalar_one_or_none() is not None}
+
+
+@app.get("/api/account/api-keys")
+async def api_keys_list(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    r = await db.execute(
+        select(APIKey).where(APIKey.user_id == user.id).order_by(APIKey.created_at.desc())
+    )
+    return [
+        {
+            "id": k.id, "name": k.name, "prefix": k.prefix,
+            "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
+            "revoked_at": k.revoked_at.isoformat() if k.revoked_at else None,
+            "created_at": k.created_at.isoformat() if k.created_at else None,
+        }
+        for k in r.scalars().all()
+    ]
+
+
+# ─── NPS SURVEY ────────────────────────────────────────────────────────────────
+
+def _nps_sig(user_id: int, tag: str) -> str:
+    msg = f"nps:{user_id}:{tag}".encode()
+    secret = os.getenv("SECRET_KEY", "").encode()
+    import hashlib as _h
+    return hmac.new(secret, msg, _h.sha256).hexdigest()[:16]
+
+
+@app.get("/nps", response_class=HTMLResponse)
+async def nps_page(
+    request: Request,
+    u: int = 0,
+    t: str = "t7",
+    s: int | None = None,
+    sig: str = "",
+    db: AsyncSession = Depends(get_db),
+):
+    if not hmac.compare_digest(_nps_sig(u, t), sig):
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    r = await db.execute(select(User).where(User.id == u))
+    user = r.scalar_one_or_none()
+    if user is None or user.deleted_at is not None:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    first = (user.full_name or "").split(" ")[0] or user.email.split("@")[0]
+    ctx = {
+        "request": request, "user_id": u, "tag": t, "sig": sig,
+        "user_first_name": first, "saved": False, "score": None,
+    }
+    if s is not None and 0 <= s <= 10:
+        # Upsert NPS response
+        existing_q = await db.execute(
+            select(NPSResponse).where(NPSResponse.user_id == u).where(NPSResponse.survey_tag == t)
+        )
+        existing = existing_q.scalar_one_or_none()
+        if existing is None:
+            db.add(NPSResponse(user_id=u, survey_tag=t, score=s, responded_at=datetime.utcnow()))
+        else:
+            existing.score = s
+            existing.responded_at = datetime.utcnow()
+        await db.commit()
+        ctx["saved"] = True
+        ctx["score"] = s
+    return templates.TemplateResponse("nps.html", ctx)
+
+
+@app.post("/api/nps")
+@limiter.limit("20/hour")
+async def api_nps(
+    request: Request,
+    u: int = Form(...),
+    t: str = Form(...),
+    s: int = Form(...),
+    sig: str = Form(...),
+    comment: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+):
+    if not hmac.compare_digest(_nps_sig(u, t), sig):
+        raise HTTPException(403, "Sig non valida")
+    r = await db.execute(
+        update(NPSResponse)
+        .where(NPSResponse.user_id == u)
+        .where(NPSResponse.survey_tag == t)
+        .values(score=s, comment=comment[:1000] or None, responded_at=datetime.utcnow())
+        .returning(NPSResponse.id)
+    )
+    await db.commit()
+    if r.scalar_one_or_none() is None:
+        raise HTTPException(404, "Risposta non trovata — richiedi di nuovo il link")
+    return RedirectResponse(f"/nps?u={u}&t={t}&s={s}&sig={sig}", status_code=303)
+
+
+@app.get("/api/admin/nps/stats")
+async def admin_nps_stats(request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    total_q = await db.execute(
+        select(func.count(NPSResponse.id)).where(NPSResponse.responded_at.is_not(None))
+    )
+    total = total_q.scalar() or 0
+    if total == 0:
+        return {"total": 0, "nps": None, "buckets": {"promoters": 0, "passives": 0, "detractors": 0}, "avg": None}
+    promoters_q = await db.execute(
+        select(func.count(NPSResponse.id)).where(NPSResponse.score >= 9)
+    )
+    passives_q = await db.execute(
+        select(func.count(NPSResponse.id))
+        .where(NPSResponse.score >= 7).where(NPSResponse.score <= 8)
+    )
+    detractors_q = await db.execute(
+        select(func.count(NPSResponse.id)).where(NPSResponse.score <= 6)
+    )
+    avg_q = await db.execute(
+        select(func.avg(NPSResponse.score)).where(NPSResponse.responded_at.is_not(None))
+    )
+    p = promoters_q.scalar() or 0
+    pa = passives_q.scalar() or 0
+    d = detractors_q.scalar() or 0
+    nps = round((p - d) / total * 100, 1)
+    return {
+        "total": total,
+        "nps": nps,
+        "buckets": {"promoters": p, "passives": pa, "detractors": d},
+        "avg": float(avg_q.scalar() or 0),
     }
 
 
