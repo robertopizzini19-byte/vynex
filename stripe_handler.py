@@ -67,6 +67,16 @@ async def create_checkout_session(
         create_kwargs["discounts"] = [{"coupon": coupon_code}]
         create_kwargs.pop("allow_promotion_codes", None)
 
+    pending_bonus = int(user.referral_bonus_months_granted or 0)
+    if pending_bonus > 0:
+        create_kwargs["subscription_data"] = {
+            "trial_period_days": 30 * pending_bonus,
+            "metadata": {"referral_bonus_months": str(pending_bonus)},
+        }
+        create_kwargs.pop("allow_promotion_codes", None)
+        user.referral_bonus_months_granted = 0
+        await db.commit()
+
     try:
         session = await stripe.checkout.Session.create_async(**create_kwargs)
     except stripe.error.StripeError as exc:
@@ -169,6 +179,7 @@ async def _dispatch_event(event_type: str, event: dict, db: AsyncSession):
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if user:
+            was_free = (user.plan == "free")
             user.plan = plan
             user.stripe_subscription_id = subscription_id
             user.stripe_customer_id = customer_id
@@ -178,6 +189,12 @@ async def _dispatch_event(event_type: str, event: dict, db: AsyncSession):
                 await send_payment_success_email(user.email, user.full_name, plan)
             except Exception:
                 logger.exception("payment success email failed")
+            if was_free:
+                try:
+                    from acquisition import on_user_converted_to_paid
+                    await on_user_converted_to_paid(db, user)
+                except Exception:
+                    logger.exception("referral bonus trigger failed user=%s", user.id)
 
     elif event_type in ("customer.subscription.deleted", "customer.subscription.paused"):
         subscription = event["data"]["object"]
@@ -304,6 +321,37 @@ async def _dispatch_event(event_type: str, event: dict, db: AsyncSession):
     elif event_type == "customer.subscription.trial_will_end":
         # No action required; just acknowledge so Stripe stops retrying.
         logger.info("Trial ending soon for event %s", event.get("id"))
+
+
+async def apply_referral_bonus_month(user: User) -> bool:
+    """Accredita 1 mese bonus al referrer.
+
+    Due strategie:
+      - sub attiva → modify sub estendendo trial_end (cosi saltiamo il prossimo addebito)
+      - nessuna sub attiva → incrementa counter locale, applicato al prossimo checkout
+
+    Caller è responsabile del commit della sessione SQLAlchemy per il counter.
+    """
+    if user.stripe_subscription_id:
+        try:
+            sub = await stripe.Subscription.retrieve_async(user.stripe_subscription_id)
+            current_end = int(sub.get("current_period_end") or 0)
+            new_trial_end = max(current_end, int(datetime.utcnow().timestamp())) + 30 * 86400
+            await stripe.Subscription.modify_async(
+                user.stripe_subscription_id,
+                trial_end=new_trial_end,
+                proration_behavior="none",
+                metadata={"last_referral_bonus_at": datetime.utcnow().isoformat()},
+            )
+            logger.info("referral bonus extended sub %s to %s", user.stripe_subscription_id, new_trial_end)
+            return True
+        except Exception:
+            logger.exception("referral bonus sub-modify failed user=%s", user.id)
+            # fallback → accredito locale per il futuro checkout
+            user.referral_bonus_months_granted = (user.referral_bonus_months_granted or 0) + 1
+            return True
+    user.referral_bonus_months_granted = (user.referral_bonus_months_granted or 0) + 1
+    return True
 
 
 async def apply_coupon(db: AsyncSession, user: User, code: str) -> tuple[bool, str]:

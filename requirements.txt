@@ -16,3 +16,4 @@ email-validator==2.2.0
 slowapi==0.1.9
 reportlab==4.2.5
 google-auth==2.49.2
+apscheduler==3.10.4

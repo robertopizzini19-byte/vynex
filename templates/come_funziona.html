@@ -18,21 +18,21 @@
       "position": 1,
       "name": "Descrivi la visita",
       "text": "Apri VYNEX e descrivi la visita in linguaggio naturale, come parleresti a un collega. Includi cliente, azienda, discussione, accordi e next steps. Ci vogliono circa 2 minuti.",
-      "url": "https://agentia-production-fb78.up.railway.app/come-funziona#step1"
+      "url": "{{ canonical_base }}/come-funziona#step1"
     },
     {
       "@type": "HowToStep",
       "position": 2,
       "name": "Lascia che l'AI generi i 3 documenti",
       "text": "VYNEX invoca il modello Claude Haiku 4.5 di Anthropic, calibrato su italiano commerciale, e genera report di visita, email di follow-up e offerta commerciale in circa 30 secondi.",
-      "url": "https://agentia-production-fb78.up.railway.app/come-funziona#step2"
+      "url": "{{ canonical_base }}/come-funziona#step2"
     },
     {
       "@type": "HowToStep",
       "position": 3,
       "name": "Affina o copia",
       "text": "Ritocca ogni documento con istruzioni in linguaggio naturale ('rendi più formale', 'aggiungi sconto 15%') oppure copialo direttamente nel tuo CRM o client di posta.",
-      "url": "https://agentia-production-fb78.up.railway.app/come-funziona#step3"
+      "url": "{{ canonical_base }}/come-funziona#step3"
     }
   ]
 }
@@ -42,8 +42,8 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://agentia-production-fb78.up.railway.app/"},
-    {"@type": "ListItem", "position": 2, "name": "Come funziona", "item": "https://agentia-production-fb78.up.railway.app/come-funziona"}
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ canonical_base }}/"},
+    {"@type": "ListItem", "position": 2, "name": "Come funziona", "item": "{{ canonical_base }}/come-funziona"}
   ]
 }
 </script>

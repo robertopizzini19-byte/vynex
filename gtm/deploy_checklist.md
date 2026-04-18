@@ -63,7 +63,7 @@ STRIPE_WEBHOOK_SECRET=whsec_... (vedi step 4)
 STRIPE_PRO_PRICE_ID=price_...
 STRIPE_TEAM_PRICE_ID=price_...
 SECRET_KEY=... (stringa random generata sopra)
-BASE_URL=https://agentia-production-fb78.up.railway.app
+BASE_URL=https://vynex.it
 DATABASE_URL=postgresql+asyncpg://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
 RESEND_API_KEY=re_...
 EMAIL_FROM=VYNEX <ciao@vynex.it>
@@ -77,7 +77,7 @@ EMAIL_REPLY_TO=ciao@vynex.it
 ## STEP 4: Stripe Webhook
 
 1. Stripe Dashboard → Developers → Webhooks → Add endpoint
-2. URL: https://agentia-production-fb78.up.railway.app/webhook/stripe
+2. URL: https://vynex.it/webhook/stripe
 3. Events da ascoltare:
    - checkout.session.completed
    - customer.subscription.deleted
@@ -94,7 +94,7 @@ Il webhook è idempotente: event_id tracciato in tabella `stripe_events`, replay
 
 **Opzione A — Railway custom domain:**
 - Railway → Settings → Domains → Add Custom Domain
-- Punta il DNS: CNAME → agentia-production-fb78.up.railway.app
+- Punta il DNS: CNAME → vynex.it
 
 **Opzione B — Cloudflare + Railway:**
 - Compra vynex.it su Namecheap (~€12/anno)
@@ -108,14 +108,14 @@ Il webhook è idempotente: event_id tracciato in tabella `stripe_events`, replay
 
 ```bash
 # Test health
-curl https://agentia-production-fb78.up.railway.app/health
+curl https://vynex.it/health
 
 # Test pagine pubbliche
-curl -I https://agentia-production-fb78.up.railway.app/
-curl -I https://agentia-production-fb78.up.railway.app/prezzi
-curl -I https://agentia-production-fb78.up.railway.app/privacy
-curl -I https://agentia-production-fb78.up.railway.app/termini
-curl -I https://agentia-production-fb78.up.railway.app/cookie
+curl -I https://vynex.it/
+curl -I https://vynex.it/prezzi
+curl -I https://vynex.it/privacy
+curl -I https://vynex.it/termini
+curl -I https://vynex.it/cookie
 
 # Test registrazione
 # Vai su /registrati → accept_terms checkbox → crea account

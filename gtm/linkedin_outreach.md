@@ -45,7 +45,7 @@ Ciao [Nome],
 
 senza pressione — so che gli agenti non hanno tempo da perdere.
 
-In 30 secondi: provi VYNEX gratis qui → https://agentia-production-fb78.up.railway.app
+In 30 secondi: provi VYNEX gratis qui → https://vynex.it
 
 Se non fa per te, nessun problema. Se invece ti fa risparmiare anche solo un'ora a settimana, vale la prova.
 
@@ -59,7 +59,7 @@ Se non fa per te, nessun problema. Se invece ti fa risparmiare anche solo un'ora
 ```
 Perfetto [Nome]!
 
-Registrati qui (gratis, no carta): https://agentia-production-fb78.up.railway.app/registrati
+Registrati qui (gratis, no carta): https://vynex.it/registrati
 
 Come funziona:
 1. Scrivi la visita come la racconteresti a un collega

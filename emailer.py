@@ -16,6 +16,11 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
 RESEND_URL = "https://api.resend.com/emails"
 
 
+async def send_raw(to: str, subject: str, html: str) -> bool:
+    """Public helper per il motore di acquisizione — template già renderizzato."""
+    return await _send(to, subject, html)
+
+
 async def _send(to: str, subject: str, html: str) -> bool:
     if not RESEND_API_KEY:
         logger.info("RESEND_API_KEY not set — skipping email to %s (%s)", to, subject)

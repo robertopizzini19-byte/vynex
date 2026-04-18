@@ -21,17 +21,17 @@
     <meta name="twitter:image" content="/static/logo-wordmark.svg">
     <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
 
-    <link rel="canonical" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
-    <link rel="alternate" hreflang="it-IT" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
-    <link rel="alternate" hreflang="x-default" href="https://agentia-production-fb78.up.railway.app{{ request.url.path }}">
+    <link rel="canonical" href="{{ canonical_base }}{{ request.url.path }}">
+    <link rel="alternate" hreflang="it-IT" href="{{ canonical_base }}{{ request.url.path }}">
+    <link rel="alternate" hreflang="x-default" href="{{ canonical_base }}{{ request.url.path }}">
 
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "VYNEX",
-      "url": "https://agentia-production-fb78.up.railway.app",
-      "logo": "https://agentia-production-fb78.up.railway.app/static/logo-wordmark.svg",
+      "url": "{{ canonical_base }}",
+      "logo": "{{ canonical_base }}/static/logo-wordmark.svg",
       "description": "AI italiana per agenti commerciali: genera report di visita, email di follow-up e offerte commerciali in 30 secondi.",
       "areaServed": {"@type": "Country", "name": "Italia"},
       "inLanguage": "it-IT",
@@ -56,7 +56,7 @@
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "VYNEX",
-      "url": "https://agentia-production-fb78.up.railway.app",
+      "url": "{{ canonical_base }}",
       "inLanguage": "it-IT",
       "publisher": {"@type": "Organization", "name": "VYNEX"}
     }

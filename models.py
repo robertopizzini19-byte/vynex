@@ -41,6 +41,10 @@ class User(Base):
     consent_ip = Column(String(45), nullable=True)
     consent_user_agent = Column(String(500), nullable=True)
 
+    referral_code = Column(String(16), unique=True, index=True, nullable=True)
+    referred_by_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    referral_bonus_months_granted = Column(Integer, default=0, nullable=False)
+
     documents = relationship("Document", back_populates="user")
     team_members = relationship(
         "User",
@@ -124,3 +128,71 @@ class CouponRedemption(Base):
     coupon_id = Column(Integer, ForeignKey("coupons.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     redeemed_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── ACQUISITION ENGINE (lead capture + drip + cold outreach + referral) ──────
+
+class Lead(Base):
+    """Prospect non ancora registrato. Email è natural key.
+
+    Fonti:
+      - demo  : ha provato /demo (high-intent, si aspetta email)
+      - cold  : importato via CSV admin (zero intent, soft opt-out)
+      - organic: catturato da waitlist/banner (warm, soft opt-in)
+    """
+    __tablename__ = "leads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    full_name = Column(String(255), nullable=True)
+    company = Column(String(255), nullable=True)
+    source = Column(String(32), nullable=False, default="organic")  # demo|cold|organic
+    status = Column(String(32), nullable=False, default="new")       # new|engaged|converted|bounced
+    unsubscribed = Column(Boolean, default=False, nullable=False)
+    unsubscribed_at = Column(DateTime, nullable=True)
+    unsub_token = Column(String(64), unique=True, index=True, nullable=False)
+    notes = Column(Text, nullable=True)
+    demo_input = Column(Text, nullable=True)  # testo che ha generato il demo
+    demo_doc_ids = Column(String(255), nullable=True)  # CSV di Document.id generati in demo
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    last_engaged_at = Column(DateTime, nullable=True)
+
+
+class EmailJob(Base):
+    """Un invio schedulato. Può puntare a un Lead o a un User, mai entrambi.
+
+    Pattern invio:
+      1. Creazione con sent_at=NULL, scheduled_for=<future>
+      2. Worker claim via UPDATE ... WHERE sent_at IS NULL (CAS)
+      3. Render + send
+      4. Tracking pixel/click aggiornano opened_at / clicked_at via route HMAC-firmate
+    """
+    __tablename__ = "email_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    campaign_key = Column(String(64), nullable=False, index=True)
+    scheduled_for = Column(DateTime, nullable=False, index=True)
+    sent_at = Column(DateTime, nullable=True, index=True)
+    opened_at = Column(DateTime, nullable=True)
+    clicked_at = Column(DateTime, nullable=True)
+    error = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("ix_email_jobs_pending", "scheduled_for", "sent_at"),
+    )
+
+
+class ReferralClick(Base):
+    """Log dei click su /r/{code} prima del signup. Permette analytics anche per
+    click che non convertono (p.es. quanti click → quanti signup → quanti paying)."""
+    __tablename__ = "referral_clicks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    referrer_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    ip = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    referer = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
