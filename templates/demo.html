@@ -35,7 +35,10 @@
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px;flex-wrap:wrap">
       <label style="color:#cbd5e1;font-size:14px;font-weight:600;margin:0">Racconta una visita commerciale (2-4 righe)</label>
-      <button type="button" id="demo-example" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Usa esempio</button>
+      <div style="display:flex;gap:8px">
+        <button type="button" id="demo-voice" aria-label="Dettatura vocale" title="Detta ad alta voce" style="display:none;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.4);color:#f472b6;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">🎤 Detta</button>
+        <button type="button" id="demo-example" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Usa esempio</button>
+      </div>
     </div>
     <textarea id="demo-input" name="input_text" required rows="6" maxlength="2000" placeholder="Oggi ho visitato Tecnoservice Srl, referente Ing. Bianchi. Cercano un partner per forniture industriali ricorrenti. Competitor attuale: Bergamo Industriale. Budget indicato: 15K/anno. Prossimo step: invio offerta entro venerdì."
               style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:15px;line-height:1.6;margin-bottom:8px;resize:vertical;font-family:inherit">{{ draft.input_text if draft else '' }}</textarea>
@@ -111,6 +114,46 @@
     inputTxt.focus();
     updateChar();
   });
+
+  // Voice input — SpeechRecognition nativo browser (it-IT)
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var voiceBtn = document.getElementById('demo-voice');
+  if (SR && voiceBtn) {
+    voiceBtn.style.display = 'inline-flex';
+    var rec = new SR();
+    rec.lang = 'it-IT';
+    rec.continuous = true;
+    rec.interimResults = true;
+    var listening = false;
+    var baseText = '';
+    voiceBtn.addEventListener('click', function(){
+      if (!listening) {
+        baseText = inputTxt.value ? inputTxt.value + ' ' : '';
+        try { rec.start(); listening = true;
+          voiceBtn.innerText = '⏸ Stop'; voiceBtn.style.background = 'rgba(239,68,68,0.15)'; voiceBtn.style.color = '#fca5a5'; voiceBtn.style.borderColor = 'rgba(239,68,68,0.4)';
+        } catch(e){ alert('Microfono non disponibile: '+e.message); }
+      } else {
+        rec.stop(); listening = false;
+        voiceBtn.innerText = '🎤 Detta'; voiceBtn.style.background = 'rgba(236,72,153,0.1)'; voiceBtn.style.color = '#f472b6'; voiceBtn.style.borderColor = 'rgba(236,72,153,0.4)';
+      }
+    });
+    rec.onresult = function(e){
+      var transcript = '';
+      for (var i = e.resultIndex; i < e.results.length; ++i) {
+        transcript += e.results[i][0].transcript;
+      }
+      inputTxt.value = baseText + transcript;
+      updateChar();
+    };
+    rec.onerror = function(e){
+      console.warn('voice error', e);
+      listening = false;
+      voiceBtn.innerText = '🎤 Detta';
+    };
+    rec.onend = function(){
+      if (listening) { try { rec.start(); } catch(e){} }
+    };
+  }
 
   var tips = [
     { title: 'Sto generando i tuoi 3 documenti…', tip: 'Claude Haiku 4.5 sta leggendo la tua descrizione e costruendo il report professionale.' },
