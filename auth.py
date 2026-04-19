@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,16 +26,24 @@ MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 15
 IDLE_TIMEOUT_DAYS = 14
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
 
 
+def _bcrypt_safe(password: str) -> bytes:
+    # bcrypt rifiuta >72 byte (passlib in passato troncava silenziosamente).
+    # Tronchiamo per restare compatibili con hash storici generati da passlib.
+    return password.encode("utf-8")[:72]
+
+
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(_bcrypt_safe(plain), hashed.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(_bcrypt_safe(password), bcrypt.gensalt()).decode("utf-8")
 
 
 def validate_password_strength(password: str) -> Tuple[bool, str]:
