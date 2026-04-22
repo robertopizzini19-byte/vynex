@@ -1,6 +1,21 @@
 <aside class="sidebar">
     <div class="sidebar-top">
-        <a href="/" class="logo sidebar-logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
+        <a href="/" class="vnx-logo" aria-label="VYNEX — home">
+            <span class="vnx-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 34" width="20" height="30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="vnx-glyph-sb" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#3b82f6"/>
+                            <stop offset="60%" stop-color="#8b5cf6"/>
+                            <stop offset="100%" stop-color="#ec4899"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M2 4 L12 26 L22 4 L18 4 L12 19 L6 4 Z" fill="url(#vnx-glyph-sb)"/>
+                    <circle cx="12" cy="30" r="2" fill="#ec4899"/>
+                </svg>
+            </span>
+            <span class="vnx-word">VYNEX</span>
+        </a>
     </div>
     <nav class="sidebar-nav">
         <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}">
