@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Benvenuto — VYNEX{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block nav %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block body_class %}no-rails{% endblock %}
+
+{% block body %}
+<div class="ob-stage" id="ob-stage">
+
+    <header class="ob-header">
+        <a href="/" class="ob-logo" aria-label="VYNEX">
+            <span class="vnx-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 34" width="18" height="26" fill="none"><defs><linearGradient id="ob-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="60%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><path d="M2 4 L12 26 L22 4 L18 4 L12 19 L6 4 Z" fill="url(#ob-g)"/><circle cx="12" cy="30" r="2" fill="#ec4899"/></svg>
+            </span>
+            <span>VYNEX</span>
+        </a>
+
+        <nav class="ob-steps" aria-label="Progresso onboarding">
+            <ol>
+                <li class="ob-step is-active" data-step="1"><span>1</span> Benvenuto</li>
+                <li class="ob-step" data-step="2"><span>2</span> Il tuo settore</li>
+                <li class="ob-step" data-step="3"><span>3</span> Prova la magia</li>
+                <li class="ob-step" data-step="4"><span>4</span> Pronto</li>
+            </ol>
+            <div class="ob-progress" aria-hidden="true"><span class="ob-progress-fill" style="width:25%"></span></div>
+        </nav>
+
+        <a href="/dashboard" class="ob-skip" title="Salta e vai alla dashboard">Salta →</a>
+    </header>
+
+    <main class="ob-main">
+
+        <!-- STEP 1 — WELCOME -->
+        <section class="ob-pane is-active" data-pane="1">
+            <div class="ob-pane-inner">
+                <div class="ob-kicker">Ciao {{ user.full_name.split()[0] }} 👋</div>
+                <h1 class="ob-title">Scrivi una visita.<br><span class="grad">Ottieni 3 documenti</span> in 30 secondi.</h1>
+                <p class="ob-lead">VYNEX trasforma la descrizione di una visita commerciale in <strong>report professionale</strong>, <strong>email di follow-up</strong> e <strong>offerta commerciale</strong>. In italiano vero, non ChatGPT tradotto.</p>
+
+                <div class="ob-value-row">
+                    <div class="ob-value">
+                        <div class="ob-value-ic">⏱</div>
+                        <div><strong>20+ ore al mese</strong><br><span>risparmiate in scrittura</span></div>
+                    </div>
+                    <div class="ob-value">
+                        <div class="ob-value-ic">🎯</div>
+                        <div><strong>Zero clienti persi</strong><br><span>follow-up automatico</span></div>
+                    </div>
+                    <div class="ob-value">
+                        <div class="ob-value-ic">💼</div>
+                        <div><strong>Offerte pronte</strong><br><span>pronte da inviare</span></div>
+                    </div>
+                </div>
+
+                <div class="ob-actions">
+                    <button type="button" class="ob-cta" data-next>Inizia <span aria-hidden="true">→</span></button>
+                    <span class="ob-sub-cta">30 secondi · poi sei operativo</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 2 — CONTEXT -->
+        <section class="ob-pane" data-pane="2">
+            <div class="ob-pane-inner">
+                <div class="ob-kicker">Dimmi di te — 20 secondi</div>
+                <h1 class="ob-title">In che <span class="grad">settore</span> lavori?</h1>
+                <p class="ob-lead">Useremo questo contesto per calibrare la terminologia dei documenti sul tuo mercato.</p>
+
+                <div class="ob-cards" role="radiogroup" aria-label="Settore principale">
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="ferramenta"><div class="ob-card-in"><div class="ob-card-ic">🔧</div><div class="ob-card-t">Ferramenta / Utensileria</div><div class="ob-card-s">Industriale e domestica</div></div></label>
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="farmaceutico"><div class="ob-card-in"><div class="ob-card-ic">💊</div><div class="ob-card-t">Farmaceutico</div><div class="ob-card-s">Farmacie e parafarmacie</div></div></label>
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="food"><div class="ob-card-in"><div class="ob-card-ic">🍷</div><div class="ob-card-t">Food & Beverage</div><div class="ob-card-s">HORECA e GDO</div></div></label>
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="industriale"><div class="ob-card-in"><div class="ob-card-ic">⚙️</div><div class="ob-card-t">Industriale / Tecnico</div><div class="ob-card-s">Componenti e macchinari</div></div></label>
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="arredo"><div class="ob-card-in"><div class="ob-card-ic">🪑</div><div class="ob-card-t">Arredo / Design</div><div class="ob-card-s">Casa, ufficio, contract</div></div></label>
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="servizi"><div class="ob-card-in"><div class="ob-card-ic">💼</div><div class="ob-card-t">Servizi B2B</div><div class="ob-card-s">Consulenza, formazione, SaaS</div></div></label>
+                    <label class="ob-card"><input type="radio" name="ob_sector" value="altro"><div class="ob-card-in"><div class="ob-card-ic">✨</div><div class="ob-card-t">Altro settore</div><div class="ob-card-s">VYNEX si adatta comunque</div></div></label>
+                </div>
+
+                <div class="ob-cards ob-cards--small" role="radiogroup" aria-label="Tipo clienti">
+                    <div class="ob-cards-title">I tuoi clienti sono soprattutto:</div>
+                    <label class="ob-chip"><input type="radio" name="ob_ctype" value="b2b"><span>🏢 Aziende (B2B)</span></label>
+                    <label class="ob-chip"><input type="radio" name="ob_ctype" value="gdo"><span>🛒 GDO / Catene</span></label>
+                    <label class="ob-chip"><input type="radio" name="ob_ctype" value="professionisti"><span>👨‍💼 Professionisti</span></label>
+                    <label class="ob-chip"><input type="radio" name="ob_ctype" value="misto"><span>🔄 Misto</span></label>
+                </div>
+
+                <div class="ob-actions">
+                    <button type="button" class="ob-ghost" data-prev>← Indietro</button>
+                    <button type="button" class="ob-cta" data-next>Continua <span aria-hidden="true">→</span></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 3 — FIRST EXPERIENCE -->
+        <section class="ob-pane" data-pane="3">
+            <div class="ob-pane-inner ob-pane-inner--wide">
+                <div class="ob-kicker">La magia in 30 secondi</div>
+                <h1 class="ob-title">Prova <span class="grad">adesso</span>.<br>Vedi cosa sa fare VYNEX.</h1>
+                <p class="ob-lead">Guarda questa descrizione di visita. Premi <strong>Genera</strong> e osserva cosa viene fuori.</p>
+
+                <div class="ob-demo">
+                    <div class="ob-demo-input">
+                        <label>Descrizione visita (esempio)</label>
+                        <textarea id="ob-demo-text" rows="5" readonly>Oggi visita da Rossi della Ferramenta Bianchi (Bergamo). Interessato al catalogo primavera 2026, in particolare linea utensili elettrici. Offerta: sconto 10% primo ordine, pagamento 30gg fine mese. Da richiamare il 5 aprile per conferma ordine.</textarea>
+                        <button type="button" class="ob-cta ob-cta--generate" id="ob-generate-btn">✦ Genera i 3 documenti <span class="ob-cta-time">(30s)</span></button>
+                    </div>
+
+                    <div class="ob-demo-output" id="ob-demo-output" aria-live="polite">
+                        <div class="ob-demo-placeholder" id="ob-demo-placeholder">
+                            <div class="ob-demo-placeholder-ic">✨</div>
+                            <div>I documenti appariranno qui.<br>Premi <strong>Genera</strong> per iniziare.</div>
+                        </div>
+                        <div class="ob-demo-loading" id="ob-demo-loading" hidden>
+                            <div class="ob-dots"><span></span><span></span><span></span></div>
+                            <div class="ob-demo-loading-t">VYNEX sta scrivendo…</div>
+                            <div class="ob-demo-loading-s">Lettura visita · Report · Email · Offerta</div>
+                        </div>
+                        <div class="ob-demo-result" id="ob-demo-result" hidden>
+                            <div class="ob-tabs">
+                                <button type="button" class="ob-tab is-active" data-tab="report">📋 Report</button>
+                                <button type="button" class="ob-tab" data-tab="email">✉️ Email</button>
+                                <button type="button" class="ob-tab" data-tab="offerta">📄 Offerta</button>
+                            </div>
+                            <div class="ob-tab-body" data-body="report">
+<strong>Report visita — Ferramenta Bianchi, Bergamo</strong>
+Cliente: Rossi (Ferramenta Bianchi)
+Data: oggi · Sede: Bergamo
+
+<strong>Obiettivo</strong>
+Presentazione catalogo primavera 2026, focus linea utensili elettrici.
+
+<strong>Accordi</strong>
+• Sconto 10% sul primo ordine
+• Pagamento 30gg fine mese
+• Conferma ordine entro 5 aprile
+
+<strong>Prossimi passi</strong>
+Richiamata il 5 aprile — chiusura ordine + fissare seconda visita.
+                            </div>
+                            <div class="ob-tab-body" data-body="email" hidden>
+<strong>Oggetto:</strong> Catalogo primavera 2026 — sconto 10% confermato
+
+Gentile Sig. Rossi,
+grazie per il tempo dedicatomi oggi.
+
+Come concordato, le confermo lo <strong>sconto del 10%</strong> sul primo ordine della linea utensili elettrici primavera 2026, con pagamento a 30 giorni fine mese.
+
+Resto a disposizione per finalizzare l'ordine entro il 5 aprile.
+
+Un caro saluto
+                            </div>
+                            <div class="ob-tab-body" data-body="offerta" hidden>
+<strong>OFFERTA COMMERCIALE — Catalogo primavera 2026</strong>
+
+<strong>Cliente:</strong> Ferramenta Bianchi (Bergamo)
+<strong>Referente:</strong> Sig. Rossi
+
+<strong>Prodotto:</strong> Linea utensili elettrici · Catalogo primavera 2026
+
+<strong>Condizioni:</strong>
+• Sconto 10% primo ordine
+• Pagamento 30 gg fine mese
+• Consegna: 7 giorni lavorativi
+
+<strong>Validità offerta:</strong> fino al 5 aprile 2026
+                            </div>
+                            <div class="ob-demo-stamp">✓ Generato in 28 secondi</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ob-actions">
+                    <button type="button" class="ob-ghost" data-prev>← Indietro</button>
+                    <button type="button" class="ob-cta" data-next id="ob-next-3" disabled>Avanti — tocca a te <span aria-hidden="true">→</span></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 4 — ACTIVATION -->
+        <section class="ob-pane" data-pane="4">
+            <div class="ob-pane-inner">
+                <div class="ob-done">
+                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden="true"><circle cx="36" cy="36" r="34" stroke="url(#ob-check-g)" stroke-width="3"/><path d="M22 37 L32 47 L51 27" stroke="url(#ob-check-g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><defs><linearGradient id="ob-check-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+                </div>
+                <h1 class="ob-title">Setup completato.<br><span class="grad">Ora tocca a te.</span></h1>
+                <p class="ob-lead">Descrivi la tua prima visita reale. Il primo documento arriva in meno di 30 secondi. Hai <strong>10 documenti gratis</strong> questo mese.</p>
+
+                <div class="ob-next-row">
+                    <a href="/genera" class="ob-cta ob-cta--primary">Genera il mio primo documento reale <span aria-hidden="true">→</span></a>
+                    <a href="/dashboard" class="ob-ghost">Vai alla dashboard</a>
+                </div>
+
+                <div class="ob-upgrade">
+                    <div class="ob-upgrade-ic">⚡</div>
+                    <div class="ob-upgrade-copy">
+                        <strong>Servono più di 10 documenti al mese?</strong>
+                        <span>Pro: illimitati + priorità AI. <strong>10 giorni gratis</strong>, nessuna carta subito.</span>
+                    </div>
+                    <a href="/checkout/pro" class="ob-upgrade-cta">Prova Pro 10 gg →</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+(function(){
+    var stage = document.getElementById('ob-stage');
+    var panes = stage.querySelectorAll('.ob-pane');
+    var steps = stage.querySelectorAll('.ob-step');
+    var fill = stage.querySelector('.ob-progress-fill');
+    var total = panes.length;
+    var i = 0;
+
+    function render() {
+        panes.forEach(function(p, idx){ p.classList.toggle('is-active', idx === i); });
+        steps.forEach(function(s, idx){
+            s.classList.toggle('is-active', idx === i);
+            s.classList.toggle('is-done', idx < i);
+        });
+        fill.style.width = ((i + 1) / total * 100) + '%';
+        panes[i].scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    stage.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click', function(){ if (i < total-1) { i++; render(); } }); });
+    stage.querySelectorAll('[data-prev]').forEach(function(b){ b.addEventListener('click', function(){ if (i > 0) { i--; render(); } }); });
+
+    // Step 3 demo
+    var genBtn = document.getElementById('ob-generate-btn');
+    var placeholder = document.getElementById('ob-demo-placeholder');
+    var loading = document.getElementById('ob-demo-loading');
+    var result = document.getElementById('ob-demo-result');
+    var nextBtn = document.getElementById('ob-next-3');
+
+    if (genBtn) {
+        genBtn.addEventListener('click', function(){
+            genBtn.disabled = true;
+            placeholder.hidden = true;
+            loading.hidden = false;
+            setTimeout(function(){
+                loading.hidden = true;
+                result.hidden = false;
+                result.classList.add('fade-in');
+                if (nextBtn) nextBtn.disabled = false;
+            }, 2200);
+        });
+    }
+
+    stage.querySelectorAll('.ob-tab').forEach(function(t){
+        t.addEventListener('click', function(){
+            var target = t.getAttribute('data-tab');
+            stage.querySelectorAll('.ob-tab').forEach(function(x){ x.classList.toggle('is-active', x === t); });
+            stage.querySelectorAll('[data-body]').forEach(function(b){ b.hidden = b.getAttribute('data-body') !== target; });
+        });
+    });
+
+    // Auto-advance step 2 when both radios selected
+    var sRadios = stage.querySelectorAll('input[name="ob_sector"], input[name="ob_ctype"]');
+    sRadios.forEach(function(r){ r.addEventListener('change', function(){
+        var s = stage.querySelector('input[name="ob_sector"]:checked');
+        var c = stage.querySelector('input[name="ob_ctype"]:checked');
+        if (s && c) {
+            try { localStorage.setItem('vynex_ob_sector', s.value); localStorage.setItem('vynex_ob_ctype', c.value); } catch(e){}
+        }
+    }); });
+})();
+</script>
+{% endblock %}

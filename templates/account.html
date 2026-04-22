@@ -18,9 +18,18 @@
 
         {% if message %}<div class="alert-success" style="margin-bottom:16px">{{ message }}</div>{% endif %}
 
+        <div class="account-tabs" role="tablist">
+            <button type="button" class="account-tab is-active" role="tab" data-tab="profilo"><i data-lucide="user-circle" style="width:15px;height:15px"></i> Profilo</button>
+            <button type="button" class="account-tab" role="tab" data-tab="sicurezza"><i data-lucide="shield" style="width:15px;height:15px"></i> Sicurezza</button>
+            <button type="button" class="account-tab" role="tab" data-tab="privacy"><i data-lucide="database" style="width:15px;height:15px"></i> Privacy & dati</button>
+            <button type="button" class="account-tab" role="tab" data-tab="danger"><i data-lucide="alert-triangle" style="width:15px;height:15px"></i> Zona pericolo</button>
+        </div>
+
+        <!-- TAB: PROFILO -->
+        <div class="account-tab-panel is-active" data-panel="profilo">
         <div class="account-grid">
             <div class="account-card account-card--wide">
-                <h2 class="account-card-title">Profilo</h2>
+                <h2 class="account-card-title">Il tuo piano</h2>
                 <dl class="account-dl">
                     <dt>Piano</dt><dd><span class="stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</span></dd>
                     <dt>Email verificata</dt><dd>
@@ -36,11 +45,11 @@
                 {% if user.plan != "free" %}
                 <a href="/portale-fatturazione" class="btn-ghost btn-sm">Gestisci abbonamento</a>
                 {% else %}
-                <a href="/checkout/pro" class="btn-primary btn-sm">Passa a Pro</a>
+                <a href="/checkout/pro" class="btn-primary btn-sm">Prova Pro — 10 giorni gratis →</a>
                 {% endif %}
             </div>
 
-            <div class="account-card">
+            <div class="account-card account-card--wide">
                 <h2 class="account-card-title">Dati personali</h2>
                 <p class="account-warning" style="color:var(--text-2)">
                     Aggiorna nome, email o azienda mandante. Se cambi l'email riceverai un nuovo link di verifica.
@@ -62,7 +71,12 @@
                     <button type="submit" class="btn-primary btn-sm">Salva modifiche</button>
                 </form>
             </div>
+        </div>
+        </div>
 
+        <!-- TAB: SICUREZZA -->
+        <div class="account-tab-panel" data-panel="sicurezza">
+        <div class="account-grid">
             <div class="account-card">
                 <h2 class="account-card-title">Cambia password</h2>
                 <p class="account-warning" style="color:var(--text-2)">
@@ -89,15 +103,25 @@
                 </p>
                 <button type="button" id="btn-logout-all" class="btn-ghost btn-sm">Disconnetti tutti i dispositivi</button>
             </div>
+        </div>
+        </div>
 
-            <div class="account-card">
+        <!-- TAB: PRIVACY -->
+        <div class="account-tab-panel" data-panel="privacy">
+        <div class="account-grid">
+            <div class="account-card account-card--wide">
                 <h2 class="account-card-title">Esporta i tuoi dati</h2>
                 <p class="account-warning" style="color:var(--text-2)">
                     Scarica tutti i tuoi dati personali e documenti in formato JSON, come previsto dall'<strong>art. 15 del GDPR</strong> (diritto di accesso).
                 </p>
                 <a href="/api/export-data" class="btn-ghost btn-sm" download>Scarica dati (JSON)</a>
             </div>
+        </div>
+        </div>
 
+        <!-- TAB: DANGER -->
+        <div class="account-tab-panel" data-panel="danger">
+        <div class="account-grid">
             <div class="account-card account-card--wide account-danger">
                 <h2 class="account-card-title">Elimina account</h2>
                 <p class="account-warning">
@@ -122,12 +146,28 @@
                 </form>
             </div>
         </div>
+        </div>
+
     </main>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Account tabs
+(function(){
+    var tabs = document.querySelectorAll('.account-tab');
+    var panels = document.querySelectorAll('.account-tab-panel');
+    function activate(key) {
+        tabs.forEach(function(t){ t.classList.toggle('is-active', t.getAttribute('data-tab') === key); });
+        panels.forEach(function(p){ p.classList.toggle('is-active', p.getAttribute('data-panel') === key); });
+        try { history.replaceState(null, '', '#' + key); } catch(e){}
+    }
+    tabs.forEach(function(t){ t.addEventListener('click', function(){ activate(t.getAttribute('data-tab')); }); });
+    var initial = (location.hash || '').replace('#', '');
+    if (initial && document.querySelector('[data-panel="' + initial + '"]')) activate(initial);
+})();
+
 const rinviaBtn = document.getElementById('btn-rinvia-verifica');
 if (rinviaBtn) {
     rinviaBtn.addEventListener('click', async () => {

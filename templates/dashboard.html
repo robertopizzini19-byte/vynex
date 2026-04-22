@@ -15,52 +15,44 @@
         <div class="page-header">
             <div>
                 <h1>Ciao, {{ user.full_name.split()[0] }} 👋</h1>
-                <p class="page-sub">{% if user.plan != "free" %}Documenti illimitati attivi{% else %}{{ limit - usage }} documenti rimanenti questo mese{% endif %}</p>
+                <p class="page-sub">{% if user.plan != "free" %}Documenti illimitati attivi{% else %}Pronto a risparmiare un'altra serata?{% endif %}</p>
             </div>
-            <a href="/genera" class="btn-primary">
-                <i data-lucide="plus" style="width:16px;height:16px"></i>
+        </div>
+
+        <div class="hero-usage">
+            <div class="hero-usage-left">
+                <div class="hero-usage-kicker">{% if user.plan == "free" %}Documenti disponibili{% else %}Piano {{ user.plan.upper() }}{% endif %}</div>
+                <div class="hero-usage-number">{% if user.plan == "free" %}{{ limit - usage }}<span style="font-size:0.45em;color:var(--text-3);font-weight:500;letter-spacing:0">/{{ limit }}</span>{% else %}∞{% endif %}</div>
+                <div class="hero-usage-sub">{% if user.plan == "free" %}{{ usage }} generati questo mese · rinnovo il 1° del mese{% else %}Generazione illimitata, priorità AI attiva{% endif %}</div>
+            </div>
+            <a href="/genera" class="hero-usage-cta">
+                <i data-lucide="sparkles" style="width:18px;height:18px"></i>
                 Nuovo documento
             </a>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="file-text"></i></div>
-                <div class="stat-value">{{ usage }}</div>
-                <div class="stat-label">Documenti questo mese</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i data-lucide="infinity"></i></div>
-                <div class="stat-value">{% if user.plan == "free" %}{{ limit - usage }}{% else %}∞{% endif %}</div>
-                <div class="stat-label">Disponibili</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon stat-icon-plan"><i data-lucide="zap"></i></div>
-                <div class="stat-value stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</div>
-                <div class="stat-label">Piano attivo</div>
-            </div>
-        </div>
-
         {% if user.plan == "free" %}
         {% set used_pct = (usage * 100 // limit) if limit else 0 %}
+        {% if used_pct >= 50 %}
         <div class="upgrade-banner {% if usage >= limit %}upgrade-banner-critical{% elif used_pct >= 70 %}upgrade-banner-warning{% endif %}">
             <div class="upgrade-banner-left">
                 <div class="upgrade-banner-icon"><i data-lucide="zap"></i></div>
                 <div>
                     {% if usage >= limit %}
                     <div class="upgrade-banner-title">Hai finito i documenti del mese</div>
-                    <div class="upgrade-banner-sub">Passa a Pro: documenti illimitati · 10 giorni gratis · nessuna carta subito</div>
+                    <div class="upgrade-banner-sub">Pro: documenti illimitati, 10 giorni gratis, nessuna carta subito.</div>
                     {% elif used_pct >= 70 %}
                     <div class="upgrade-banner-title">Ti restano solo {{ limit - usage }} documenti</div>
-                    <div class="upgrade-banner-sub">Pro: illimitati · 10 giorni gratis · disdici quando vuoi</div>
+                    <div class="upgrade-banner-sub">Pro: illimitati, 10 giorni gratis, disdici quando vuoi.</div>
                     {% else %}
-                    <div class="upgrade-banner-title">Passa a Pro — documenti illimitati</div>
-                    <div class="upgrade-banner-sub">{{ limit - usage }} rimanenti · 10 giorni gratis · nessuna carta subito</div>
+                    <div class="upgrade-banner-title">Hai già usato metà dei documenti gratis</div>
+                    <div class="upgrade-banner-sub">Pro: illimitati, 10 giorni gratis, nessuna carta subito.</div>
                     {% endif %}
                 </div>
             </div>
-            <a href="/checkout/pro" class="btn-primary btn-sm">{% if usage >= limit %}Sblocca Pro{% else %}Prova gratis{% endif %}</a>
+            <a href="/checkout/pro" class="btn-primary btn-sm">{% if usage >= limit %}Sblocca Pro →{% else %}Prova Pro 10 gg →{% endif %}</a>
         </div>
+        {% endif %}
         {% endif %}
 
         {% if user.referral_code %}

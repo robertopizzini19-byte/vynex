@@ -599,9 +599,21 @@ async def api_register(
         logger.exception("save_source_attribution signup failed user=%s", user.id)
 
     token = create_access_token({"sub": user.email}, token_version=user.token_version or 0)
-    response = redirect_with_cookie("/dashboard", token)
+    response = redirect_with_cookie("/benvenuto", token)
     response.delete_cookie("vynex_ref")
     return response
+
+
+@app.get("/benvenuto", response_class=HTMLResponse)
+async def benvenuto(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_user),
+):
+    return templates.TemplateResponse("benvenuto.html", {
+        "request": request,
+        "user": user,
+    })
 
 
 @app.post("/api/recupera-password")

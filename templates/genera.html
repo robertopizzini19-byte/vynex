@@ -31,59 +31,52 @@
         </div>
         {% else %}
 
-        <div class="genera-layout">
-            <!-- INPUT PANEL -->
-            <div class="genera-panel" id="input-panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">Descrivi la visita</h2>
-                    <p class="panel-sub">Scrivi come parleresti a un collega. Includi cliente, discussione, accordi e next steps.</p>
-                </div>
+        <div class="genera-hero" id="input-panel">
+            <h1 class="genera-hero-title">Descrivi la tua visita</h1>
+            <p class="genera-hero-sub">Scrivi come parleresti a un collega. 3 documenti pronti in 30 secondi.</p>
 
-                <div class="form-group">
-                    <label for="azienda_mandante">
-                        <i data-lucide="building-2" style="width:14px;height:14px"></i>
-                        Per quale mandante?
-                        <span class="optional">opzionale</span>
-                    </label>
-                    <input type="text" id="azienda_mandante" placeholder="es. Ferramenta Italia SpA" value="{{ user.company_name or '' }}">
-                </div>
-
-                <div class="form-group">
-                    <label for="input_testo">
-                        <i data-lucide="message-square" style="width:14px;height:14px"></i>
-                        Descrizione visita
-                    </label>
-
-                    <div class="genera-chips" role="group" aria-label="Template pronti">
-                        <button type="button" class="chip" data-template="visita">📋 Visita standard</button>
-                        <button type="button" class="chip" data-template="ordine">🛒 Ordine</button>
-                        <button type="button" class="chip" data-template="reclamo">⚠️ Reclamo</button>
-                        <button type="button" class="chip" data-template="prospecting">🎯 Prospecting</button>
-                        <button type="button" class="chip" data-template="mandante">👔 Riunione mandante</button>
-                    </div>
-
-                    <textarea id="input_testo" rows="10" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
-                    <div class="textarea-meta">
-                        <span id="input-hint" class="input-hint">Più dettagli metti → documenti più precisi.</span>
-                        <span class="char-count"><span id="char-count">0</span> / 2000</span>
-                    </div>
-                </div>
-
-                <button id="btn-genera" class="btn-primary btn-full btn-lg" onclick="generaDocumenti()">
-                    <span id="btn-text" style="display:flex;align-items:center;gap:8px;justify-content:center">
-                        <i data-lucide="sparkles" style="width:17px;height:17px"></i>
-                        Genera 3 documenti
-                    </span>
-                    <span id="btn-loading" style="display:none" class="loading-dots">
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        Generazione in corso
-                    </span>
-                </button>
-
-                <div id="error-msg" class="alert-error" style="display:none"></div>
+            <div class="genera-chips" role="group" aria-label="Template pronti">
+                <button type="button" class="chip" data-template="visita">📋 Visita standard</button>
+                <button type="button" class="chip" data-template="ordine">🛒 Ordine</button>
+                <button type="button" class="chip" data-template="reclamo">⚠️ Reclamo</button>
+                <button type="button" class="chip" data-template="prospecting">🎯 Prospecting</button>
+                <button type="button" class="chip" data-template="mandante">👔 Riunione mandante</button>
             </div>
+
+            <div class="genera-hero-textarea-wrap">
+                <textarea id="input_testo" class="genera-hero-textarea" placeholder="es. Oggi visita da Rossi della Ferramenta Bianchi a Bergamo. Interessato al catalogo primavera, linea utensili elettrici. Offerta: sconto 10% sul primo ordine, pagamento 30gg. Da richiamare il 5 aprile per conferma."></textarea>
+                <div class="genera-hero-footer">
+                    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-3)">
+                        <span><span id="char-count">0</span> / 2000 caratteri</span>
+                        <span id="input-hint" class="input-hint">Più dettagli → documenti più precisi.</span>
+                    </div>
+                    <button id="btn-genera" class="genera-hero-cta" onclick="generaDocumenti()">
+                        <span id="btn-text" style="display:inline-flex;align-items:center;gap:8px">
+                            <i data-lucide="sparkles" style="width:16px;height:16px"></i>
+                            Genera 3 documenti
+                        </span>
+                        <span id="btn-loading" style="display:none" class="loading-dots">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <details style="margin-top:24px">
+                <summary style="cursor:pointer;font-size:13px;color:var(--text-3);list-style:none;display:inline-flex;align-items:center;gap:6px">
+                    <i data-lucide="building-2" style="width:13px;height:13px"></i> Specifica mandante (opzionale)
+                </summary>
+                <div style="margin-top:12px">
+                    <input type="text" id="azienda_mandante" placeholder="es. Ferramenta Italia SpA" value="{{ user.company_name or '' }}" style="width:100%;max-width:440px;padding:10px 14px;background:var(--glass);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit">
+                </div>
+            </details>
+
+            <div id="error-msg" class="alert-error" style="display:none;margin-top:16px"></div>
+        </div>
+
+        <div class="genera-layout" style="margin-top:32px;grid-template-columns:1fr;max-width:880px;margin-left:auto;margin-right:auto">
 
             <!-- OUTPUT PANEL -->
             <div id="output-panel" class="genera-panel output-panel" style="display:none">
