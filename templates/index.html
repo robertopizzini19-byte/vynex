@@ -22,6 +22,41 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "VYNEX — Intelligenza Artificiale personale per agenti commerciali",
+  "serviceType": "Generazione automatica documenti commerciali",
+  "provider": {"@type": "Organization", "name": "VYNEX", "url": "{{ canonical_base }}"},
+  "areaServed": {"@type": "Country", "name": "Italia"},
+  "audience": {"@type": "BusinessAudience", "audienceType": "Agenti di commercio italiani, plurimandatari, reti vendita B2B"},
+  "description": "Genera report di visita, email di follow-up e offerta commerciale in 30 secondi da una descrizione informale della visita. In italiano professionale nativo, ricordando ogni cliente visita dopo visita.",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Piani VYNEX",
+    "itemListElement": [
+      {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "EUR", "description": "10 documenti al mese, per sempre"},
+      {"@type": "Offer", "name": "Pro", "price": "49", "priceCurrency": "EUR", "description": "Documenti illimitati, 10 giorni gratis, disdici quando vuoi"},
+      {"@type": "Offer", "name": "Team", "price": "89", "priceCurrency": "EUR", "description": "Per agente, min 3 agenti, reti vendita B2B"}
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Come generare report di visita, email di follow-up e offerta commerciale con VYNEX in 30 secondi",
+  "description": "Tre passi dal parlato al documento commerciale pronto all'uso.",
+  "totalTime": "PT30S",
+  "step": [
+    {"@type": "HowToStep", "position": 1, "name": "Descrivi la visita", "text": "Scrivi in italiano informale cosa è successo durante la visita. 2 minuti, senza campi obbligatori."},
+    {"@type": "HowToStep", "position": 2, "name": "VYNEX elabora", "text": "L'Intelligenza Artificiale riconosce cliente, azienda, accordi, date e next steps. Zero invenzioni."},
+    {"@type": "HowToStep", "position": 3, "name": "Ricevi 3 documenti pronti", "text": "Report per il mandante, email per il cliente, offerta formale con numero proposta e validità."}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
     {
@@ -645,6 +680,135 @@
                 <h3>Italiano professionale</h3>
                 <p>Terminologia commerciale italiana corretta. Non una traduzione — scritto come un professionista.</p>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- SHOWCASE "VEDI VYNEX IN AZIONE" -->
+<section class="vnx-showcase vnx-fade-in" aria-labelledby="showcase-title">
+    <div class="vnx-showcase-head">
+        <div class="section-label">Vedi VYNEX all'opera</div>
+        <h2 id="showcase-title">Dai 25 minuti a <span class="highlight">30 secondi</span>.<br>Stesso risultato. Meno fatica.</h2>
+        <p class="vnx-showcase-lead">Guarda come un tuo collega agente trasforma due righe post‑visita in tre documenti professionali. In loop, con esempi italiani reali: ferramenta a Bergamo, utensileria a Torino, farmacia in provincia.</p>
+    </div>
+
+    <div class="vnx-showcase-grid">
+        <div class="vnx-showcase-points">
+            <div class="vnx-showcase-point">
+                <div class="vnx-showcase-num">01</div>
+                <div>
+                    <h3>Parli come a un collega</h3>
+                    <p>Scrivi la visita in italiano informale. Niente form, niente campi obbligatori da compilare. <strong>2 minuti.</strong></p>
+                </div>
+            </div>
+            <div class="vnx-showcase-point">
+                <div class="vnx-showcase-num">02</div>
+                <div>
+                    <h3>VYNEX riconosce cliente, azienda, accordi</h3>
+                    <p>Estrae nomi, importi, sconti, date e next steps. <strong>Senza inventare niente</strong> — se un dato manca, lo segnala.</p>
+                </div>
+            </div>
+            <div class="vnx-showcase-point">
+                <div class="vnx-showcase-num">03</div>
+                <div>
+                    <h3>Ricevi 3 documenti pronti</h3>
+                    <p>Report per il mandante, email per il cliente, offerta formale con numero proposta e validità. <strong>Zero placeholder vuoti.</strong></p>
+                </div>
+            </div>
+            <div class="vnx-showcase-cta">
+                <a href="/demo" class="btn-primary btn-lg">Provalo adesso (senza account) →</a>
+                <span class="vnx-showcase-cta-sub">30 secondi · nessuna carta · nessun impegno</span>
+            </div>
+        </div>
+
+        <div class="vnx-showcase-visual" aria-hidden="true">
+            <div class="vnx-showcase-frame">
+                <div class="vnx-showcase-frame-bar">
+                    <span></span><span></span><span></span>
+                    <div class="vnx-showcase-frame-url">vynex.it/genera</div>
+                </div>
+                <div class="vnx-showcase-frame-body">
+                    <div class="vnx-showcase-typing">
+                        <span class="vnx-showcase-typing-label">Descrivi la visita</span>
+                        <div class="vnx-showcase-typing-text">Oggi Rossi della Ferramenta Bianchi, Bergamo. Catalogo primavera, sconto 10%, richiamo il 5 aprile<span class="vnx-showcase-caret">|</span></div>
+                    </div>
+                    <div class="vnx-showcase-arrow">↓ <span>VYNEX elabora in 28s</span></div>
+                    <div class="vnx-showcase-docs">
+                        <div class="vnx-showcase-doc" style="--delay:0s">
+                            <div class="vnx-showcase-doc-tag">📋 Report</div>
+                            <div class="vnx-showcase-doc-line line-full"></div>
+                            <div class="vnx-showcase-doc-line line-md"></div>
+                            <div class="vnx-showcase-doc-line line-full"></div>
+                            <div class="vnx-showcase-doc-line line-sm"></div>
+                        </div>
+                        <div class="vnx-showcase-doc" style="--delay:.3s">
+                            <div class="vnx-showcase-doc-tag">✉️ Email</div>
+                            <div class="vnx-showcase-doc-line line-full"></div>
+                            <div class="vnx-showcase-doc-line line-md"></div>
+                            <div class="vnx-showcase-doc-line line-full"></div>
+                        </div>
+                        <div class="vnx-showcase-doc" style="--delay:.6s">
+                            <div class="vnx-showcase-doc-tag">📄 Offerta</div>
+                            <div class="vnx-showcase-doc-line line-full"></div>
+                            <div class="vnx-showcase-doc-line line-md"></div>
+                            <div class="vnx-showcase-doc-line line-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SETTORI — social proof verticale -->
+<section class="vnx-sectors vnx-fade-in" aria-labelledby="sectors-title">
+    <div class="vnx-sectors-head">
+        <div class="section-label">Parla la tua lingua di mercato</div>
+        <h2 id="sectors-title">Calibrata su <span class="highlight">6 settori</span> dove l'agente italiano vende.</h2>
+        <p>Non una IA generica tradotta dall'inglese. VYNEX conosce la terminologia di 6 verticali chiave del B2B italiano: partite IVA, codici articolo, modalità di pagamento, tono commerciale nativo.</p>
+    </div>
+    <div class="vnx-sectors-grid">
+        <div class="vnx-sector-card">
+            <div class="vnx-sector-ill" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 12h28l6 10v34a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4z"/><path d="M44 12v10h8"/><circle cx="32" cy="38" r="8"/><path d="M32 30v-4M32 50v-4M40 38h4M20 38h4"/></svg>
+            </div>
+            <h3>Ferramenta &amp; Utensileria</h3>
+            <p>Codici articolo, lotti minimi, serie, d.f.f.m., lead time fornitura.</p>
+        </div>
+        <div class="vnx-sector-card">
+            <div class="vnx-sector-ill" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 14h20l-2 10H24z"/><path d="M26 24v32a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4V24"/><path d="M14 38h8M42 38h8M18 44l-4 4M46 44l4 4"/></svg>
+            </div>
+            <h3>Farmaceutico</h3>
+            <p>Scheda tecnica, prova di gamma, informatore scientifico, ENASARCO.</p>
+        </div>
+        <div class="vnx-sector-card">
+            <div class="vnx-sector-ill" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20h28l-2 32a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4z"/><path d="M26 20V14a6 6 0 0 1 12 0v6"/><path d="M24 32h16M24 42h16"/></svg>
+            </div>
+            <h3>Food &amp; Beverage</h3>
+            <p>HORECA, GDO, listini stagionali, promo, scadenze lotti, bolla accompagnamento.</p>
+        </div>
+        <div class="vnx-sector-card">
+            <div class="vnx-sector-ill" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="10"/><path d="M32 6v8M32 50v8M6 32h8M50 32h8M14 14l6 6M44 44l6 6M14 50l6-6M44 20l6-6"/></svg>
+            </div>
+            <h3>Industriale &amp; Tecnico</h3>
+            <p>Componentistica, contratti quadro, resi, garanzie, trasporto responsabilità.</p>
+        </div>
+        <div class="vnx-sector-card">
+            <div class="vnx-sector-ill" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="20" width="44" height="32" rx="3"/><path d="M10 28h44M18 20V14M46 20V14M18 52v4M46 52v4"/></svg>
+            </div>
+            <h3>Arredo &amp; Design</h3>
+            <p>Contract, preventivi a misura, campionature, posa, tempistiche consegna.</p>
+        </div>
+        <div class="vnx-sector-card">
+            <div class="vnx-sector-ill" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h40v28a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z"/><path d="M22 20v-4a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v4"/><path d="M22 32h20M22 40h14"/></svg>
+            </div>
+            <h3>Servizi B2B</h3>
+            <p>Consulenza, formazione, SaaS, SLA, contratti rinnovo, fatturazione ricorrente.</p>
         </div>
     </div>
 </section>
