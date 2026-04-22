@@ -164,6 +164,15 @@ cta_url_suffix deve iniziare con / e valere: /registrati | /demo | /prezzi | /co
     if not cta_url.startswith(("/registrati", "/demo", "/prezzi", "/come-funziona", "/blog", "/")):
         cta_url = "/registrati"
 
+    # Post-validation: CTA must be operative + topic-coherent, not generic.
+    # If Claude ignored the rule, force a second pass that rewrites ONLY the CTA.
+    data["cta_text"] = await _enforce_cta_quality(
+        cta_text=data["cta_text"],
+        subject=data["subject"],
+        hook=data["hook"],
+        valore_html=data["valore_html"],
+    )
+
     now = datetime.utcnow()
     slug_base = _slug(data["slug"] or data["subject"])
     slug = f"{now.strftime('%Y%m%d')}-{slug_base}"
@@ -205,6 +214,89 @@ cta_url_suffix deve iniziare con / e valere: /registrati | /demo | /prezzi | /co
     finally:
         if own_db:
             await session.close()
+
+
+_CTA_BANNED_PATTERNS = (
+    r"\bprova\s+(vynex|gratis)\b",
+    r"\bregistrati\b",
+    r"\binizia\s+(gratis|ora)\b",
+    r"\biscriviti\b",
+    r"\bscopri\s+di\s+pi(ù|u)\b",
+    r"\bclicca\s+qui\b",
+    r"\bvai\s+al\s+sito\b",
+)
+_CTA_BANNED_RE = re.compile("|".join(_CTA_BANNED_PATTERNS), re.IGNORECASE)
+_CTA_OPERATIVE_VERBS = (
+    "automatizza", "genera", "smetti", "riduci", "crea", "recupera",
+    "trasforma", "risparmia", "evita", "elimina", "scrivi", "ottieni",
+    "chiudi", "accelera", "prepara", "invia", "organizza", "prendi",
+)
+
+
+async def _enforce_cta_quality(*, cta_text: str, subject: str, hook: str, valore_html: str) -> str:
+    """If the CTA is generic or missing an operative verb, call Claude again
+    for a single-shot rewrite. Falls back to a deterministic template if the
+    second pass also fails."""
+    raw = (cta_text or "").strip().strip(".!→")
+    lower = raw.lower()
+    banned = _CTA_BANNED_RE.search(lower) is not None
+    has_verb = any(lower.startswith(v) or f" {v} " in f" {lower} " for v in _CTA_OPERATIVE_VERBS)
+    too_long = len(raw.split()) > 7
+    if raw and not banned and has_verb and not too_long:
+        return raw
+
+    logger.info("CTA failed validation (text=%r banned=%s verb=%s len=%d) — rewriting", raw, banned, has_verb, len(raw.split()))
+
+    valore_plain = _strip_html(valore_html)[:500]
+    prompt = f"""La CTA attuale per questa newsletter VYNEX non rispetta le regole:
+
+Subject: {subject}
+Hook: {hook}
+Contenuto (estratto): {valore_plain}
+CTA attuale: "{raw}"
+
+Regole che la CTA deve rispettare (OBBLIGATORIE):
+- Inizia con UN verbo imperativo operativo (Automatizza, Genera, Smetti, Riduci, Crea, Recupera, Trasforma, Risparmia, Evita, Elimina, Scrivi, Ottieni, Chiudi, Accelera, Prepara, Invia, Organizza, Prendi).
+- È coerente col tema dell'email (se parla di follow-up → riguarda follow-up; se parla di offerte → riguarda offerte; se parla di report → riguarda report).
+- Massimo 6 parole.
+- NON usa "Prova gratis", "Prova VYNEX", "Registrati", "Iscriviti", "Scopri", "Clicca qui".
+
+Esempi validi:
+- Email su follow-up: "Automatizza i follow-up dei clienti"
+- Email su offerte: "Genera offerte in 30 secondi"
+- Email su report di visita: "Smetti di scrivere report la sera"
+- Email su riattivazione clienti: "Recupera i clienti silenziosi"
+
+Restituisci SOLO la nuova CTA, una singola riga di testo (nessuna virgoletta, nessuna spiegazione, nessun emoji, nessuna freccia). Massimo 6 parole."""
+
+    try:
+        msg = await ai_engine._call_claude(prompt, max_tokens=60)
+        new_raw = msg.content[0].text.strip().strip('"').strip("'").strip(".!→").split("\n")[0].strip()
+        new_lower = new_raw.lower()
+        new_ok = (
+            new_raw
+            and not _CTA_BANNED_RE.search(new_lower)
+            and any(new_lower.startswith(v) for v in _CTA_OPERATIVE_VERBS)
+            and len(new_raw.split()) <= 7
+        )
+        if new_ok:
+            logger.info("CTA rewritten: %r", new_raw)
+            return new_raw
+        logger.warning("CTA rewrite still invalid: %r — using deterministic fallback", new_raw)
+    except Exception:
+        logger.exception("CTA rewrite Claude call failed — falling back")
+
+    # Deterministic fallback: pick a safe topical CTA based on keywords in the subject.
+    subj_l = (subject or "").lower()
+    if any(k in subj_l for k in ("follow-up", "follow up", "silenzio", "riattiv", "ricontatt")):
+        return "Automatizza i follow-up dei clienti"
+    if any(k in subj_l for k in ("offerta", "offerte", "preventivo", "preventivi")):
+        return "Genera offerte in 30 secondi"
+    if any(k in subj_l for k in ("report", "visita", "resoconto")):
+        return "Smetti di scrivere report la sera"
+    if any(k in subj_l for k in ("email", "messaggio", "whatsapp")):
+        return "Scrivi email di follow-up subito"
+    return "Automatizza i documenti post-visita"
 
 
 def _strip_html(html: str) -> str:
