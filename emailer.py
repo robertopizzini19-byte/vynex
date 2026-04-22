@@ -24,8 +24,17 @@ async def send_raw(to: str, subject: str, html: str) -> bool:
 
 
 async def _send(to: str, subject: str, html: str) -> bool:
+    # Try Brevo first, fall back to Resend at runtime if Brevo fails (e.g.
+    # account not yet activated). Ensures newsletter + transactional work
+    # the moment Resend is configured, without waiting for Brevo approval.
     if BREVO_API_KEY:
-        return await _send_brevo(to, subject, html)
+        ok = await _send_brevo(to, subject, html)
+        if ok:
+            return True
+        if RESEND_API_KEY:
+            logger.info("Brevo failed for %s, falling back to Resend", to)
+            return await _send_resend(to, subject, html)
+        return False
     if RESEND_API_KEY:
         return await _send_resend(to, subject, html)
     logger.info("No email provider configured — skipping email to %s (%s)", to, subject)
