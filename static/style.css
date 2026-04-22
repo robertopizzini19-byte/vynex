@@ -540,6 +540,7 @@ textarea {
   justify-content: center;
 }
 .mockup-card {
+  position: relative;
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: var(--r-xl);

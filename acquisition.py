@@ -495,6 +495,9 @@ async def post_signup_setup(
         referrer = r.scalar_one_or_none()
         if referrer is not None and referrer.id != user.id and referrer.deleted_at is None:
             user.referred_by_id = referrer.id
+            # Double-sided referral: il referee riceve 1 mese di Pro trial extra.
+            # Si attiva automaticamente al primo checkout Pro via stripe_handler.
+            user.referral_bonus_months_granted = (user.referral_bonus_months_granted or 0) + 1
             changed = True
 
     if changed:

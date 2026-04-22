@@ -32,11 +32,12 @@
   closeBtn.addEventListener('click', hide);
   overlay.addEventListener('click', function(e){ if (e.target === overlay) hide(); });
 
-  // Trigger 1: mouse leaves viewport from top (desktop)
-  document.addEventListener('mouseleave', function(e){
-    if (e.clientY <= 0 && !sessionStorage.getItem(KEY)) show();
-  });
-  // Trigger 2: fallback after 45s engagement (mobile can't detect mouseleave)
-  setTimeout(function(){ if (!sessionStorage.getItem(KEY)) show(); }, 45000);
+  // Trigger: mouse leaves viewport from top (desktop only — no popup mobile)
+  var isMobile = window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  if (!isMobile) {
+    document.addEventListener('mouseleave', function(e){
+      if (e.clientY <= 0 && !sessionStorage.getItem(KEY)) show();
+    });
+  }
 })();
 </script>

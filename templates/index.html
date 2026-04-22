@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}VYNEX — Ogni visita diventa 3 documenti in 30 secondi{% endblock %}
-{% block description %}L'AI per agenti commerciali italiani. Descrivi la visita, ottieni report professionale, email di follow-up e offerta commerciale pronti all'uso. Prova gratis.{% endblock %}
+{% block title %}VYNEX — Risparmia 20+ ore al mese di report e follow-up{% endblock %}
+{% block description %}Per agenti di commercio plurimandatari italiani. Descrivi la visita a voce, ottieni report, email di follow-up e offerta commerciale in 30 secondi. 10 documenti gratis ogni mese, nessuna carta di credito.{% endblock %}
 
 {% block ld_json %}
 <script type="application/ld+json">
@@ -77,30 +77,32 @@
         <div>
             <div class="hero-label">
                 <span class="hero-label-dot"></span>
-                AI per agenti commerciali italiani
+                Per agenti di commercio plurimandatari italiani
             </div>
             <h1 class="hero-title">
-                20 ore al mese.<br>
-                <span class="highlight">Riprenditele.</span>
+                Risparmia <span class="highlight">20+ ore al mese</span><br>
+                di report e follow-up.
             </h1>
             <p class="hero-sub">
-                Descrivi la visita. VYNEX scrive report, email di follow-up e offerta commerciale in 30 secondi — in italiano commerciale vero, non tradotto da ChatGPT.
+                Finita la visita, descrivi quello che è successo. VYNEX scrive <strong style="color:var(--text)">report professionale, email di follow-up e offerta commerciale</strong> in 30 secondi — in italiano commerciale vero, non ChatGPT tradotto.
             </p>
             <div class="hero-actions">
-                <a href="/demo" class="btn-primary btn-lg">Prova senza account →</a>
-                <a href="/registrati" class="btn-ghost">Crea account gratis</a>
+                <a href="/demo" class="btn-primary btn-lg">Provalo gratis in 30 secondi →</a>
+                <a href="/registrati" class="btn-ghost">Crea account (10 doc/mese gratis)</a>
             </div>
             <div class="hero-proof">
                 <i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green)"></i>
-                Nessuna carta di credito richiesta
+                Nessuna carta di credito
                 <span class="hero-proof-dot"></span>
-                10 documenti gratuiti/mese per sempre
+                Nessun account per provare
+                <span class="hero-proof-dot"></span>
+                3 documenti pronti in 30 secondi
             </div>
         </div>
 
-        <!-- RIGHT — Product mockup -->
+        <!-- RIGHT — Product mockup (animato) -->
         <div class="hero-visual">
-            <div class="mockup-card">
+            <div class="mockup-card" id="vnx-hero-mock" data-stage="input">
                 <div class="mockup-header">
                     <div class="mockup-dots">
                         <div class="mockup-dot mockup-dot-r"></div>
@@ -112,22 +114,22 @@
 
                 <div style="margin-bottom:14px">
                     <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Descrivi la visita</div>
-                    <div style="background:var(--glass);border:1px solid var(--border-h);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text-2);line-height:1.6;font-style:italic;">
-                        Ho visto Rossi della Ferramenta Bianchi a Bergamo. Catalogo primavera, sconto 10%, richiamare il 5 aprile…
+                    <div style="background:var(--glass);border:1px solid var(--border-h);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text-2);line-height:1.6;font-style:italic;min-height:58px">
+                        <span id="vnx-hero-typer" aria-live="polite"></span><span id="vnx-hero-caret" style="display:inline-block;width:1px;background:var(--blue-l);margin-left:2px;animation:vnxBlink 1s steps(2) infinite">&nbsp;</span>
                     </div>
                 </div>
 
-                <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r);padding:10px;text-align:center;font-size:13px;font-weight:600;color:#fff;margin-bottom:16px;box-shadow:0 4px 16px var(--blue-glow)">
-                    ✦ Genera 3 documenti
+                <button id="vnx-hero-cta" type="button" aria-label="Simulazione generazione" style="all:unset;display:block;width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r);padding:10px;text-align:center;font-size:13px;font-weight:600;color:#fff;margin-bottom:16px;box-shadow:0 4px 16px var(--blue-glow);cursor:default;transition:opacity .3s">
+                    <span id="vnx-hero-cta-label">✦ Genera 3 documenti</span>
+                </button>
+
+                <div class="vnx-hero-tabs" role="tablist" aria-label="Documenti generati" style="display:flex;gap:4px;padding:4px;background:var(--glass);border:1px solid var(--border);border-radius:12px;margin-bottom:14px">
+                    <div class="vnx-hero-tab is-active" data-tab="report" role="tab" style="flex:1;padding:6px 0;text-align:center;border-radius:9px;font-size:11.5px;font-weight:600;transition:background .25s,color .25s">📋 Report</div>
+                    <div class="vnx-hero-tab" data-tab="email" role="tab" style="flex:1;padding:6px 0;text-align:center;border-radius:9px;font-size:11.5px;font-weight:500;transition:background .25s,color .25s">✉️ Email</div>
+                    <div class="vnx-hero-tab" data-tab="offerta" role="tab" style="flex:1;padding:6px 0;text-align:center;border-radius:9px;font-size:11.5px;font-weight:500;transition:background .25s,color .25s">📄 Offerta</div>
                 </div>
 
-                <div style="display:flex;gap:4px;padding:4px;background:var(--glass);border:1px solid var(--border);border-radius:12px;margin-bottom:14px">
-                    <div style="flex:1;padding:6px 0;text-align:center;background:var(--blue-dim);border-radius:9px;font-size:11.5px;font-weight:600;color:var(--blue-l)">📋 Report</div>
-                    <div style="flex:1;padding:6px 0;text-align:center;font-size:11.5px;color:var(--text-3)">✉️ Email</div>
-                    <div style="flex:1;padding:6px 0;text-align:center;font-size:11.5px;color:var(--text-3)">📄 Offerta</div>
-                </div>
-
-                <div class="mockup-lines">
+                <div class="mockup-lines" id="vnx-hero-lines">
                     <div class="mockup-line mockup-line-full"></div>
                     <div class="mockup-line mockup-line-lg"></div>
                     <div class="mockup-line mockup-line-full"></div>
@@ -136,12 +138,21 @@
                 </div>
 
                 <div class="mockup-badge-row">
-                    <span class="mockup-badge mockup-badge-green">✓ Generato in 26s</span>
+                    <span class="mockup-badge mockup-badge-green" id="vnx-hero-badge-time">✓ Generato in 28s</span>
                     <span class="mockup-badge mockup-badge-blue">📋 Copiato</span>
+                </div>
+
+                <div id="vnx-hero-loader" aria-hidden="true" style="display:none;position:absolute;inset:0;background:rgba(8,12,26,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:inherit;z-index:3;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+                    <div style="display:flex;gap:6px">
+                        <span style="width:8px;height:8px;border-radius:50%;background:var(--blue-l);animation:vnxDot 1.2s ease-in-out infinite"></span>
+                        <span style="width:8px;height:8px;border-radius:50%;background:var(--blue-l);animation:vnxDot 1.2s ease-in-out .15s infinite"></span>
+                        <span style="width:8px;height:8px;border-radius:50%;background:var(--blue-l);animation:vnxDot 1.2s ease-in-out .3s infinite"></span>
+                    </div>
+                    <div style="color:var(--text-2);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase">VYNEX sta scrivendo…</div>
                 </div>
             </div>
 
-            <div style="position:absolute;bottom:-18px;right:-10px;background:var(--bg-2);border:1px solid var(--border-h);border-radius:var(--r-lg);padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;align-items:center;gap:10px;z-index:2">
+            <div class="vnx-hero-floating" style="position:absolute;bottom:-18px;right:-10px;background:var(--bg-2);border:1px solid var(--border-h);border-radius:var(--r-lg);padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;align-items:center;gap:10px;z-index:2;opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease">
                 <div style="width:34px;height:34px;background:var(--green-dim);border:1px solid rgba(16,185,129,.3);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px">✓</div>
                 <div>
                     <div style="font-size:12px;font-weight:600;color:var(--text)">3 documenti pronti</div>
@@ -149,6 +160,117 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<style>
+@keyframes vnxBlink { 0%,100% {opacity:1} 50% {opacity:0} }
+@keyframes vnxDot { 0%,80%,100% {opacity:.3;transform:scale(.8)} 40% {opacity:1;transform:scale(1.2)} }
+.vnx-hero-tab.is-active { background: var(--blue-dim); color: var(--blue-l); }
+.vnx-hero-tab { color: var(--text-3); }
+#vnx-hero-mock[data-stage="loading"] .mockup-lines .mockup-line { opacity: .25; }
+#vnx-hero-mock[data-stage="output"] .mockup-line,
+#vnx-hero-mock[data-stage="done"] .mockup-line { animation: vnxLineIn .55s cubic-bezier(.2,.9,.25,1) both; }
+#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(1),
+#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(1) { animation-delay: 0ms; }
+#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(2),
+#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(2) { animation-delay: 90ms; }
+#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(3),
+#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(3) { animation-delay: 180ms; }
+#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(4),
+#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(4) { animation-delay: 270ms; }
+#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(5),
+#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(5) { animation-delay: 360ms; }
+@keyframes vnxLineIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+#vnx-hero-mock[data-stage="done"] ~ .vnx-hero-floating { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  #vnx-hero-caret { animation: none; opacity: 1; }
+  #vnx-hero-mock[data-stage="output"] .mockup-line,
+  #vnx-hero-mock[data-stage="done"] .mockup-line { animation: none; }
+  .vnx-hero-floating { opacity: 1 !important; transform: none !important; }
+}
+</style>
+
+<script>
+(function(){
+  var mock = document.getElementById('vnx-hero-mock');
+  if (!mock) return;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var typer = document.getElementById('vnx-hero-typer');
+  var caret = document.getElementById('vnx-hero-caret');
+  var ctaLabel = document.getElementById('vnx-hero-cta-label');
+  var loader = document.getElementById('vnx-hero-loader');
+  var tabs = mock.querySelectorAll('.vnx-hero-tab');
+  var badge = document.getElementById('vnx-hero-badge-time');
+
+  var examples = [
+    { text: "Oggi Rossi della Ferramenta Bianchi (Bergamo). Catalogo primavera, chiede sconto 10%. Richiama il 5 aprile.", seconds: 28 },
+    { text: "Visita da Gualtieri Srl a Torino. Ordine utensileria 2.300€. Preferirebbe pagamento a 60gg. Mandante da approvare.", seconds: 31 },
+    { text: "Farmacia Donato, titolare interessato a nuova linea integratori. Chiede campione e scheda tecnica entro venerdì.", seconds: 26 },
+  ];
+  var idx = 0;
+
+  function setStage(s) { mock.setAttribute('data-stage', s); }
+
+  function typeText(text, done) {
+    if (reduce) { typer.textContent = text; done(); return; }
+    typer.textContent = '';
+    var i = 0;
+    (function step() {
+      if (i >= text.length) { done(); return; }
+      typer.textContent = text.slice(0, ++i);
+      setTimeout(step, 10 + Math.random() * 14);
+    })();
+  }
+
+  function activateTab(name) {
+    tabs.forEach(function(t){
+      if (t.dataset.tab === name) t.classList.add('is-active');
+      else t.classList.remove('is-active');
+    });
+  }
+
+  function loop() {
+    var ex = examples[idx % examples.length];
+    idx++;
+    setStage('input');
+    activateTab('report');
+    loader.style.display = 'none';
+    caret.style.display = 'inline-block';
+    if (badge) badge.textContent = '✓ Generato in ' + ex.seconds + 's';
+
+    typeText(ex.text, function(){
+      setTimeout(function(){
+        caret.style.display = 'none';
+        setStage('loading');
+        loader.style.display = 'flex';
+        if (ctaLabel) ctaLabel.textContent = '✦ Sto generando…';
+        setTimeout(function(){
+          loader.style.display = 'none';
+          if (ctaLabel) ctaLabel.textContent = '✦ 3 documenti pronti';
+          setStage('output');
+          setTimeout(function(){ activateTab('email'); }, 700);
+          setTimeout(function(){ activateTab('offerta'); }, 1300);
+          setTimeout(function(){ activateTab('report'); setStage('done'); }, 1900);
+          setTimeout(loop, 4500);
+        }, reduce ? 200 : 1000);
+      }, 300);
+    });
+  }
+
+  // Start after a short beat so the hero lands first
+  setTimeout(loop, 700);
+})();
+</script>
+
+<!-- TRUST BAR -->
+<section style="padding:24px 24px 8px;max-width:1200px;margin:0 auto">
+    <div style="display:flex;flex-wrap:wrap;gap:18px 32px;justify-content:center;align-items:center;color:var(--text-3);font-size:13px;line-height:1.6">
+        <div style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="shield-check" style="width:16px;height:16px;color:var(--green)"></i> Dati in EU (Supabase Frankfurt)</div>
+        <div style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="flag" style="width:16px;height:16px;color:var(--blue-l)"></i> Italiano commerciale nativo</div>
+        <div style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="zap" style="width:16px;height:16px;color:#f59e0b"></i> Powered by Claude Haiku 4.5</div>
+        <div style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="credit-card" style="width:16px;height:16px;color:var(--text-2)"></i> Disdici in un click</div>
     </div>
 </section>
 
