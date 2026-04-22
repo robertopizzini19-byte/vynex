@@ -491,17 +491,20 @@ textarea {
 }
 
 .hero-title {
-  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-size: clamp(2.125rem, 3.6vw, 3.25rem);
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.12;
   letter-spacing: -0.03em;
   margin-bottom: 20px;
+  text-wrap: balance;
+  hyphens: none;
 }
 .hero-title .highlight {
   background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  white-space: nowrap;
 }
 
 .hero-sub {
