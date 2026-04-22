@@ -119,8 +119,8 @@
                     </div>
                 </div>
 
-                <button id="vnx-hero-cta" type="button" aria-label="Simulazione generazione" style="all:unset;display:block;width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r);padding:10px;text-align:center;font-size:13px;font-weight:600;color:#fff;margin-bottom:16px;box-shadow:0 4px 16px var(--blue-glow);cursor:default;transition:opacity .3s">
-                    <span id="vnx-hero-cta-label">✦ Genera 3 documenti</span>
+                <button id="vnx-hero-cta" type="button" aria-label="Simulazione generazione" style="all:unset;display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r);padding:11px 14px;text-align:center;font-size:13px;font-weight:700;color:#fff;margin-bottom:16px;box-shadow:0 4px 16px var(--blue-glow);cursor:default;transition:opacity .3s">
+                    <span id="vnx-hero-cta-label" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;text-align:center">✦ Genera 3 documenti</span>
                 </button>
 
                 <div class="vnx-hero-tabs" role="tablist" aria-label="Documenti generati" style="display:flex;gap:4px;padding:4px;background:var(--glass);border:1px solid var(--border);border-radius:12px;margin-bottom:14px">
@@ -129,17 +129,15 @@
                     <div class="vnx-hero-tab" data-tab="offerta" role="tab" style="flex:1;padding:6px 0;text-align:center;border-radius:9px;font-size:11.5px;font-weight:500;transition:background .25s,color .25s">📄 Offerta</div>
                 </div>
 
-                <div class="mockup-lines" id="vnx-hero-lines">
-                    <div class="mockup-line mockup-line-full"></div>
-                    <div class="mockup-line mockup-line-lg"></div>
-                    <div class="mockup-line mockup-line-full"></div>
-                    <div class="mockup-line mockup-line-md"></div>
-                    <div class="mockup-line mockup-line-sm"></div>
+                <div class="vnx-hero-doc" id="vnx-hero-doc" role="region" aria-live="polite">
+                    <div class="vnx-hero-doc-body" data-doc="report"></div>
+                    <div class="vnx-hero-doc-body" data-doc="email" hidden></div>
+                    <div class="vnx-hero-doc-body" data-doc="offerta" hidden></div>
                 </div>
 
                 <div class="mockup-badge-row">
                     <span class="mockup-badge mockup-badge-green" id="vnx-hero-badge-time">✓ Generato in 28s</span>
-                    <span class="mockup-badge mockup-badge-blue">📋 Copiato</span>
+                    <span class="mockup-badge mockup-badge-blue">📋 Copia</span>
                 </div>
 
                 <div id="vnx-hero-loader" aria-hidden="true" style="display:none;position:absolute;inset:0;background:rgba(8,12,26,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:inherit;z-index:3;align-items:center;justify-content:center;flex-direction:column;gap:14px">
@@ -168,25 +166,44 @@
 @keyframes vnxDot { 0%,80%,100% {opacity:.3;transform:scale(.8)} 40% {opacity:1;transform:scale(1.2)} }
 .vnx-hero-tab.is-active { background: var(--blue-dim); color: var(--blue-l); }
 .vnx-hero-tab { color: var(--text-3); }
-#vnx-hero-mock[data-stage="loading"] .mockup-lines .mockup-line { opacity: .25; }
-#vnx-hero-mock[data-stage="output"] .mockup-line,
-#vnx-hero-mock[data-stage="done"] .mockup-line { animation: vnxLineIn .55s cubic-bezier(.2,.9,.25,1) both; }
-#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(1),
-#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(1) { animation-delay: 0ms; }
-#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(2),
-#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(2) { animation-delay: 90ms; }
-#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(3),
-#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(3) { animation-delay: 180ms; }
-#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(4),
-#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(4) { animation-delay: 270ms; }
-#vnx-hero-mock[data-stage="output"] .mockup-line:nth-child(5),
-#vnx-hero-mock[data-stage="done"] .mockup-line:nth-child(5) { animation-delay: 360ms; }
-@keyframes vnxLineIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+#vnx-hero-doc {
+  background: rgba(4,6,15,.55);
+  border: 1px solid rgba(96,165,250,.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--text-2);
+  min-height: 128px;
+  max-height: 128px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 14px;
+}
+#vnx-hero-doc::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40px;
+  background: linear-gradient(180deg, transparent, rgba(8,12,26,.95));
+  pointer-events: none;
+}
+.vnx-hero-doc-body[hidden] { display: none; }
+.vnx-hero-doc-line {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: vnxLineIn .4s cubic-bezier(.2,.9,.25,1) forwards;
+}
+.vnx-hero-doc-line strong { color: var(--text); font-weight: 700; }
+@keyframes vnxLineIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+#vnx-hero-mock[data-stage="loading"] .vnx-hero-doc-body,
+#vnx-hero-mock[data-stage="input"] .vnx-hero-doc-body { opacity: 0; }
+
 #vnx-hero-mock[data-stage="done"] ~ .vnx-hero-floating { opacity: 1; transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) {
   #vnx-hero-caret { animation: none; opacity: 1; }
-  #vnx-hero-mock[data-stage="output"] .mockup-line,
-  #vnx-hero-mock[data-stage="done"] .mockup-line { animation: none; }
+  .vnx-hero-doc-line { animation: none; opacity: 1; transform: none; }
   .vnx-hero-floating { opacity: 1 !important; transform: none !important; }
 }
 </style>
@@ -204,12 +221,97 @@
   var tabs = mock.querySelectorAll('.vnx-hero-tab');
   var badge = document.getElementById('vnx-hero-badge-time');
 
+  var docContainers = {
+    report: mock.querySelector('[data-doc="report"]'),
+    email:  mock.querySelector('[data-doc="email"]'),
+    offerta: mock.querySelector('[data-doc="offerta"]'),
+  };
+
   var examples = [
-    { text: "Oggi Rossi della Ferramenta Bianchi (Bergamo). Catalogo primavera, chiede sconto 10%. Richiama il 5 aprile.", seconds: 28 },
-    { text: "Visita da Gualtieri Srl a Torino. Ordine utensileria 2.300€. Preferirebbe pagamento a 60gg. Mandante da approvare.", seconds: 31 },
-    { text: "Farmacia Donato, titolare interessato a nuova linea integratori. Chiede campione e scheda tecnica entro venerdì.", seconds: 26 },
+    {
+      text: "Oggi Rossi della Ferramenta Bianchi (Bergamo). Catalogo primavera, chiede sconto 10%. Richiama il 5 aprile.",
+      seconds: 28,
+      docs: {
+        report: [
+          '<strong>Report visita — Ferramenta Bianchi</strong>',
+          'Cliente: Rossi · Bergamo · oggi',
+          '<strong>Obiettivo:</strong> catalogo primavera, linea utensili.',
+          '<strong>Accordi:</strong> sconto 10%, pagamento 30gg.',
+          '<strong>Next:</strong> richiamo 5 aprile, conferma ordine.'
+        ],
+        email: [
+          '<strong>Oggetto:</strong> Catalogo primavera — sconto 10% confermato',
+          'Gentile Sig. Rossi,',
+          'grazie per il tempo dedicato oggi. Come concordato, le confermo',
+          'lo <strong>sconto del 10%</strong> sul primo ordine linea utensili,',
+          'pagamento a 30 giorni. Resto a disposizione fino al 5 aprile.'
+        ],
+        offerta: [
+          '<strong>PROPOSTA COMMERCIALE</strong>',
+          'Spett.le Ferramenta Bianchi · Bergamo',
+          'Linea utensili elettrici · Catalogo primavera 2026',
+          '<strong>Sconto:</strong> 10% primo ordine · <strong>Pagamento:</strong> 30gg',
+          '<strong>Validità:</strong> 5 aprile 2026'
+        ]
+      }
+    },
+    {
+      text: "Visita da Gualtieri Srl a Torino. Ordine utensileria 2.300€. Preferirebbe pagamento a 60gg. Mandante da approvare.",
+      seconds: 31,
+      docs: {
+        report: [
+          '<strong>Report visita — Gualtieri Srl, Torino</strong>',
+          '<strong>Ordine:</strong> utensileria, valore €2.300',
+          '<strong>Richiesta cliente:</strong> pagamento 60gg',
+          '<strong>Azione:</strong> sottoporre al mandante per approvazione',
+          '<strong>Prossima mossa:</strong> conferma entro 48h.'
+        ],
+        email: [
+          '<strong>Oggetto:</strong> Ordine €2.300 — verifico condizioni 60gg',
+          'Gentile Sig. Gualtieri,',
+          'la ringrazio dell\'ordine. Sto verificando con il mandante',
+          'la fattibilità del <strong>pagamento a 60 giorni</strong> come da',
+          'Sua richiesta. Le confermo entro 48 ore.'
+        ],
+        offerta: [
+          '<strong>PROPOSTA COMMERCIALE</strong>',
+          'Spett.le Gualtieri Srl · Torino',
+          'Fornitura utensileria · Valore €2.300',
+          '<strong>Pagamento:</strong> 60gg (subordinato ad approvazione)',
+          '<strong>Validità offerta:</strong> 7 giorni'
+        ]
+      }
+    },
+    {
+      text: "Farmacia Donato, titolare interessato a nuova linea integratori. Chiede campione e scheda tecnica entro venerdì.",
+      seconds: 26,
+      docs: {
+        report: [
+          '<strong>Report visita — Farmacia Donato</strong>',
+          '<strong>Interesse:</strong> nuova linea integratori',
+          '<strong>Richiesta cliente:</strong> campione + scheda tecnica',
+          '<strong>Deadline:</strong> venerdì di questa settimana',
+          '<strong>Esito atteso:</strong> prova di gamma su 30gg.'
+        ],
+        email: [
+          '<strong>Oggetto:</strong> Campione e scheda tecnica in arrivo',
+          'Gentile Dott. Donato,',
+          'come richiesto, entro <strong>venerdì</strong> riceverà il campione',
+          'della nuova linea integratori insieme alla scheda tecnica',
+          'completa. Resto a disposizione per una prova di gamma.'
+        ],
+        offerta: [
+          '<strong>PROPOSTA COMMERCIALE</strong>',
+          'Spett.le Farmacia Donato',
+          'Nuova linea integratori · Prova di gamma 30 giorni',
+          '<strong>Prima fornitura:</strong> condizioni di lancio dedicate',
+          '<strong>Consegna campione:</strong> entro venerdì'
+        ]
+      }
+    }
   ];
   var idx = 0;
+  var currentDocs = null;
 
   function setStage(s) { mock.setAttribute('data-stage', s); }
 
@@ -224,18 +326,48 @@
     })();
   }
 
+  function clearDocs() {
+    Object.keys(docContainers).forEach(function(k){
+      if (docContainers[k]) docContainers[k].innerHTML = '';
+    });
+  }
+
+  function renderDoc(name) {
+    if (!currentDocs || !docContainers[name]) return;
+    var c = docContainers[name];
+    c.innerHTML = '';
+    var lines = currentDocs[name] || [];
+    lines.forEach(function(line, i){
+      var el = document.createElement('div');
+      el.className = 'vnx-hero-doc-line';
+      el.style.animationDelay = (i * 80) + 'ms';
+      el.innerHTML = line;
+      c.appendChild(el);
+    });
+  }
+
   function activateTab(name) {
     tabs.forEach(function(t){
       if (t.dataset.tab === name) t.classList.add('is-active');
       else t.classList.remove('is-active');
     });
+    // show only the matching doc body
+    Object.keys(docContainers).forEach(function(k){
+      if (!docContainers[k]) return;
+      docContainers[k].hidden = (k !== name);
+    });
+    renderDoc(name);
   }
 
   function loop() {
     var ex = examples[idx % examples.length];
     idx++;
+    currentDocs = ex.docs;
     setStage('input');
-    activateTab('report');
+    clearDocs();
+    // Preselect report tab and clear its body (will fill in output stage)
+    tabs.forEach(function(t){ t.classList.toggle('is-active', t.dataset.tab === 'report'); });
+    Object.keys(docContainers).forEach(function(k){ if (docContainers[k]) docContainers[k].hidden = (k !== 'report'); });
     loader.style.display = 'none';
     caret.style.display = 'inline-block';
     if (badge) badge.textContent = '✓ Generato in ' + ex.seconds + 's';
@@ -250,10 +382,11 @@
           loader.style.display = 'none';
           if (ctaLabel) ctaLabel.textContent = '✦ 3 documenti pronti';
           setStage('output');
-          setTimeout(function(){ activateTab('email'); }, 700);
-          setTimeout(function(){ activateTab('offerta'); }, 1300);
-          setTimeout(function(){ activateTab('report'); setStage('done'); }, 1900);
-          setTimeout(loop, 4500);
+          activateTab('report');
+          setTimeout(function(){ activateTab('email'); }, 1400);
+          setTimeout(function(){ activateTab('offerta'); }, 2600);
+          setTimeout(function(){ activateTab('report'); setStage('done'); }, 3800);
+          setTimeout(loop, 6500);
         }, reduce ? 200 : 1000);
       }, 300);
     });
