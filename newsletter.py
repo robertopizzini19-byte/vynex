@@ -93,15 +93,44 @@ Tipologia di questa issue: **{conf['label']}**.
 Direzione:
 {conf['direction']}
 
-Vincoli obbligatori:
-- Testo in italiano commerciale professionale, mai maccheronico.
+═══════════════════════════════════════════════════
+VINCOLI HARD — NON DEROGARE MAI
+═══════════════════════════════════════════════════
+
+OFFERTA VYNEX (copiala letteralmente, non inventare numeri):
+- Piano Free: 10 documenti gratis ogni mese, per sempre, senza carta.
+- Piano Pro: 10 giorni di prova gratuita, poi €49/mese, disdici quando vuoi.
+- NON scrivere mai "15 giorni", "14 giorni", "trial di X giorni" diversi da "10 giorni".
+- NON inventare bonus, sconti, coupon o promozioni non esistenti.
+
+CTA (regola critica):
+- La CTA deve essere COERENTE col contenuto dell'email: se parli di follow-up, la CTA riguarda i follow-up; se parli di offerte, la CTA riguarda le offerte.
+- La CTA deve contenere un VERBO OPERATIVO in imperativo (Automatizza, Genera, Smetti di, Riduci, Crea, Recupera, Trasforma).
+- NON usare CTA generiche tipo "Prova gratis", "Prova VYNEX", "Registrati". Deve sempre specchiare il problema trattato.
+- Massimo 6 parole, senza "→" (la freccia la aggiunge il template).
+- Esempio per email su follow-up: "Automatizza i follow-up dei clienti".
+- Esempio per email su offerte commerciali: "Genera offerte in 30 secondi".
+- Esempio per email su report di visita: "Smetti di scrivere report la sera".
+
+VALORE OPERATIVO (regola critica):
+- Devi includere ALMENO UNA frase concreta (script, template, email, domanda) che l'utente può copiare e usare subito in una visita/chiamata/email reale.
+- Racchiudila tra virgolette così si riconosce come "testo da usare".
+
+STILE:
+- Italiano commerciale professionale, mai maccheronico.
 - Mai generico ("il digitale sta cambiando", "l'AI è il futuro"): sempre concreto e operativo.
-- Lunghezza corpo: 180-260 parole totali. Brevità è valore.
-- Struttura OBBLIGATORIA in 4 blocchi: HOOK, VALORE, DEMO_VYNEX, CTA.
-  * HOOK: 1-2 frasi che agganciano il problema reale dell'agente (es: "Se ti è capitato di...").
-  * VALORE: il consiglio/template/insight vero e proprio (contenuto utile anche senza VYNEX).
-  * DEMO_VYNEX: 1-2 frasi naturali dove mostri come VYNEX velocizza/automatizza proprio questo (niente pitch aggressivo).
-  * CTA: chiusura breve che invita a provare VYNEX gratis.
+- Lunghezza corpo: 180-260 parole totali.
+- NO emoji nel testo. NO saluti iniziali/finali (li aggiunge il template).
+
+STRUTTURA OBBLIGATORIA (4 blocchi):
+- HOOK: 1-2 frasi che agganciano il problema reale dell'agente.
+- VALORE: il consiglio/template/insight vero, utile anche senza VYNEX, con frase copiabile.
+- DEMO_VYNEX: 1-2 frasi naturali che mostrano come VYNEX automatizza proprio questo. NO pitch aggressivo.
+- CTA: vedi regola sopra.
+
+═══════════════════════════════════════════════════
+OUTPUT
+═══════════════════════════════════════════════════
 
 Restituisci SOLO un JSON con questa struttura esatta:
 
@@ -110,16 +139,14 @@ Restituisci SOLO un JSON con questa struttura esatta:
   "preheader": "Preview text ≤100 caratteri che completa il subject",
   "slug": "slug-url-friendly-kebab-case-max-70-char",
   "hook": "Il blocco HOOK, 1-2 frasi",
-  "valore_html": "Il blocco VALORE in HTML (usa <p>, <ul><li>, <strong>, eventuali <code>). No style inline, no h1/h2, no classi CSS — verranno stilati dal template. Lunghezza 120-180 parole.",
+  "valore_html": "Il blocco VALORE in HTML (usa <p>, <ul><li>, <strong>, <em>, eventuali <code>). Deve contenere almeno UNA frase tra virgolette pronta da copiare. No style inline, no h1/h2, no classi CSS. Lunghezza 120-180 parole.",
   "demo_vynex": "Il blocco DEMO_VYNEX come paragrafo unico, 1-2 frasi, tono naturale",
-  "cta_text": "Testo del bottone CTA, 2-5 parole",
-  "cta_url_suffix": "suffisso URL (es: /registrati o /demo)"
+  "cta_text": "Verbo operativo + oggetto coerente col contenuto. Max 6 parole. Esempi validi: 'Automatizza i follow-up dei clienti' / 'Genera offerte in 30 secondi' / 'Smetti di scrivere report la sera'",
+  "cta_url_suffix": "suffisso URL: usa /registrati se CTA invita a creare account, /demo se invita a provare senza account"
 }}
 
-IMPORTANTE:
-- JSON valido (stringhe escape corretto, nessun commento).
-- Non includere firma, saluti iniziali o finali: il template li aggiunge.
-- cta_url_suffix deve iniziare con / e puntare a una pagina reale di vynex.it (/, /demo, /registrati, /prezzi, /come-funziona, /blog).
+JSON valido (stringhe escape corretto, nessun commento).
+cta_url_suffix deve iniziare con / e valere: /registrati | /demo | /prezzi | /come-funziona.
 """
 
     message = await ai_engine._call_claude(prompt, max_tokens=2048)
