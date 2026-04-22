@@ -576,9 +576,43 @@ textarea {
 .mockup-dot-g { background: #10b981; }
 .mockup-title-bar {
   flex: 1;
-  height: 8px;
-  background: var(--glass);
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 10px;
+  background: linear-gradient(135deg, rgba(59,130,246,.10), rgba(139,92,246,.08));
+  border: 1px solid rgba(96,165,250,.2);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.vnx-slogan-bar {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 55%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  animation: vnxSloganShimmer 3.6s ease-in-out infinite;
+  background-size: 200% auto;
+}
+.vnx-slogan-bar-accent {
+  background: linear-gradient(90deg, #f472b6 0%, #a78bfa 50%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@keyframes vnxSloganShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vnx-slogan-bar { animation: none; }
 }
 .mockup-lines {
   display: flex;
