@@ -402,12 +402,15 @@ textarea {
 /* ─── HERO ───────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding: 120px 48px 80px;
+  padding: 56px 48px 72px;
+}
+@media (max-width: 768px) {
+  .hero { padding: 40px 24px 56px; }
 }
 
 .hero-bg {
