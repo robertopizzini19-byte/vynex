@@ -19,7 +19,7 @@
         {% if message %}<div class="alert-success" style="margin-bottom:16px">{{ message }}</div>{% endif %}
 
         <div class="account-grid">
-            <div class="account-card">
+            <div class="account-card account-card--wide">
                 <h2 class="account-card-title">Profilo</h2>
                 <dl class="account-dl">
                     <dt>Piano</dt><dd><span class="stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</span></dd>
@@ -98,7 +98,7 @@
                 <a href="/api/export-data" class="btn-ghost btn-sm" download>Scarica dati (JSON)</a>
             </div>
 
-            <div class="account-card account-danger">
+            <div class="account-card account-card--wide account-danger">
                 <h2 class="account-card-title">Elimina account</h2>
                 <p class="account-warning">
                     Questa azione è <strong>permanente e irreversibile</strong>. Cancella definitivamente:

@@ -53,8 +53,20 @@
                         <i data-lucide="message-square" style="width:14px;height:14px"></i>
                         Descrizione visita
                     </label>
+
+                    <div class="genera-chips" role="group" aria-label="Template pronti">
+                        <button type="button" class="chip" data-template="visita">📋 Visita standard</button>
+                        <button type="button" class="chip" data-template="ordine">🛒 Ordine</button>
+                        <button type="button" class="chip" data-template="reclamo">⚠️ Reclamo</button>
+                        <button type="button" class="chip" data-template="prospecting">🎯 Prospecting</button>
+                        <button type="button" class="chip" data-template="mandante">👔 Riunione mandante</button>
+                    </div>
+
                     <textarea id="input_testo" rows="10" placeholder="es. Ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato al catalogo primavera, in particolare alle cerniere serie 500. Ha chiesto uno sconto del 10% per ordini sopra 200 pezzi. Da richiamare entro il 5 aprile per conferma ordine."></textarea>
-                    <div class="char-count"><span id="char-count">0</span> / 2000</div>
+                    <div class="textarea-meta">
+                        <span id="input-hint" class="input-hint">Più dettagli metti → documenti più precisi.</span>
+                        <span class="char-count"><span id="char-count">0</span> / 2000</span>
+                    </div>
                 </div>
 
                 <button id="btn-genera" class="btn-primary btn-full btn-lg" onclick="generaDocumenti()">
@@ -169,7 +181,38 @@ let currentDocs = {};
 
 const textarea = document.getElementById('input_testo');
 const charCount = document.getElementById('char-count');
-if (textarea) textarea.addEventListener('input', () => { charCount.textContent = textarea.value.length; });
+const inputHint = document.getElementById('input-hint');
+
+const CHIP_TEMPLATES = {
+  visita: "Oggi visita da [Nome Referente] di [Azienda] a [Città]. Discusso [argomento/catalogo/prodotto]. [Interessi principali]. Offerta: [sconto/condizioni]. Next step: [data richiamo/prossima visita/invio materiale].",
+  ordine: "Ordine da [Azienda] — referente [Nome]. Articoli: [codici/quantità]. Importo: [€]. Pagamento: [condizioni]. Consegna: [data/modalità]. Note: [urgenze/vincoli].",
+  reclamo: "Reclamo da [Azienda] — [Nome referente]. Problema: [descrizione]. Impatto cliente: [operativo/economico]. Richiesta: [sostituzione/nota di credito/risoluzione]. Urgenza: [bassa/media/alta].",
+  prospecting: "Primo contatto con [Azienda] — interlocutore [Nome, ruolo]. Settore: [X]. Volumi potenziali: [stima]. Competitor attuale: [nome]. Interesse mostrato: [basso/medio/alto]. Prossima mossa: [invio materiale/appuntamento].",
+  mandante: "Riunione con mandante [Nome Azienda]. Temi: [obiettivi trimestre/target/nuova linea]. Decisioni prese: [punti chiave]. Azioni assegnate a me: [task + deadline]. Prossima review: [data]."
+};
+
+function refreshHint() {
+  if (!inputHint || !textarea) return;
+  var len = textarea.value.length;
+  if (len === 0) { inputHint.textContent = "Più dettagli metti → documenti più precisi."; inputHint.style.color = ""; }
+  else if (len < 80) { inputHint.textContent = "Aggiungi cliente, budget, condizioni, next step."; inputHint.style.color = "#f59e0b"; }
+  else if (len < 200) { inputHint.textContent = "Buono. Se puoi, specifica tempistiche e obiezioni."; inputHint.style.color = "#60a5fa"; }
+  else { inputHint.textContent = "Ottimo livello di dettaglio — sarai soddisfatto del risultato."; inputHint.style.color = "#10b981"; }
+}
+
+if (textarea) textarea.addEventListener('input', () => { charCount.textContent = textarea.value.length; refreshHint(); });
+
+document.querySelectorAll('.chip[data-template]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var key = btn.getAttribute('data-template');
+    var tpl = CHIP_TEMPLATES[key];
+    if (!tpl || !textarea) return;
+    textarea.value = tpl;
+    textarea.focus();
+    if (charCount) charCount.textContent = textarea.value.length;
+    refreshHint();
+  });
+});
 
 async function generaDocumenti() {
     const input = document.getElementById('input_testo').value.trim();
