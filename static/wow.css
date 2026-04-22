@@ -1986,8 +1986,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2011,6 +2009,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   animation: wow-vyn-shimmer 8s ease-in-out infinite, wow-vyn-glow 4.5s ease-in-out infinite;
   will-change: background-position, filter;
   filter: drop-shadow(0 0 28px rgba(96,165,250,.22));
+}
+.auth-vertical-brand.is-left  { left: 4vw; }
+.auth-vertical-brand.is-right { right: 4vw; animation-delay: -4s, -2s; }
+
+@media (max-width: 720px) {
+  .auth-vertical-brand { display: none; }
 }
 @keyframes wow-vyn-shimmer {
   0%, 100% { background-position: 50% 0%; }
