@@ -3321,6 +3321,18 @@ async def admin_newsletter_run(topic_type: str, request: Request):
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 
 
+@app.post("/admin/newsletter/send/{issue_id}")
+async def admin_newsletter_send_existing(issue_id: int, request: Request):
+    _require_admin(request)
+    from newsletter import send_issue
+    try:
+        counts = await send_issue(issue_id)
+        return JSONResponse({"ok": True, "issue_id": issue_id, **counts})
+    except Exception as exc:
+        logger.exception("admin newsletter send existing failed id=%s", issue_id)
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+
 @app.post("/admin/newsletter/generate/{topic_type}")
 async def admin_newsletter_generate_only(topic_type: str, request: Request):
     _require_admin(request)
