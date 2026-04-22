@@ -72,7 +72,9 @@
     <link rel="stylesheet" href="/static/enrichments.css">
 </head>
 <body>
+    {% block nav %}{% include 'partials/nav.html' ignore missing %}{% endblock %}
     {% block body %}{% endblock %}
+    {% block footer %}{% include 'partials/footer.html' ignore missing %}{% endblock %}
 
     <!-- Cookie banner (GDPR) -->
     <div id="cookie-banner" class="cookie-banner" hidden>

@@ -4,7 +4,6 @@
 {% block description %}Prova VYNEX senza account. Descrivi una visita, ricevi report + email di follow-up + offerta commerciale nella tua casella. Gratis, 3 documenti, nessuna carta.{% endblock %}
 
 {% block body %}
-{% include 'partials/nav.html' ignore missing %}
 
 <main style="max-width:720px;margin:0 auto;padding:80px 24px 120px">
   <div style="text-align:center;margin-bottom:48px">
@@ -36,7 +35,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px;flex-wrap:wrap">
       <label style="color:#cbd5e1;font-size:14px;font-weight:600;margin:0">Racconta una visita commerciale (2-4 righe)</label>
       <div style="display:flex;gap:8px">
-        <button type="button" id="demo-voice" aria-label="Dettatura vocale" title="Detta ad alta voce" style="display:none;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.4);color:#f472b6;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">🎤 Detta</button>
+        <button type="button" id="demo-voice" aria-label="Dettatura vocale (beta)" title="Dettatura beta — qualità variabile, funziona meglio in ambienti silenziosi e con frasi brevi. Rileggi e correggi prima di generare." style="display:none;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.4);color:#f472b6;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">🎤 Detta <span style="opacity:.7;font-size:10px;margin-left:4px">beta</span></button>
         <button type="button" id="demo-example" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Usa esempio</button>
       </div>
     </div>

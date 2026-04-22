@@ -67,20 +67,6 @@
 {% endblock %}
 
 {% block body %}
-<nav class="nav-public">
-    <div class="nav-inner">
-        <a href="/" class="logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
-        <div class="nav-links">
-            <a href="/prezzi">Prezzi</a>
-            {% if user %}
-            <a href="/dashboard" class="btn-primary">Dashboard</a>
-            {% else %}
-            <a href="/login" class="btn-ghost">Accedi</a>
-            <a href="/registrati" class="btn-primary">Inizia gratis</a>
-            {% endif %}
-        </div>
-    </div>
-</nav>
 
 <section class="pricing-page">
     <div class="container">
@@ -182,5 +168,4 @@
     </div>
 </section>
 
-{% include "partials/footer.html" %}
 {% endblock %}
