@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}VYNEX — Risparmia 20+ ore al mese di report e follow-up{% endblock %}
-{% block description %}Per agenti di commercio plurimandatari italiani. Descrivi la visita a voce, ottieni report, email di follow-up e offerta commerciale in 30 secondi. 10 documenti gratis ogni mese, nessuna carta di credito.{% endblock %}
+{% block title %}VYNEX — Risparmia 40+ ore al mese di report e follow-up{% endblock %}
+{% block description %}Per agenti di commercio plurimandatari italiani. Descrivi la visita a voce, ottieni report, email di follow-up e offerta commerciale in 30 secondi. Fino a 2-3 ore risparmiate ogni giorno. 10 documenti gratis ogni mese, nessuna carta.{% endblock %}
 
 {% block ld_json %}
 <script type="application/ld+json">
@@ -80,7 +80,7 @@
                 Per agenti di commercio plurimandatari italiani
             </div>
             <h1 class="hero-title">
-                Risparmia <span class="highlight">20+&nbsp;ore</span> al mese<br>
+                Risparmia <span class="highlight">40+&nbsp;ore</span> al mese<br>
                 di report e follow&#8209;up.
             </h1>
             <p class="hero-sub">
@@ -172,11 +172,11 @@
   border: 1px solid rgba(96,165,250,.12);
   border-radius: 10px;
   padding: 12px 14px;
-  font-size: 11.5px;
-  line-height: 1.65;
+  font-size: 11px;
+  line-height: 1.55;
   color: var(--text-2);
-  min-height: 128px;
-  max-height: 128px;
+  min-height: 150px;
+  max-height: 150px;
   overflow: hidden;
   position: relative;
   margin-bottom: 14px;
@@ -229,83 +229,97 @@
 
   var examples = [
     {
-      text: "Oggi Rossi della Ferramenta Bianchi (Bergamo). Catalogo primavera, chiede sconto 10%. Richiama il 5 aprile.",
-      seconds: 28,
+      text: "Visita del 23 aprile a Ferramenta Bianchi (Bergamo), sig. Rossi. Catalogo primavera utensili elettrici serie X-450, richiesto sconto 10% su primo ordine 200 pz. Pagamento 30 gg d.f.f.m. Richiamo 5 aprile per conferma.",
+      seconds: 29,
       docs: {
         report: [
-          '<strong>Report visita — Ferramenta Bianchi</strong>',
-          'Cliente: Rossi · Bergamo · oggi',
-          '<strong>Obiettivo:</strong> catalogo primavera, linea utensili.',
-          '<strong>Accordi:</strong> sconto 10%, pagamento 30gg.',
-          '<strong>Next:</strong> richiamo 5 aprile, conferma ordine.'
+          '<strong>REPORT DI VISITA COMMERCIALE</strong>',
+          'Data: 23 aprile 2026 · Cliente: Sig. Rossi · Ferramenta Bianchi (BG)',
+          '<strong>Obiettivo:</strong> presentazione catalogo primavera — linea utensili elettrici serie X-450.',
+          '<strong>Svolgimento:</strong> condivisa la gamma 2026. Interesse confermato su 200 pz primo ordine.',
+          '<strong>Accordi:</strong> sconto 10% su primo ordine. Pagamento 30 gg d.f.f.m.',
+          '<strong>Next steps:</strong> 5 aprile ore 10:00 — chiamata conferma ordine e invio PDF offerta.'
         ],
         email: [
-          '<strong>Oggetto:</strong> Catalogo primavera — sconto 10% confermato',
+          '<strong>Oggetto:</strong> Seguito visita del 23 aprile — offerta serie X-450',
           'Gentile Sig. Rossi,',
-          'grazie per il tempo dedicato oggi. Come concordato, le confermo',
-          'lo <strong>sconto del 10%</strong> sul primo ordine linea utensili,',
-          'pagamento a 30 giorni. Resto a disposizione fino al 5 aprile.'
+          'grazie per il tempo dedicatomi durante la <strong>visita del 23 aprile</strong>. Come concordato,',
+          'le confermo le condizioni riservate sulla serie X-450 primo ordine 200 pz:',
+          'sconto <strong>10%</strong>, pagamento 30 giorni data fattura fine mese.',
+          'La richiamo il <strong>5 aprile alle 10:00</strong> per confermare l\'ordine.',
+          'Cordialmente, Roberto Pizzini'
         ],
         offerta: [
-          '<strong>PROPOSTA COMMERCIALE</strong>',
-          'Spett.le Ferramenta Bianchi · Bergamo',
-          'Linea utensili elettrici · Catalogo primavera 2026',
-          '<strong>Sconto:</strong> 10% primo ordine · <strong>Pagamento:</strong> 30gg',
-          '<strong>Validità:</strong> 5 aprile 2026'
+          '<strong>PROPOSTA COMMERCIALE N° 2026/PP-2304/FB</strong>',
+          'Data emissione: 23 aprile 2026 · Validità: 7 giorni',
+          'Spett.le Ferramenta Bianchi — Bergamo · All\'attenzione Sig. Rossi',
+          '<strong>Oggetto:</strong> Fornitura utensili elettrici serie X-450 · Primo ordine 200 pz',
+          '<strong>Sconto riservato:</strong> 10% · <strong>Pagamento:</strong> 30 gg d.f.f.m.',
+          '<strong>Ordine di prova suggerito:</strong> 200 pz · valore indicativo con sconto applicato',
+          'Per accettazione: ______________________ Data: __________'
         ]
       }
     },
     {
-      text: "Visita da Gualtieri Srl a Torino. Ordine utensileria 2.300€. Preferirebbe pagamento a 60gg. Mandante da approvare.",
+      text: "Visita del 23 aprile a Gualtieri Srl (Torino), ing. Gualtieri. Ordine utensileria valore €2.300. Richiesto pagamento 60 gg — da verificare con mandante. Conferma entro 48h.",
       seconds: 31,
       docs: {
         report: [
-          '<strong>Report visita — Gualtieri Srl, Torino</strong>',
-          '<strong>Ordine:</strong> utensileria, valore €2.300',
-          '<strong>Richiesta cliente:</strong> pagamento 60gg',
-          '<strong>Azione:</strong> sottoporre al mandante per approvazione',
-          '<strong>Prossima mossa:</strong> conferma entro 48h.'
+          '<strong>REPORT DI VISITA COMMERCIALE</strong>',
+          'Data: 23 aprile 2026 · Cliente: Ing. Gualtieri · Gualtieri Srl (TO)',
+          '<strong>Obiettivo:</strong> finalizzazione ordine utensileria da €2.300.',
+          '<strong>Svolgimento:</strong> quantità e referenze concordate. Cliente chiede pagamento a 60 gg.',
+          '<strong>Risultato:</strong> ordine accettato salvo approvazione mandante su dilazione.',
+          '<strong>Next steps:</strong> 25 aprile ore 09:00 — verifica con mandante · 25 aprile ore 17:00 — conferma a cliente.'
         ],
         email: [
-          '<strong>Oggetto:</strong> Ordine €2.300 — verifico condizioni 60gg',
-          'Gentile Sig. Gualtieri,',
-          'la ringrazio dell\'ordine. Sto verificando con il mandante',
-          'la fattibilità del <strong>pagamento a 60 giorni</strong> come da',
-          'Sua richiesta. Le confermo entro 48 ore.'
+          '<strong>Oggetto:</strong> Ordine €2.300 — verifica in corso su pagamento 60 gg',
+          'Gentile Ing. Gualtieri,',
+          'la ringrazio per l\'ordine confermato durante la <strong>visita del 23 aprile</strong>.',
+          'Sto sottoponendo al mandante la Sua richiesta di <strong>pagamento a 60 gg</strong>.',
+          'Le confermo esito entro <strong>venerdì 25 aprile entro fine giornata</strong>.',
+          'Cordialmente, Roberto Pizzini'
         ],
         offerta: [
-          '<strong>PROPOSTA COMMERCIALE</strong>',
-          'Spett.le Gualtieri Srl · Torino',
-          'Fornitura utensileria · Valore €2.300',
-          '<strong>Pagamento:</strong> 60gg (subordinato ad approvazione)',
-          '<strong>Validità offerta:</strong> 7 giorni'
+          '<strong>PROPOSTA COMMERCIALE N° 2026/PP-2304/GU</strong>',
+          'Data emissione: 23 aprile 2026 · Validità: 15 giorni',
+          'Spett.le Gualtieri Srl — Torino · All\'attenzione Ing. Gualtieri',
+          '<strong>Oggetto:</strong> Fornitura utensileria · Valore €2.300',
+          '<strong>Pagamento proposto:</strong> 60 gg d.f.f.m. (subordinato ad approvazione mandante)',
+          '<strong>Consegna:</strong> 7 gg lavorativi da conferma ordine',
+          'Per accettazione: ______________________ Data: __________'
         ]
       }
     },
     {
-      text: "Farmacia Donato, titolare interessato a nuova linea integratori. Chiede campione e scheda tecnica entro venerdì.",
-      seconds: 26,
+      text: "Visita del 23 aprile a Farmacia Donato, dott. Donato. Interessato nuova linea integratori. Richiesto campione + scheda tecnica entro venerdì. Valuta prova gamma 30 gg.",
+      seconds: 27,
       docs: {
         report: [
-          '<strong>Report visita — Farmacia Donato</strong>',
-          '<strong>Interesse:</strong> nuova linea integratori',
-          '<strong>Richiesta cliente:</strong> campione + scheda tecnica',
-          '<strong>Deadline:</strong> venerdì di questa settimana',
-          '<strong>Esito atteso:</strong> prova di gamma su 30gg.'
+          '<strong>REPORT DI VISITA COMMERCIALE</strong>',
+          'Data: 23 aprile 2026 · Cliente: Dott. Donato · Farmacia Donato',
+          '<strong>Obiettivo:</strong> lancio nuova linea integratori · apertura gamma.',
+          '<strong>Svolgimento:</strong> presentata la linea. Interesse alto. Richiesta documentazione.',
+          '<strong>Accordi:</strong> invio campione + scheda tecnica entro venerdì 25 aprile.',
+          '<strong>Next steps:</strong> 25 aprile — consegna campione · 2 maggio — call esito prova gamma 30 gg.'
         ],
         email: [
-          '<strong>Oggetto:</strong> Campione e scheda tecnica in arrivo',
+          '<strong>Oggetto:</strong> Campione e scheda tecnica — consegna entro venerdì',
           'Gentile Dott. Donato,',
-          'come richiesto, entro <strong>venerdì</strong> riceverà il campione',
-          'della nuova linea integratori insieme alla scheda tecnica',
-          'completa. Resto a disposizione per una prova di gamma.'
+          'grazie per l\'interesse mostrato durante la <strong>visita del 23 aprile</strong>.',
+          'Come concordato, entro <strong>venerdì 25 aprile</strong> Le farò recapitare il',
+          'campione della nuova linea e la scheda tecnica completa.',
+          'La richiamo <strong>venerdì 2 maggio</strong> per raccogliere il Suo riscontro sulla prova.',
+          'Cordialmente, Roberto Pizzini'
         ],
         offerta: [
-          '<strong>PROPOSTA COMMERCIALE</strong>',
-          'Spett.le Farmacia Donato',
-          'Nuova linea integratori · Prova di gamma 30 giorni',
+          '<strong>PROPOSTA COMMERCIALE N° 2026/PP-2304/DO</strong>',
+          'Data emissione: 23 aprile 2026 · Validità: 30 giorni',
+          'Spett.le Farmacia Donato · All\'attenzione Dott. Donato',
+          '<strong>Oggetto:</strong> Prova gamma nuova linea integratori · 30 gg',
           '<strong>Prima fornitura:</strong> condizioni di lancio dedicate',
-          '<strong>Consegna campione:</strong> entro venerdì'
+          '<strong>Consegna campione + scheda tecnica:</strong> entro 25 aprile 2026',
+          'Per accettazione: ______________________ Data: __________'
         ]
       }
     }
@@ -511,7 +525,7 @@
             <div class="split-meter">
                 <div class="split-meter-top">
                     <span>Tempo recuperato</span>
-                    <span class="split-meter-num">20<em>ore/mese</em></span>
+                    <span class="split-meter-num">40+<em>ore/mese</em></span>
                 </div>
                 <div class="split-meter-bar"><div class="split-meter-fill"></div></div>
             </div>
