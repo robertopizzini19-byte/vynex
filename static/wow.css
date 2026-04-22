@@ -1937,6 +1937,59 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .blog-card:hover .blog-card-more { gap: 10px; }
 
 /* ═══════════════════════════════════════════════════════════
+   HERO SPACING FIX — eliminate the dead zone under navbar
+   ═══════════════════════════════════════════════════════════ */
+.hero {
+  min-height: auto !important;
+  align-items: flex-start !important;
+  padding-top: 28px !important;
+}
+@media (max-width: 768px) {
+  .hero { padding-top: 20px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL VERTICAL VYNEX RAILS (all pages) + scroll parallax
+   ═══════════════════════════════════════════════════════════ */
+.page-brand-rail {
+  position: fixed;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(44px, 7.5vw, 120px);
+  font-weight: 900;
+  letter-spacing: 18px;
+  line-height: 1;
+  background: linear-gradient(180deg, #60a5fa, #a78bfa 45%, #f472b6 100%);
+  background-size: 100% 260%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  opacity: .20;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  animation: wow-vyn-shimmer 9s ease-in-out infinite, wow-vyn-glow 5s ease-in-out infinite;
+  will-change: transform, background-position, filter;
+  filter: drop-shadow(0 0 22px rgba(96,165,250,.2));
+  /* Parallax: --vyn-offset is updated by JS on scroll.
+     translateY(-50%) centers vertically; extra offset gives the "moves
+     opposite to scroll direction" feel (scroll down → rail moves up). */
+  transform: translateY(calc(-50% + var(--vyn-offset, 0px)));
+  transition: transform .05s linear;
+}
+.page-brand-rail.is-left  { left: 3vw; }
+.page-brand-rail.is-right { right: 3vw; animation-delay: -4s, -2.5s; }
+@media (max-width: 860px) {
+  .page-brand-rail { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
    AUTH PAGES REDESIGN (registrati / accedi)
    ═══════════════════════════════════════════════════════════ */
 
