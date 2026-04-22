@@ -212,20 +212,40 @@ Linee guida obbligatorie:
   l'offerta è formale con condizioni chiare"""
 
     t0 = time.perf_counter()
+    # max_tokens=4096: 3 documenti ~600-900 tokens ognuno + overhead schema
+    # → 2048 tronca l'offerta_commerciale (ultimo campo) causando tool_use parziale
     message = await _call_claude(
         prompt,
-        max_tokens=2048,
+        max_tokens=4096,
         tools=[_GENERA_TOOL],
         tool_choice={"type": "tool", "name": "crea_documenti_commerciali"},
     )
     elapsed_ms = int((time.perf_counter() - t0) * 1000)
 
+    stop_reason = getattr(message, "stop_reason", None)
+    if stop_reason == "max_tokens":
+        logger.warning("Claude tool_use truncated by max_tokens — output incompleto")
+
     result = _extract_tool_result(message, "crea_documenti_commerciali")
 
-    required_fields = ["report_visita", "email_followup", "offerta_commerciale"]
-    for field in required_fields:
+    # Se Claude ha troncato, completa i campi mancanti con placeholder invece di
+    # buttare via 2+ documenti già completi. Meglio output parziale che errore totale.
+    fallback = {
+        "report_visita": "[Report non completato — riprova la generazione per ottenere il testo integrale.]",
+        "email_followup": "[Email non completata — riprova la generazione per ottenere il testo integrale.]",
+        "offerta_commerciale": "[Offerta non completata — riprova la generazione per ottenere il testo integrale.]",
+    }
+    completed_fields = 0
+    for field in ("report_visita", "email_followup", "offerta_commerciale"):
         if not result.get(field):
-            raise ValueError(f"Campo mancante nella risposta AI: {field}")
+            logger.warning("Campo mancante nel tool_use: %s — fallback placeholder", field)
+            result[field] = fallback[field]
+        else:
+            completed_fields += 1
+
+    # Se TUTTI i 3 sono mancanti è un fail vero (tool_use rotto): raise.
+    if completed_fields == 0:
+        raise ValueError("Claude ha restituito tool_use vuoto — zero documenti generati")
 
     usage = getattr(message, "usage", None)
     tokens_used = (usage.input_tokens + usage.output_tokens) if usage else None
