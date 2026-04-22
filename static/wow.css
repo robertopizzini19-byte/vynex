@@ -1978,34 +1978,71 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   animation: wow-orb-b 26s ease-in-out infinite alternate;
 }
 
-.auth-topbar {
-  width: 100%;
-  max-width: 480px;
+/* Vertical VYNEX wordmark divider — top-to-bottom centered.
+   Stacks letters (V / Y / N / E / X) using writing-mode so each stays upright.
+   Gradient blu→viola→rosa animated (same as home .highlight) + glow pulse
+   so it feels alive behind the glass form. */
+.auth-vertical-brand {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 36px;
-  z-index: 1;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(56px, 9vw, 140px);
+  font-weight: 900;
+  letter-spacing: 22px;
+  line-height: 1;
+  background: linear-gradient(180deg, #60a5fa, #a78bfa 45%, #f472b6 100%);
+  background-size: 100% 260%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  opacity: .28;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  animation: wow-vyn-shimmer 8s ease-in-out infinite, wow-vyn-glow 4.5s ease-in-out infinite;
+  will-change: background-position, filter;
+  filter: drop-shadow(0 0 28px rgba(96,165,250,.22));
 }
-/* exact same styling as partials/nav.html logo */
-.auth-logo-mark {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  color: #60a5fa;
-  text-decoration: none;
-  display: inline-block;
+@keyframes wow-vyn-shimmer {
+  0%, 100% { background-position: 50% 0%; }
+  50%      { background-position: 50% 100%; }
 }
-.auth-topbar .back-link {
+@keyframes wow-vyn-glow {
+  0%, 100% { filter: drop-shadow(0 0 22px rgba(96,165,250,.18)); }
+  50%      { filter: drop-shadow(0 0 44px rgba(167,139,250,.35)); }
+}
+
+.auth-top-back {
+  position: absolute;
+  top: 22px;
+  left: 24px;
   color: #64748b;
   font-size: 13px;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  z-index: 2;
   transition: color .2s ease;
 }
-.auth-topbar .back-link:hover { color: #cbd5e1; }
+.auth-top-back:hover { color: #cbd5e1; }
+.auth-top-switch {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  color: #94a3b8;
+  font-size: 13px;
+  text-decoration: none;
+  z-index: 2;
+  transition: color .2s ease;
+}
+.auth-top-switch:hover { color: #60a5fa; }
 
 .auth-intro {
   width: 100%;
