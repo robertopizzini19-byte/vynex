@@ -4,37 +4,54 @@
 {% block footer %}{% endblock %}
 
 {% block body %}
-<div class="auth-split">
-    <div class="auth-left">
-        <a href="/" class="logo auth-split-logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
-        <div class="auth-left-content">
-            <h2>Inizia gratis.<br>Senza carta.</h2>
-            <p>10 documenti gratuiti ogni mese, per sempre. Piano Pro con 10 giorni di prova inclusi.</p>
-            <ul class="auth-benefits">
-                <li><i data-lucide="check-circle"></i> 10 documenti/mese gratuiti per sempre</li>
-                <li><i data-lucide="check-circle"></i> Nessuna carta di credito richiesta</li>
-                <li><i data-lucide="check-circle"></i> Attivazione immediata</li>
-                <li><i data-lucide="check-circle"></i> Piano Pro: 10 giorni gratis</li>
+<div class="auth-scene">
+
+    <!-- LEFT — value proposition -->
+    <aside class="auth-left-new">
+        <a href="/" class="logo-wordmark" aria-label="Torna alla home VYNEX">
+            <img src="/static/logo-wordmark.svg" alt="VYNEX">
+        </a>
+
+        <div>
+            <div class="auth-kicker">Setup in 30 secondi · Nessuna carta</div>
+            <h1>Inizia <em>gratis</em>.<br>Senza carta. Senza fregature.</h1>
+            <p class="auth-lead">10 documenti gratuiti ogni mese, per sempre. Il piano Pro include 10 giorni di prova gratuita con documenti illimitati — disdici quando vuoi.</p>
+
+            <ul class="auth-benefits-new" style="margin-top:26px;max-width:440px">
+                <li>10 documenti al mese gratis, per sempre</li>
+                <li>Nessuna carta di credito richiesta per iniziare</li>
+                <li>Report + Email + Offerta in 30 secondi</li>
+                <li>Italiano professionale nativo, non traduzione</li>
+                <li>Dati in EU (Frankfurt) · GDPR compliant</li>
             </ul>
         </div>
-        <div class="auth-stats-row">
-            <div class="auth-stat">
-                <div class="auth-stat-val">30s</div>
-                <div class="auth-stat-lbl">per 3 documenti</div>
+
+        <div class="auth-testimonial">
+            <p>Prima impiegavo 2 ore al giorno a scrivere report. Con VYNEX sono 10 minuti. Il mandante riceve anche documenti più puliti.</p>
+            <div class="author"><strong>Marco B.</strong> · Agente plurimandatario, Milano</div>
+        </div>
+
+        <div class="auth-stats-new">
+            <div class="auth-stat-new">
+                <div class="v">30s</div>
+                <div class="l">per 3 documenti</div>
             </div>
-            <div class="auth-stat">
-                <div class="auth-stat-val">~20h</div>
-                <div class="auth-stat-lbl">risparmiate/mese</div>
+            <div class="auth-stat-new">
+                <div class="v">~20h</div>
+                <div class="l">risparmiate/mese</div>
+            </div>
+            <div class="auth-stat-new">
+                <div class="v">10</div>
+                <div class="l">documenti free/mese</div>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <div class="auth-right">
-        <div class="auth-form-wrap">
-            <div class="auth-form-header">
-                <h1>Crea il tuo account</h1>
-                <p class="auth-sub">Gratis · Nessuna carta · Attivo in 30 secondi</p>
-            </div>
+    <!-- RIGHT — form card -->
+    <main class="auth-right-new">
+        <div class="auth-card-new">
+            <h2>Crea il tuo account</h2>
+            <p class="auth-card-sub">Gratis · Nessuna carta · Attivo in 30 secondi</p>
 
             {% if error %}
             <div class="alert-error">{{ error }}</div>
@@ -53,42 +70,66 @@
                  data-size="large"
                  data-locale="it"
                  data-logo_alignment="left"
-                 data-width="380"
-                 style="margin:0 auto 18px;display:flex;justify-content:center"></div>
+                 data-width="368"
+                 style="margin:0 auto 4px;display:flex;justify-content:center"></div>
             <script src="https://accounts.google.com/gsi/client" async defer></script>
-            <div class="auth-divider"><span>oppure</span></div>
+            <div class="auth-divider-new">oppure con email</div>
             {% endif %}
 
-            <form action="/api/registrati" method="post" class="auth-form">
-                <div class="form-group">
+            <form action="/api/registrati" method="post" class="auth-form-new" novalidate>
+                <div class="form-group-new">
                     <label for="full_name">Nome e cognome</label>
-                    <input type="text" id="full_name" name="full_name" required placeholder="Mario Rossi" autocomplete="name">
+                    <input type="text" id="full_name" name="full_name" required placeholder="Mario Rossi" autocomplete="name" minlength="2" maxlength="120">
                 </div>
-                <div class="form-group">
+                <div class="form-group-new">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
                 </div>
-                <div class="form-group">
+                <div class="form-group-new">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required minlength="8" placeholder="Minimo 8 caratteri" autocomplete="new-password">
-                    <div class="pw-strength" id="pw-strength">
-                        <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
-                        <div class="pw-strength-label" id="pw-strength-label">Debole</div>
+                    <div class="pw-meter" data-score="0" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span>
                     </div>
+                    <div class="pw-meter-label" id="pw-meter-label">Usa almeno 8 caratteri · meglio se con numeri o simboli</div>
                 </div>
-                <label style="display:flex;align-items:flex-start;gap:10px;margin:4px 0 18px;font-size:13px;color:var(--text-2);line-height:1.55;cursor:pointer">
-                    <input type="checkbox" name="accept_terms" value="on" required style="margin-top:3px;flex-shrink:0">
-                    <span>Accetto i <a href="/termini" target="_blank" style="color:var(--blue-l)">Termini e Condizioni</a> e la <a href="/privacy" target="_blank" style="color:var(--blue-l)">Privacy Policy</a>.</span>
+
+                <label class="terms">
+                    <input type="checkbox" name="accept_terms" value="on" required>
+                    <span>Accetto i <a href="/termini" target="_blank">Termini e Condizioni</a> e la <a href="/privacy" target="_blank">Privacy Policy</a>. Dati conservati in EU.</span>
                 </label>
-                <button type="submit" class="btn-primary btn-full btn-lg">Crea account gratis</button>
+
+                <button type="submit" class="auth-cta-new">Crea account gratis →</button>
             </form>
 
-            <div style="margin-top:16px;padding:12px 14px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:10px;font-size:12.5px;color:var(--text-2);line-height:1.6">
-                <strong style="color:var(--text)">L'account è attivo subito dopo la registrazione.</strong> Ti inviamo anche un'email di benvenuto — se non la trovi entro 5 minuti, controlla lo spam. In ogni caso puoi accedere alla dashboard e iniziare. Per dubbi: <a href="mailto:robertopizzini19@gmail.com" style="color:var(--blue-l)">robertopizzini19@gmail.com</a>.
+            <div class="auth-trust-new">
+                <strong>L'account è attivo subito.</strong> Riceverai un'email di benvenuto — se non arriva entro 5 minuti, controlla lo spam. Puoi accedere alla dashboard immediatamente. Per dubbi: <a href="mailto:robertopizzini19@gmail.com">robertopizzini19@gmail.com</a>.
             </div>
 
-            <p class="auth-switch">Hai già un account? <a href="/login">Accedi</a></p>
+            <p class="auth-switch-new">Hai già un account? <a href="/login">Accedi</a></p>
         </div>
-    </div>
+    </main>
+
 </div>
+
+<script>
+(function() {
+  var pw = document.getElementById('password');
+  var meter = document.querySelector('.pw-meter');
+  var lbl = document.getElementById('pw-meter-label');
+  if (!pw || !meter) return;
+  pw.addEventListener('input', function() {
+    var v = pw.value || '';
+    var s = 0;
+    if (v.length >= 8) s++;
+    if (v.length >= 12) s++;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
+    if (/\d/.test(v) && /[^A-Za-z0-9]/.test(v)) s++;
+    meter.setAttribute('data-score', String(s));
+    var labels = ['Usa almeno 8 caratteri · meglio se con numeri o simboli', 'Debole — aggiungi più caratteri', 'Debole — aggiungi un numero', 'Buona', 'Robusta'];
+    lbl.textContent = labels[s];
+    lbl.style.color = ['#64748b','#fca5a5','#f59e0b','#60a5fa','#6ee7b7'][s];
+  });
+})();
+</script>
 {% endblock %}

@@ -35,10 +35,14 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px;flex-wrap:wrap">
       <label style="color:#cbd5e1;font-size:14px;font-weight:600;margin:0">Racconta una visita commerciale (2-4 righe)</label>
       <div style="display:flex;gap:8px">
-        <button type="button" id="demo-voice" aria-label="Dettatura vocale (beta)" title="Dettatura beta — qualità variabile, funziona meglio in ambienti silenziosi e con frasi brevi. Rileggi e correggi prima di generare." style="display:none;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.4);color:#f472b6;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">🎤 Detta <span style="opacity:.7;font-size:10px;margin-left:4px">beta</span></button>
+        <button type="button" id="demo-voice" class="voice-btn" aria-label="Dettatura vocale italiano" title="Dettatura italiana — usa Chrome o Edge, serve permesso microfono al primo click" hidden>
+          <span class="voice-dot" aria-hidden="true"></span>
+          <span class="voice-label">🎤 Detta in italiano</span>
+        </button>
         <button type="button" id="demo-example" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Usa esempio</button>
       </div>
     </div>
+    <div id="voice-status" class="voice-status" role="status" aria-live="polite"></div>
     <textarea id="demo-input" name="input_text" required rows="6" maxlength="2000" placeholder="Oggi ho visitato Tecnoservice Srl, referente Ing. Bianchi. Cercano un partner per forniture industriali ricorrenti. Competitor attuale: Bergamo Industriale. Budget indicato: 15K/anno. Prossimo step: invio offerta entro venerdì."
               style="width:100%;padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:15px;line-height:1.6;margin-bottom:8px;resize:vertical;font-family:inherit">{{ draft.input_text if draft else '' }}</textarea>
     <div style="display:flex;justify-content:space-between;color:#64748b;font-size:12px;margin-bottom:20px">
@@ -114,43 +118,143 @@
     updateChar();
   });
 
-  // Voice input — SpeechRecognition nativo browser (it-IT)
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // ─── Voice dictation — Web SpeechRecognition (Chrome/Edge) ──────────────
   var voiceBtn = document.getElementById('demo-voice');
-  if (SR && voiceBtn) {
-    voiceBtn.style.display = 'inline-flex';
+  var voiceLabelEl = voiceBtn ? voiceBtn.querySelector('.voice-label') : null;
+  var voiceStatus = document.getElementById('voice-status');
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  function setVoiceStatus(type, msg) {
+    if (!voiceStatus) return;
+    voiceStatus.className = 'voice-status ' + (type || '');
+    voiceStatus.textContent = msg || '';
+  }
+  function setVoiceLabel(txt) { if (voiceLabelEl) voiceLabelEl.textContent = txt; }
+
+  if (!voiceBtn) {
+    // no button on page
+  } else if (!SR) {
+    voiceBtn.hidden = false;
+    voiceBtn.disabled = true;
+    voiceBtn.style.opacity = '0.55';
+    voiceBtn.style.cursor = 'not-allowed';
+    voiceBtn.title = 'La dettatura vocale richiede Chrome o Edge (desktop o Android)';
+    setVoiceLabel('🎤 Usa Chrome/Edge');
+  } else if (!window.isSecureContext) {
+    voiceBtn.hidden = true;
+    setVoiceStatus('warn', 'La dettatura richiede HTTPS. Apri il sito con https:// per attivarla.');
+  } else {
+    voiceBtn.hidden = false;
     var rec = new SR();
     rec.lang = 'it-IT';
     rec.continuous = true;
     rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
     var listening = false;
     var baseText = '';
-    voiceBtn.addEventListener('click', function(){
+    var finalBuffer = '';
+    var restartOnEnd = true;
+    var autoRestartCount = 0;
+    var lastSpeechAt = 0;
+
+    function start() {
+      baseText = inputTxt.value ? (inputTxt.value.replace(/\s+$/, '') + ' ') : '';
+      finalBuffer = '';
+      autoRestartCount = 0;
+      try {
+        rec.start();
+      } catch (err) {
+        setVoiceStatus('error', 'Impossibile avviare microfono: ' + (err.message || err));
+        return;
+      }
+      listening = true;
+      voiceBtn.classList.add('recording');
+      setVoiceLabel('⏹ Stop dettatura');
+      setVoiceStatus('active', 'Ascolto attivo · parla chiaramente in italiano, il testo appare man mano. Fai una pausa per concludere una frase.');
+      lastSpeechAt = Date.now();
+    }
+    function stop() {
+      restartOnEnd = false;
+      try { rec.stop(); } catch (e) {}
+      listening = false;
+      voiceBtn.classList.remove('recording');
+      setVoiceLabel('🎤 Detta in italiano');
+      setVoiceStatus('', '');
+    }
+
+    voiceBtn.addEventListener('click', function () {
       if (!listening) {
-        baseText = inputTxt.value ? inputTxt.value + ' ' : '';
-        try { rec.start(); listening = true;
-          voiceBtn.innerText = '⏸ Stop'; voiceBtn.style.background = 'rgba(239,68,68,0.15)'; voiceBtn.style.color = '#fca5a5'; voiceBtn.style.borderColor = 'rgba(239,68,68,0.4)';
-        } catch(e){ alert('Microfono non disponibile: '+e.message); }
+        restartOnEnd = true;
+        // explicit permission request via getUserMedia for clearer UX
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function (stream) {
+              // we don't actually need the stream; just the permission grant
+              stream.getTracks().forEach(function (t) { t.stop(); });
+              start();
+            })
+            .catch(function (err) {
+              if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+                setVoiceStatus('error', 'Permesso microfono negato. Clicca sul lucchetto nella barra del browser e riconsenti.');
+              } else {
+                setVoiceStatus('error', 'Microfono non disponibile: ' + ((err && err.message) || err));
+              }
+            });
+        } else {
+          start();
+        }
       } else {
-        rec.stop(); listening = false;
-        voiceBtn.innerText = '🎤 Detta'; voiceBtn.style.background = 'rgba(236,72,153,0.1)'; voiceBtn.style.color = '#f472b6'; voiceBtn.style.borderColor = 'rgba(236,72,153,0.4)';
+        stop();
       }
     });
-    rec.onresult = function(e){
-      var transcript = '';
-      for (var i = e.resultIndex; i < e.results.length; ++i) {
-        transcript += e.results[i][0].transcript;
+
+    rec.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var r = e.results[i];
+        var txt = r[0].transcript;
+        if (r.isFinal) {
+          finalBuffer += txt + (txt.endsWith('.') || txt.endsWith('?') || txt.endsWith('!') ? ' ' : '. ');
+          lastSpeechAt = Date.now();
+        } else {
+          interim += txt;
+        }
       }
-      inputTxt.value = baseText + transcript;
+      inputTxt.value = (baseText + finalBuffer + interim).replace(/\s+$/, '');
       updateChar();
     };
-    rec.onerror = function(e){
-      console.warn('voice error', e);
-      listening = false;
-      voiceBtn.innerText = '🎤 Detta';
+
+    rec.onerror = function (e) {
+      var msg = e && e.error ? String(e.error) : 'unknown';
+      if (msg === 'no-speech') {
+        setVoiceStatus('warn', 'Nessun suono rilevato. Parla più vicino al microfono, poi riprova.');
+      } else if (msg === 'not-allowed' || msg === 'service-not-allowed') {
+        setVoiceStatus('error', 'Permesso microfono negato. Vai nelle impostazioni del browser → permessi sito → consenti Microfono.');
+        stop();
+      } else if (msg === 'audio-capture') {
+        setVoiceStatus('error', 'Nessun microfono rilevato. Collega un microfono e riprova.');
+        stop();
+      } else if (msg === 'network') {
+        setVoiceStatus('warn', 'Connessione persa durante la dettatura. Riprovo automaticamente...');
+      } else if (msg === 'aborted') {
+        // user stopped; no message
+      } else {
+        setVoiceStatus('warn', 'Errore dettatura: ' + msg + '. Riprova tra un secondo.');
+      }
     };
-    rec.onend = function(){
-      if (listening) { try { rec.start(); } catch(e){} }
+
+    rec.onend = function () {
+      // Chrome auto-stops after ~60s silence. If user hasn't stopped, restart.
+      if (listening && restartOnEnd && autoRestartCount < 8) {
+        autoRestartCount++;
+        try { rec.start(); } catch (e) {}
+      } else if (listening) {
+        listening = false;
+        voiceBtn.classList.remove('recording');
+        setVoiceLabel('🎤 Detta in italiano');
+        setVoiceStatus('warn', 'Dettatura terminata (limite browser). Clicca di nuovo per riprendere.');
+      }
     };
   }
 

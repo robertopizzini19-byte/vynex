@@ -4,31 +4,53 @@
 {% block footer %}{% endblock %}
 
 {% block body %}
-<div class="auth-split">
-    <div class="auth-left">
-        <a href="/" class="logo auth-split-logo"><img src="/static/logo-wordmark.svg" alt="VYNEX" class="logo-img"></a>
-        <div class="auth-left-content">
-            <h2>Risparmia 20 ore<br>ogni mese</h2>
-            <p>Ogni visita diventa report, email e offerta in 30 secondi. Sempre in italiano professionale.</p>
-            <ul class="auth-benefits">
-                <li><i data-lucide="check-circle"></i> Report di visita professionale</li>
-                <li><i data-lucide="check-circle"></i> Email follow-up personalizzata</li>
-                <li><i data-lucide="check-circle"></i> Offerta commerciale pronta</li>
-                <li><i data-lucide="check-circle"></i> Affina con istruzioni AI</li>
+<div class="auth-scene">
+
+    <!-- LEFT — welcome back + value -->
+    <aside class="auth-left-new">
+        <a href="/" class="logo-wordmark" aria-label="Torna alla home VYNEX">
+            <img src="/static/logo-wordmark.svg" alt="VYNEX">
+        </a>
+
+        <div>
+            <div class="auth-kicker">Bentornato · Italia</div>
+            <h1>Riprendi da <em>dove eri</em>.<br>Le tue visite ti aspettano.</h1>
+            <p class="auth-lead">Accedi per tornare alla tua dashboard. Storico completo dei documenti, affinamento AI e nuove generazioni in 30 secondi.</p>
+
+            <ul class="auth-benefits-new" style="margin-top:26px;max-width:440px">
+                <li>Report di visita professionale</li>
+                <li>Email follow-up personalizzata</li>
+                <li>Offerta commerciale pronta</li>
+                <li>Affina con istruzioni in italiano</li>
             </ul>
         </div>
-        <div class="auth-left-quote">
-            <p>"Prima impiegavo 2 ore al giorno a scrivere report. Con VYNEX sono 10 minuti."</p>
-            <div class="auth-quote-author">Marco B. · Agente commerciale, Milano</div>
-        </div>
-    </div>
 
-    <div class="auth-right">
-        <div class="auth-form-wrap">
-            <div class="auth-form-header">
-                <h1>Bentornato</h1>
-                <p class="auth-sub">Accedi al tuo account VYNEX</p>
+        <div class="auth-testimonial">
+            <p>Dopo 3 settimane con VYNEX ho recuperato un pomeriggio pieno a settimana. Quel pomeriggio ora è di vendita attiva, non di scartoffie.</p>
+            <div class="author"><strong>Luca D.</strong> · Agente commercio, Verona</div>
+        </div>
+
+        <div class="auth-stats-new">
+            <div class="auth-stat-new">
+                <div class="v">30s</div>
+                <div class="l">per 3 documenti</div>
             </div>
+            <div class="auth-stat-new">
+                <div class="v">∞</div>
+                <div class="l">doc illimitati su Pro</div>
+            </div>
+            <div class="auth-stat-new">
+                <div class="v">🇮🇹</div>
+                <div class="l">italiano nativo</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT — login card -->
+    <main class="auth-right-new">
+        <div class="auth-card-new">
+            <h2>Bentornato</h2>
+            <p class="auth-card-sub">Accedi al tuo account VYNEX</p>
 
             {% if error %}
             <div class="alert-error">{{ error }}</div>
@@ -47,27 +69,28 @@
                  data-size="large"
                  data-locale="it"
                  data-logo_alignment="left"
-                 data-width="380"
-                 style="margin:0 auto 18px;display:flex;justify-content:center"></div>
+                 data-width="368"
+                 style="margin:0 auto 4px;display:flex;justify-content:center"></div>
             <script src="https://accounts.google.com/gsi/client" async defer></script>
-            <div class="auth-divider"><span>oppure</span></div>
+            <div class="auth-divider-new">oppure con email</div>
             {% endif %}
 
-            <form action="/api/login" method="post" class="auth-form">
-                <div class="form-group">
+            <form action="/api/login" method="post" class="auth-form-new" novalidate>
+                <div class="form-group-new">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
                 </div>
-                <div class="form-group">
+                <div class="form-group-new">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn-primary btn-full btn-lg">Accedi</button>
+                <button type="submit" class="auth-cta-new">Accedi →</button>
             </form>
 
-            <p class="auth-switch"><a href="/recupera-password">Password dimenticata?</a></p>
-            <p class="auth-switch">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
+            <p class="auth-switch-new"><a href="/recupera-password">Password dimenticata?</a></p>
+            <p class="auth-switch-new">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
         </div>
-    </div>
+    </main>
+
 </div>
 {% endblock %}
