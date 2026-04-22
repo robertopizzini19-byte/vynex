@@ -2705,17 +2705,46 @@ Chiama lo strumento save_blog_post con tutti i campi compilati."""
         slug = f"{slug_base}-{suffix}"[:120]
 
     # Sanitize body_html: whitelist rigorosa su output Claude tool-use per prevenire XSS stored.
-    import bleach as _bleach
+    # Zero-deps: HTMLParser stdlib + whitelist tag/attr/protocol.
+    from html.parser import HTMLParser as _HTMLParser
+    from html import escape as _html_escape
     _BLOG_ALLOWED_TAGS = {"h2", "h3", "h4", "p", "ul", "ol", "li", "strong", "em", "a", "blockquote", "br", "code", "pre"}
-    _BLOG_ALLOWED_ATTRS = {"a": ["href", "title", "rel"]}
+    _BLOG_ALLOWED_ATTRS = {"a": {"href", "title", "rel"}}
+    _BLOG_ALLOWED_PROTOCOLS = ("http://", "https://", "mailto:", "/", "#")
+
+    class _BlogSanitizer(_HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.out = []
+        def handle_starttag(self, tag, attrs):
+            if tag not in _BLOG_ALLOWED_TAGS:
+                return
+            allowed = _BLOG_ALLOWED_ATTRS.get(tag, set())
+            safe_attrs = []
+            for k, v in attrs:
+                if k not in allowed or v is None:
+                    continue
+                if k == "href":
+                    vl = v.strip().lower()
+                    if not any(vl.startswith(p) for p in _BLOG_ALLOWED_PROTOCOLS):
+                        continue
+                safe_attrs.append(f'{k}="{_html_escape(v, quote=True)}"')
+            if tag == "a":
+                safe_attrs.append('rel="nofollow noopener"')
+            self.out.append(f"<{tag}{(' ' + ' '.join(safe_attrs)) if safe_attrs else ''}>")
+        def handle_endtag(self, tag):
+            if tag in _BLOG_ALLOWED_TAGS:
+                self.out.append(f"</{tag}>")
+        def handle_startendtag(self, tag, attrs):
+            if tag == "br":
+                self.out.append("<br>")
+        def handle_data(self, data):
+            self.out.append(_html_escape(data, quote=False))
+
     raw_body = data.get("body_html") or "<p>(vuoto)</p>"
-    safe_body = _bleach.clean(
-        raw_body,
-        tags=_BLOG_ALLOWED_TAGS,
-        attributes=_BLOG_ALLOWED_ATTRS,
-        protocols=["http", "https", "mailto"],
-        strip=True,
-    )
+    _s = _BlogSanitizer()
+    _s.feed(raw_body)
+    safe_body = "".join(_s.out) or "<p>(vuoto)</p>"
 
     post = BlogPost(
         slug=slug,
