@@ -1951,40 +1951,56 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* ═══════════════════════════════════════════════════════════
    GLOBAL VERTICAL VYNEX RAILS (all pages) + scroll parallax
    ═══════════════════════════════════════════════════════════ */
+/* Rail = fixed viewport-height column that clips its scrolling content.
+   Rail content = long repeating "VYNEX · " stream that marquee-loops.
+   Left rail scrolls upward, right rail scrolls downward — opposite
+   directions in continuous infinite loop. No parallax, no scroll JS. */
 .page-brand-rail {
   position: fixed;
-  top: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 0;
+  height: 100vh;
+  width: clamp(40px, 5vw, 70px);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  opacity: .18;
+  filter: drop-shadow(0 0 18px rgba(96,165,250,.18));
+}
+.page-brand-rail.is-left  { left: 2vw; }
+.page-brand-rail.is-right { right: 2vw; }
+
+.page-brand-rail .rail-track {
+  display: block;
   writing-mode: vertical-rl;
   text-orientation: upright;
   font-family: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
-  font-size: clamp(44px, 7.5vw, 120px);
+  font-size: clamp(22px, 2.4vw, 38px);
   font-weight: 900;
-  letter-spacing: 18px;
+  letter-spacing: 8px;
   line-height: 1;
+  white-space: nowrap;
   background: linear-gradient(180deg, #60a5fa, #a78bfa 45%, #f472b6 100%);
   background-size: 100% 260%;
   -webkit-background-clip: text;
           background-clip: text;
   -webkit-text-fill-color: transparent;
           color: transparent;
-  opacity: .20;
-  pointer-events: none;
-  user-select: none;
-  z-index: 1;
-  animation: wow-vyn-shimmer 9s ease-in-out infinite, wow-vyn-glow 5s ease-in-out infinite;
-  will-change: transform, background-position, filter;
-  filter: drop-shadow(0 0 22px rgba(96,165,250,.2));
-  /* Parallax: --vyn-offset is updated by JS on scroll.
-     translateY(-50%) centers vertically; extra offset gives the "moves
-     opposite to scroll direction" feel (scroll down → rail moves up). */
-  transform: translateY(calc(-50% + var(--vyn-offset, 0px)));
-  transition: transform .05s linear;
+  will-change: transform, background-position;
+  animation: wow-vyn-shimmer 9s ease-in-out infinite;
 }
-.page-brand-rail.is-left  { left: 3vw; }
-.page-brand-rail.is-right { right: 3vw; animation-delay: -4s, -2.5s; }
+.page-brand-rail.is-left  .rail-track { animation: wow-vyn-shimmer 9s ease-in-out infinite, rail-loop-up   42s linear infinite; }
+.page-brand-rail.is-right .rail-track { animation: wow-vyn-shimmer 9s ease-in-out infinite, rail-loop-down 42s linear infinite; animation-delay: -4s, 0s; }
+
+@keyframes rail-loop-up {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+@keyframes rail-loop-down {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0); }
+}
+
 @media (max-width: 860px) {
   .page-brand-rail { display: none; }
 }

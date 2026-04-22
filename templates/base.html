@@ -74,9 +74,13 @@
     <link rel="stylesheet" href="/static/wow.css">
 </head>
 <body>
-    <!-- Global VYNEX vertical rails — shimmer + scroll parallax -->
-    <div class="page-brand-rail is-left" aria-hidden="true">VYNEX</div>
-    <div class="page-brand-rail is-right" aria-hidden="true">VYNEX</div>
+    <!-- Global VYNEX vertical rails — infinite marquee, opposite directions -->
+    <div class="page-brand-rail is-left" aria-hidden="true">
+        <span class="rail-track">VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · </span>
+    </div>
+    <div class="page-brand-rail is-right" aria-hidden="true">
+        <span class="rail-track">VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · VYNEX · </span>
+    </div>
 
     {% block nav %}{% include 'partials/nav.html' ignore missing %}{% endblock %}
     {% block body %}{% endblock %}
@@ -105,26 +109,6 @@
       document.querySelectorAll('.vnx-fade-in').forEach(function(el){ io.observe(el); });
     })();
 
-    // VYNEX rails parallax: scroll down → rails glide up (opposite direction).
-    // Sets --vyn-offset on :root, CSS applies translateY(calc(-50% + var(...))).
-    (function(){
-      if (!document.querySelector('.page-brand-rail')) return;
-      var ticking = false;
-      var FACTOR = -0.35;   // negative = rails move opposite to scroll
-      var MAX    = 900;     // cap the offset so letters don't drift off-screen on long pages
-      function onScroll(){
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(function(){
-          var y = window.scrollY || window.pageYOffset || 0;
-          var off = Math.max(-MAX, Math.min(MAX, y * FACTOR));
-          document.documentElement.style.setProperty('--vyn-offset', off.toFixed(1) + 'px');
-          ticking = false;
-        });
-      }
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-    })();
     </script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="/static/app.js"></script>
