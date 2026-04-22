@@ -47,8 +47,9 @@
                 <textarea id="input_testo" class="genera-hero-textarea" placeholder="es. Oggi visita da Rossi della Ferramenta Bianchi a Bergamo. Interessato al catalogo primavera, linea utensili elettrici. Offerta: sconto 10% sul primo ordine, pagamento 30gg. Da richiamare il 5 aprile per conferma."></textarea>
                 <div class="genera-hero-footer">
                     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-3)">
-                        <span><span id="char-count">0</span> / 2000 caratteri</span>
+                        <span><span id="char-count">0</span> / 2000</span>
                         <span id="input-hint" class="input-hint">Più dettagli → documenti più precisi.</span>
+                        <span class="kbd-hint" title="Scorciatoia tastiera"><kbd id="kbd-meta">⌘</kbd> <kbd>Enter</kbd> per generare</span>
                     </div>
                     <button id="btn-genera" class="genera-hero-cta" onclick="generaDocumenti()">
                         <span id="btn-text" style="display:inline-flex;align-items:center;gap:8px">
@@ -206,6 +207,22 @@ document.querySelectorAll('.chip[data-template]').forEach(function(btn){
     refreshHint();
   });
 });
+
+// Keyboard shortcut Cmd/Ctrl + Enter → generate
+var kbdMeta = document.getElementById('kbd-meta');
+var isMac = /Mac|iPhone|iPad/.test(navigator.platform || '');
+if (kbdMeta) kbdMeta.textContent = isMac ? '⌘' : 'Ctrl';
+if (textarea) {
+  textarea.addEventListener('keydown', function(e){
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      var btn = document.getElementById('btn-genera');
+      if (btn && !btn.disabled) btn.click();
+    }
+  });
+  // Auto-focus textarea on page load for magical feel
+  setTimeout(function(){ try { textarea.focus(); } catch(e){} }, 200);
+}
 
 async function generaDocumenti() {
     const input = document.getElementById('input_testo').value.trim();

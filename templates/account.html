@@ -27,6 +27,22 @@
 
         <!-- TAB: PROFILO -->
         <div class="account-tab-panel is-active" data-panel="profilo">
+        {% if user.plan == "free" %}
+        <div class="pro-upsell">
+            <div>
+                <span class="pro-upsell-badge">Pro · 10 giorni gratis</span>
+                <h3 class="pro-upsell-title">Documenti illimitati. Nessuna carta per iniziare.</h3>
+                <ul class="pro-upsell-benefits">
+                    <li>Documenti illimitati ogni mese</li>
+                    <li>Priorità di elaborazione AI</li>
+                    <li>Export PDF e DOCX</li>
+                    <li>Disdici quando vuoi</li>
+                </ul>
+                <div class="pro-upsell-price">€49/mese dopo il trial · annulla in 1 click</div>
+            </div>
+            <a href="/checkout/pro" class="pro-upsell-cta">Attiva trial 10 gg →</a>
+        </div>
+        {% endif %}
         <div class="account-grid">
             <div class="account-card account-card--wide">
                 <h2 class="account-card-title">Il tuo piano</h2>
