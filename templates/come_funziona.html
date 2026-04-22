@@ -51,87 +51,106 @@
 
 {% block body %}
 
-<article class="legal-page">
-    <div class="legal-inner">
-        <nav aria-label="Breadcrumb" class="breadcrumb">
-            <a href="/">Home</a> <span>›</span> <span>Come funziona</span>
-        </nav>
+<section class="sub-hero">
+    <div class="sub-hero-breadcrumb"><a href="/">Home</a><span class="sep">›</span><strong>Come funziona</strong></div>
+    <div class="sub-hero-kicker">3 passi · 2 minuti 30 secondi totali</div>
+    <h1>Dalla visita ai <em>3 documenti</em>.<br>In tempo reale, con le tue parole.</h1>
+    <p class="sub-hero-lead">VYNEX trasforma 2 minuti di descrizione in 3 documenti commerciali in 30 secondi. Questa è la procedura completa con tempi reali, esempio vero e stack tecnologico usato dietro le quinte.</p>
+</section>
 
-        <header>
-            <h1>Come funziona VYNEX</h1>
-            <p class="legal-lead">VYNEX trasforma 2 minuti di descrizione testuale in 3 documenti commerciali professionali in 30 secondi. Questa è la procedura completa, passo dopo passo, con tempi reali.</p>
-        </header>
-
-        <section id="step1">
-            <h2>Passo 1 — Descrivi la visita (2 minuti)</h2>
-            <p>Dopo la visita, apri VYNEX dal browser (mobile, tablet o desktop) e vai su <strong>Genera documento</strong>. Trovi una casella di testo vuota. Scrivi come parleresti a un collega. Esempio reale:</p>
-            <blockquote>
-                <em>"Ho visto Rossi della Ferramenta Bianchi a Bergamo oggi alle 10:30. Catalogo primavera 2026, interessato alla linea utensili elettrici. Offerta proposta: sconto 10% sul primo ordine, pagamento 30 gg fine mese. Rossi ha chiesto di richiamarlo il 5 aprile per chiudere. Prossima visita programmata il 20 aprile con campione modello X-450."</em>
-            </blockquote>
-            <p>Non servono formati speciali, punteggiatura perfetta o struttura predefinita. VYNEX capisce il linguaggio naturale italiano.</p>
-            <p><strong>Tempo richiesto</strong>: 2 minuti in media. Più dettagli scrivi, più precisi saranno i documenti generati.</p>
-        </section>
-
-        <section id="step2">
-            <h2>Passo 2 — L'AI genera i 3 documenti (30 secondi)</h2>
-            <p>Clicca su <strong>Genera 3 documenti</strong>. VYNEX invia il testo al modello Claude Haiku 4.5 di Anthropic con un prompt specializzato in italiano commerciale. In circa 28-30 secondi ricevi:</p>
-            <ol>
-                <li><strong>Report di visita</strong> — Strutturato con obiettivi, svolgimento della visita, accordi raggiunti, prossimi passi. Formato professionale pronto per il mandante.</li>
-                <li><strong>Email di follow-up</strong> — Indirizzata al cliente, tono caldo e professionale, riassume i punti chiave della visita e conferma i prossimi passi.</li>
-                <li><strong>Offerta commerciale</strong> — Include condizioni discusse, sconti, termini di pagamento, validità. Pronta da stampare, firmare o inviare.</li>
-            </ol>
-            <p>Tutti e 3 i documenti sono in italiano professionale nativo, non in traduzione da inglese.</p>
-        </section>
-
-        <section id="step3">
-            <h2>Passo 3 — Affina o copia (30 secondi)</h2>
-            <p>Ogni documento ha due azioni:</p>
-            <ul>
-                <li><strong>Copia</strong> — Un click e il testo è nella clipboard, pronto per il tuo CRM, client di posta o editor di testo.</li>
-                <li><strong>Affina con AI</strong> — Scrivi un'istruzione in linguaggio naturale e VYNEX rigenera il documento. Esempi: <code>"rendi più formale"</code>, <code>"aggiungi sconto 15%"</code>, <code>"togli il paragrafo sull'urgenza"</code>, <code>"accorcia del 30%"</code>.</li>
-            </ul>
-            <p>Puoi affinare quante volte vuoi sullo stesso documento. Ogni rigenerazione costa 1 documento dal tuo plafond mensile (Free) oppure è illimitata su Pro e Team.</p>
-        </section>
-
-        <section>
-            <h2>Tempi reali vs manuale</h2>
-            <table class="legal-table">
-                <thead>
-                    <tr><th>Attività</th><th>Manuale</th><th>Con VYNEX</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Scrivere report di visita</td><td>10-15 min</td><td>~10 sec</td></tr>
-                    <tr><td>Scrivere email di follow-up</td><td>5-8 min</td><td>~10 sec</td></tr>
-                    <tr><td>Preparare offerta commerciale</td><td>10-20 min</td><td>~10 sec</td></tr>
-                    <tr><td><strong>Totale per visita</strong></td><td><strong>25-43 min</strong></td><td><strong>~2.5 min (incluso testo input)</strong></td></tr>
-                    <tr><td><strong>Risparmio per 5 visite/giorno</strong></td><td>-</td><td><strong>~2-3 ore al giorno</strong></td></tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section>
-            <h2>Domande tecniche</h2>
-            <h3>Quale modello AI usa VYNEX?</h3>
-            <p>VYNEX usa <strong>Claude Haiku 4.5</strong> di Anthropic, rilasciato a ottobre 2025. È un modello progettato per velocità e qualità di output in lingue europee, incluso l'italiano commerciale.</p>
-
-            <h3>Dove sono salvati i miei dati?</h3>
-            <p>Tutti i dati (account, documenti generati, input di visita) sono salvati su un database PostgreSQL ospitato da Supabase nella regione EU di Frankfurt. I dati non lasciano mai l'Unione Europea.</p>
-
-            <h3>Quanti documenti posso generare?</h3>
-            <p>Il piano Free include 10 documenti al mese, rinnovati il primo di ogni mese. Il piano Pro (€49/mese) e Team (€89/agente/mese) includono documenti illimitati.</p>
-
-            <h3>Posso usare VYNEX su mobile?</h3>
-            <p>Sì. VYNEX è una web app responsive: funziona identicamente su smartphone, tablet e desktop. Nessuna app da scaricare.</p>
-
-            <h3>I documenti hanno un limite di caratteri?</h3>
-            <p>L'input della visita deve essere tra 20 e 2000 caratteri. I documenti generati non hanno limite fisso — dipende dalla complessità della visita descritta.</p>
-        </section>
-
-        <div class="legal-cta">
-            <a href="/registrati" class="btn-primary btn-lg">Prova VYNEX gratis</a>
-            <p class="legal-cta-sub">10 documenti gratis ogni mese. Nessuna carta richiesta. Attivo in 30 secondi.</p>
+<section class="timeline-stage">
+    <div class="timeline-step vnx-fade-in" id="step1">
+        <div class="timeline-step-marker">
+            <div class="timeline-step-num"><span>1</span></div>
+            <div class="timeline-step-time">2 min</div>
+        </div>
+        <div class="timeline-step-body">
+            <h2>Descrivi la visita</h2>
+            <p>Dopo la visita, apri VYNEX dal browser (mobile, tablet o desktop) e vai su <strong>Genera documento</strong>. Trovi una casella di testo vuota. Scrivi come parleresti a un collega. Non servono formati, punteggiatura perfetta o struttura predefinita — VYNEX capisce il linguaggio naturale italiano.</p>
+            <blockquote>Ho visto Rossi della Ferramenta Bianchi a Bergamo alle 10:30. Catalogo primavera 2026, interessato alla linea utensili elettrici. Offerta: sconto 10% sul primo ordine, pagamento 30 gg fine mese. Rossi ha chiesto di richiamare il 5 aprile. Prossima visita il 20 aprile con campione modello X-450.</blockquote>
+            <p><strong>Regola d'oro:</strong> più dettagli metti, più precisi saranno i documenti. Nome cliente, azienda, budget, obiezioni, next step.</p>
         </div>
     </div>
-</article>
+
+    <div class="timeline-step vnx-fade-in" id="step2">
+        <div class="timeline-step-marker">
+            <div class="timeline-step-num"><span>2</span></div>
+            <div class="timeline-step-time">30 sec</div>
+        </div>
+        <div class="timeline-step-body">
+            <h2>L'AI genera i 3 documenti</h2>
+            <p>Clicca <strong>Genera 3 documenti</strong>. VYNEX invia il testo a <strong>Claude Haiku 4.5</strong> di Anthropic con un prompt specializzato in italiano commerciale. In 28-30 secondi ricevi:</p>
+            <ol>
+                <li><strong>Report di visita</strong> — Strutturato con obiettivi, svolgimento, accordi raggiunti, prossimi passi. Pronto per il mandante.</li>
+                <li><strong>Email di follow-up</strong> — Indirizzata al cliente, tono caldo e professionale, riassume i punti chiave della visita.</li>
+                <li><strong>Offerta commerciale</strong> — Condizioni, sconti, termini di pagamento, validità. Pronta da firmare o inviare.</li>
+            </ol>
+            <p>Tutti in <strong>italiano professionale nativo</strong>, non in traduzione da inglese.</p>
+        </div>
+    </div>
+
+    <div class="timeline-step vnx-fade-in" id="step3">
+        <div class="timeline-step-marker">
+            <div class="timeline-step-num"><span>3</span></div>
+            <div class="timeline-step-time">30 sec</div>
+        </div>
+        <div class="timeline-step-body">
+            <h2>Affina o copia</h2>
+            <p>Ogni documento ha due azioni:</p>
+            <ul>
+                <li><strong>Copia</strong> — Un click e il testo è nella clipboard, pronto per CRM, client di posta o editor.</li>
+                <li><strong>Affina con AI</strong> — Scrivi un'istruzione e VYNEX rigenera. Esempi: <code>rendi più formale</code>, <code>aggiungi sconto 15%</code>, <code>togli il paragrafo sull'urgenza</code>, <code>accorcia del 30%</code>.</li>
+            </ul>
+            <p>Affina quante volte vuoi. Ogni rigenerazione costa 1 documento sul Free, illimitata su Pro/Team.</p>
+        </div>
+    </div>
+</section>
+
+<section class="compare-wrap">
+    <div class="bento-head vnx-fade-in" style="margin-bottom:28px">
+        <div class="section-label">Tempi reali</div>
+        <h2 style="font-size:clamp(24px,3.2vw,34px);font-weight:800;color:#f1f5f9;margin:8px 0 0">Quanto risparmi, davvero.</h2>
+    </div>
+    <table class="compare-table vnx-fade-in">
+        <thead>
+            <tr><th>Attività</th><th>Manuale</th><th>Con VYNEX</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Scrivere report di visita</td><td>10-15 min</td><td>~10 sec</td></tr>
+            <tr><td>Scrivere email di follow-up</td><td>5-8 min</td><td>~10 sec</td></tr>
+            <tr><td>Preparare offerta commerciale</td><td>10-20 min</td><td>~10 sec</td></tr>
+            <tr class="total"><td>Totale per visita</td><td>25-43 min</td><td>~2.5 min</td></tr>
+            <tr class="total"><td>Risparmio 5 visite/giorno</td><td>—</td><td>~2-3 ore/giorno</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section class="prose-wrap">
+    <div class="prose-card vnx-fade-in">
+        <h2><span class="prose-num">TECH</span> Domande tecniche</h2>
+        <h3>Quale modello AI usa VYNEX?</h3>
+        <p>VYNEX usa <strong>Claude Haiku 4.5</strong> di Anthropic, rilasciato a ottobre 2025. Modello progettato per velocità e qualità di output in lingue europee, incluso l'italiano commerciale.</p>
+
+        <h3>Dove sono salvati i miei dati?</h3>
+        <p>Tutti i dati (account, documenti generati, input di visita) sono salvati su PostgreSQL ospitato da Supabase nella regione EU di <strong>Frankfurt</strong>. I dati non lasciano mai l'Unione Europea.</p>
+
+        <h3>Quanti documenti posso generare?</h3>
+        <p>Free: <strong>10 documenti/mese</strong>, rinnovati il primo del mese. Pro (€49/mese) e Team (€89/agente/mese) includono documenti <strong>illimitati</strong>.</p>
+
+        <h3>Posso usare VYNEX da mobile?</h3>
+        <p>Sì. VYNEX è una web app responsive: funziona identicamente su smartphone, tablet e desktop. Nessuna app da scaricare, nessun install.</p>
+
+        <h3>I documenti hanno un limite di caratteri?</h3>
+        <p>L'input della visita deve essere tra <code>20</code> e <code>2000</code> caratteri. I documenti generati non hanno limite fisso — dipendono dalla complessità della visita descritta.</p>
+    </div>
+
+    <div class="article-cta vnx-fade-in" style="padding:0">
+        <div class="article-cta-inner">
+            <h3>Prova VYNEX gratis.</h3>
+            <p>10 documenti gratis ogni mese. Nessuna carta richiesta. Attivo in 30 secondi.</p>
+            <a href="/registrati" class="pp-card-cta primary" style="display:inline-block;padding:14px 28px">Crea account gratis →</a>
+        </div>
+    </div>
+</section>
 
 {% endblock %}

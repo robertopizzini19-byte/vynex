@@ -38,34 +38,57 @@
 
 {% block body %}
 
-<main style="max-width:760px;margin:0 auto;padding:60px 24px 100px">
-  <nav aria-label="Breadcrumb" style="margin-bottom:32px;color:#64748b;font-size:13px">
-    <a href="/" style="color:#94a3b8;text-decoration:none">Home</a> ›
-    <a href="/blog" style="color:#94a3b8;text-decoration:none">Blog</a> ›
-    <span style="color:#cbd5e1">{{ post.title }}</span>
-  </nav>
+<div class="article-progress" id="article-progress" aria-hidden="true"></div>
 
-  <header style="margin-bottom:40px">
-    <div style="color:#60a5fa;font-size:13px;font-weight:600;letter-spacing:0.5px;margin-bottom:16px">
-      {{ post.published_at.strftime('%d %B %Y') }} · {{ post.reading_minutes }} min lettura
+<section class="sub-hero" style="padding:56px 24px 24px">
+    <div class="sub-hero-breadcrumb">
+        <a href="/">Home</a><span class="sep">›</span><a href="/blog">Blog</a><span class="sep">›</span><strong>Articolo</strong>
     </div>
-    <h1 style="font-size:40px;font-weight:800;color:#f1f5f9;line-height:1.15;margin:0 0 20px">{{ post.title }}</h1>
+</section>
+
+<header class="article-hero vnx-fade-in">
+    <div class="article-meta">
+        <span>{{ post.published_at.strftime('%d %B %Y') }}</span>
+        <span class="dot"></span>
+        <span>{{ post.reading_minutes }} min di lettura</span>
+    </div>
+    <h1>{{ post.title }}</h1>
     {% if post.hero_subtitle %}
-    <p style="font-size:18px;color:#94a3b8;line-height:1.6;margin:0">{{ post.hero_subtitle }}</p>
+    <p class="article-sub">{{ post.hero_subtitle }}</p>
     {% endif %}
-  </header>
+</header>
 
-  <article style="color:#e2e8f0;line-height:1.8;font-size:16px">
+<article class="article-body vnx-fade-in">
     {{ post.body_html|safe }}
-  </article>
+</article>
 
-  <aside style="margin-top:56px;padding:32px;background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.1));border:1px solid rgba(96,165,250,0.3);border-radius:16px;text-align:center">
-    <h3 style="font-size:22px;color:#f1f5f9;font-weight:800;margin:0 0 10px">Prova VYNEX ora.</h3>
-    <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0 auto 20px;max-width:440px">3 documenti commerciali in 30 secondi, direttamente da una descrizione della visita. Senza account.</p>
-    <a href="/demo" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:14px 28px;border-radius:12px;text-decoration:none;font-weight:700">Prova gratis →</a>
-  </aside>
+<section class="article-cta vnx-fade-in">
+    <div class="article-cta-inner">
+        <h3>Prova VYNEX ora.</h3>
+        <p>3 documenti commerciali in 30 secondi, direttamente da una descrizione della visita. Senza account, senza carta.</p>
+        <a href="/demo" class="pp-card-cta primary" style="display:inline-block;padding:14px 28px">Prova gratis →</a>
+    </div>
+</section>
 
-  <p style="text-align:center;margin-top:40px"><a href="/blog" style="color:#60a5fa;text-decoration:none;font-size:14px">← Tutti gli articoli</a></p>
-</main>
+<div class="article-back">
+    <a href="/blog">← Tutti gli articoli</a>
+</div>
+
+<script>
+(function () {
+  var bar = document.getElementById('article-progress');
+  var article = document.querySelector('.article-body');
+  if (!bar || !article) return;
+  function onScroll() {
+    var rect = article.getBoundingClientRect();
+    var total = article.offsetHeight - window.innerHeight;
+    var passed = -rect.top;
+    var pct = Math.max(0, Math.min(100, (passed / total) * 100));
+    bar.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
 
 {% endblock %}

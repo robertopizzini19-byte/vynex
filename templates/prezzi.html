@@ -68,104 +68,142 @@
 
 {% block body %}
 
-<section class="pricing-page">
-    <div class="container">
-        <h1>Prezzi semplici e trasparenti</h1>
-        <p class="pricing-sub">Inizia gratis. 10 giorni di prova su ogni piano a pagamento. Disdici quando vuoi.</p>
+<section class="sub-hero">
+    <div class="sub-hero-breadcrumb"><a href="/">Home</a><span class="sep">›</span><strong>Prezzi</strong></div>
+    <div class="sub-hero-kicker">Listino VYNEX · 2026</div>
+    <h1>Paga solo <em>quando vale la pena</em>.<br>Inizia gratis. Sempre.</h1>
+    <p class="sub-hero-lead">Nessuna carta per iniziare. 10 giorni di prova gratuita inclusi su ogni piano a pagamento. Disdici in un click dal portale di fatturazione. Nessun vincolo minimo, nessuna clausola nascosta.</p>
+</section>
 
-        <div class="pricing-grid">
-            <!-- FREE -->
-            <div class="pricing-card">
-                <div class="plan-name">Free</div>
-                <div class="plan-price">€0<span>/mese</span></div>
-                <div class="plan-desc">Per scoprire VYNEX senza impegno</div>
-                <ul class="plan-features">
-                    <li>10 documenti al mese</li>
-                    <li>Report di visita professionale</li>
-                    <li>Email di follow-up</li>
-                    <li>Offerta commerciale</li>
-                    <li>Storico documenti</li>
-                    <li class="no">Documenti illimitati</li>
-                    <li class="no">Affina con istruzioni AI</li>
-                </ul>
-                <a href="/registrati" class="btn-ghost btn-full" style="display:flex">Inizia gratis</a>
-            </div>
-
-            <!-- PRO -->
-            <div class="pricing-card pricing-card-featured">
-                <div class="plan-badge">Più scelto</div>
-                <div class="plan-name">Pro</div>
-                <div class="plan-price">€49<span>/mese</span></div>
-                <div class="plan-trial">✓ 10 giorni gratis inclusi</div>
-                <div class="plan-desc">Per agenti commerciali con P.IVA</div>
-                <ul class="plan-features">
-                    <li><strong>Documenti illimitati</strong></li>
-                    <li>Report di visita professionale</li>
-                    <li>Email di follow-up</li>
-                    <li>Offerta commerciale</li>
-                    <li>Storico completo</li>
-                    <li><strong>Affina con istruzioni AI</strong></li>
-                    <li class="no">Dashboard team</li>
-                </ul>
-                {% if user and user.plan != "free" %}
-                <div class="btn-primary btn-full" style="display:flex;justify-content:center;cursor:default">Piano attivo ✓</div>
-                {% else %}
-                <a href="{% if user %}/checkout/pro{% else %}/registrati{% endif %}" class="btn-primary btn-full">
-                    {% if user %}Attiva Pro — 10 giorni gratis{% else %}Prova gratis 10 giorni{% endif %}
-                </a>
-                {% endif %}
-            </div>
-
-            <!-- TEAM -->
-            <div class="pricing-card">
-                <div class="plan-name">Team</div>
-                <div class="plan-price">€89<span>/agente/mese</span></div>
-                <div class="plan-price-sub">Min. 3 agenti · €267/mese</div>
-                <div class="plan-trial">✓ 10 giorni gratis inclusi</div>
-                <div class="plan-desc">Per aziende con reti vendita</div>
-                <ul class="plan-features">
-                    <li><strong>Min. 3 agenti inclusi</strong></li>
-                    <li>Tutto il piano Pro</li>
-                    <li>Dashboard team centralizzata</li>
-                    <li>Brandizzazione aziendale</li>
-                    <li>Report unificato per mandante</li>
-                    <li>Supporto prioritario via email</li>
-                    <li>Fatturazione mensile o annuale</li>
-                </ul>
-                {% if user and user.plan == "team" %}
-                <div class="btn-primary btn-full" style="display:flex;justify-content:center;cursor:default">Piano attivo ✓</div>
-                {% else %}
-                <a href="{% if user %}/checkout/team{% else %}/registrati{% endif %}" class="btn-ghost btn-full" style="display:flex">
-                    {% if user %}Attiva Team{% else %}Prova gratis 10 giorni{% endif %}
-                </a>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="faq">
-            <h2>Domande frequenti</h2>
-            <div class="faq-item">
-                <h3>Devo inserire la carta di credito per il piano Free?</h3>
-                <p>No. Il piano Free è completamente gratuito, senza carta di credito e senza scadenza.</p>
-            </div>
-            <div class="faq-item">
-                <h3>Come funziona la prova di 10 giorni?</h3>
-                <p>Attivi il piano Pro o Team, hai 10 giorni per testarlo senza limiti. Se non è per te, disdici prima della scadenza e non ti addebitiamo nulla.</p>
-            </div>
-            <div class="faq-item">
-                <h3>Posso cancellare in qualsiasi momento?</h3>
-                <p>Sì. Nessun vincolo minimo. Disdici dal portale di fatturazione in qualsiasi momento.</p>
-            </div>
-            <div class="faq-item">
-                <h3>I documenti sembrano davvero scritti da un professionista?</h3>
-                <p>Sì. VYNEX usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI — e puoi affinarli con istruzioni testuali.</p>
-            </div>
-            <div class="faq-item">
-                <h3>Come funziona il piano Team per le aziende?</h3>
-                <p>Il piano Team è per seat: ogni agente della tua rete ha il proprio accesso. Il minimo è 3 agenti (€267/mese). Per team più grandi contattaci per un preventivo personalizzato.</p>
-            </div>
+<section class="pricing-premium" style="padding-top:20px">
+    <div class="pricing-premium-head vnx-fade-in">
+        <div class="pricing-toggle" data-period="monthly" role="tablist" aria-label="Ciclo di fatturazione">
+            <div class="pricing-toggle-slider" aria-hidden="true"></div>
+            <button type="button" class="active" data-period="monthly" role="tab" aria-selected="true">Mensile</button>
+            <button type="button" data-period="yearly" role="tab" aria-selected="false">Annuale <span class="pricing-save-badge">-20%</span></button>
         </div>
     </div>
+
+    <div class="pricing-cards">
+        <article class="pp-card vnx-fade-in">
+            <div class="pp-card-name">Free</div>
+            <div class="pp-card-price">
+                <span class="pp-card-price-num">€0</span>
+                <span class="pp-card-price-period">/ mese</span>
+            </div>
+            <p class="pp-card-billed">Per sempre, senza carta</p>
+            <p class="pp-card-desc">Per scoprire VYNEX senza impegno. Ideale per chi vuole capire se fa al caso suo.</p>
+            <ul class="pp-features">
+                <li><span><strong>10 documenti</strong> al mese</span></li>
+                <li><span>Report di visita professionale</span></li>
+                <li><span>Email di follow-up</span></li>
+                <li><span>Offerta commerciale</span></li>
+                <li><span>Storico documenti</span></li>
+                <li><span>Nessuna carta richiesta</span></li>
+            </ul>
+            <a href="/registrati" class="pp-card-cta ghost">Inizia gratis</a>
+        </article>
+
+        <article class="pp-card pp-card-popular vnx-fade-in">
+            <span class="pp-badge">✦ Più scelto</span>
+            <div class="pp-card-name">Pro</div>
+            <div class="pp-card-price">
+                <span class="pp-card-price-num" data-price-monthly="49" data-price-yearly="39">€49</span>
+                <span class="pp-card-price-period">/ mese</span>
+            </div>
+            <p class="pp-card-billed" data-billed-monthly="10 giorni gratis inclusi · disdici quando vuoi" data-billed-yearly="€468/anno · risparmi €120 · disdici quando vuoi">10 giorni gratis inclusi · disdici quando vuoi</p>
+            <p class="pp-card-desc">Per agenti commerciali con P.IVA. Documenti illimitati, zero limiti, zero attrito.</p>
+            <ul class="pp-features">
+                <li><span><strong>Documenti illimitati</strong></span></li>
+                <li><span>Report + Email + Offerta</span></li>
+                <li><span><strong>Affina con istruzioni AI</strong></span></li>
+                <li><span>Storico completo + ricerca</span></li>
+                <li><span>Export PDF personalizzato</span></li>
+                <li><span>10 giorni di prova gratuita</span></li>
+            </ul>
+            {% if user and user.plan != "free" %}
+            <div class="pp-card-cta primary" style="cursor:default;opacity:.9">Piano attivo ✓</div>
+            {% else %}
+            <a href="{% if user %}/checkout/pro{% else %}/registrati{% endif %}" class="pp-card-cta primary">
+                {% if user %}Attiva Pro — 10 giorni gratis →{% else %}Prova gratis 10 giorni →{% endif %}
+            </a>
+            {% endif %}
+        </article>
+
+        <article class="pp-card vnx-fade-in">
+            <div class="pp-card-name">Team</div>
+            <div class="pp-card-price">
+                <span class="pp-card-price-num" data-price-monthly="89" data-price-yearly="71">€89</span>
+                <span class="pp-card-price-period">/ agente / mese</span>
+            </div>
+            <p class="pp-card-billed" data-billed-monthly="Min. 3 agenti · €267/mese" data-billed-yearly="Min. 3 agenti · €2.556/anno · -20%">Min. 3 agenti · €267/mese</p>
+            <p class="pp-card-desc">Per reti vendita con 3-100 agenti. Standard uniformi, dashboard centralizzata.</p>
+            <ul class="pp-features">
+                <li><span>Tutto il piano <strong>Pro</strong></span></li>
+                <li><span><strong>Min. 3 agenti inclusi</strong></span></li>
+                <li><span>Dashboard team centralizzata</span></li>
+                <li><span>Brandizzazione aziendale</span></li>
+                <li><span>Report unificato per mandante</span></li>
+                <li><span>Supporto prioritario email</span></li>
+                <li><span>Fatturazione mensile o annuale</span></li>
+            </ul>
+            {% if user and user.plan == "team" %}
+            <div class="pp-card-cta ghost" style="cursor:default;opacity:.9">Piano attivo ✓</div>
+            {% else %}
+            <a href="{% if user %}/checkout/team{% else %}/registrati{% endif %}" class="pp-card-cta ghost">
+                {% if user %}Attiva Team{% else %}Prova gratis 10 giorni{% endif %}
+            </a>
+            {% endif %}
+        </article>
+    </div>
 </section>
+
+<section class="prose-wrap">
+    <div class="prose-card vnx-fade-in">
+        <h2><span class="prose-num">FAQ</span> Domande frequenti</h2>
+        <h3>Devo inserire la carta di credito per il piano Free?</h3>
+        <p>No. Il piano Free è completamente gratuito, senza carta di credito e senza scadenza. Hai 10 documenti al mese rinnovati automaticamente ogni primo del mese.</p>
+
+        <h3>Come funziona la prova di 10 giorni?</h3>
+        <p>Attivi il piano Pro o Team, hai 10 giorni per testarlo senza limiti. Se non è per te, disdici prima della scadenza e non ti addebitiamo nulla — il piano resta attivo fino alla fine dei 10 giorni.</p>
+
+        <h3>Posso cancellare in qualsiasi momento?</h3>
+        <p>Sì. Nessun vincolo minimo. Disdici dal <strong>portale di fatturazione Stripe</strong> integrato nella dashboard — un click, senza telefonate, senza raccomandate.</p>
+
+        <h3>I documenti sembrano davvero scritti da un professionista?</h3>
+        <p>Sì. VYNEX usa terminologia commerciale italiana corretta e adatta il tono al cliente specifico. Non si capisce che sono generati da un'AI — e puoi affinarli con istruzioni testuali come <code>rendi più formale</code> o <code>aggiungi sconto 15%</code>.</p>
+
+        <h3>Come funziona il piano Team per le aziende?</h3>
+        <p>Il piano Team è per seat: ogni agente della tua rete ha il proprio accesso individuale. Il minimo è 3 agenti (€267/mese). Per team più grandi (50+ agenti) contattaci per un preventivo personalizzato a <a href="mailto:ciao@vynex.it">ciao@vynex.it</a>.</p>
+
+        <h3>Cosa succede se supero i 10 documenti del Free?</h3>
+        <p>Ricevi un alert e puoi passare al Pro in 30 secondi (10 giorni di prova, nessuna carta). Altrimenti aspetti il primo del mese successivo per il rinnovo automatico del plafond Free.</p>
+    </div>
+</section>
+
+<script>
+(function () {
+  var toggle = document.querySelector('.pricing-toggle');
+  if (!toggle) return;
+  toggle.querySelectorAll('button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var period = btn.getAttribute('data-period');
+      toggle.setAttribute('data-period', period);
+      toggle.querySelectorAll('button').forEach(function (b) {
+        b.classList.toggle('active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      document.querySelectorAll('[data-price-monthly]').forEach(function (p) {
+        var v = p.getAttribute('data-price-' + period);
+        if (v) p.textContent = '€' + v;
+      });
+      document.querySelectorAll('[data-billed-monthly]').forEach(function (p) {
+        var v = p.getAttribute('data-billed-' + period);
+        if (v) p.textContent = v;
+      });
+    });
+  });
+})();
+</script>
 
 {% endblock %}
