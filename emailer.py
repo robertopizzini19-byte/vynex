@@ -78,13 +78,17 @@ async def _send_brevo(to: str, subject: str, html: str) -> bool:
     return True
 
 
-async def _send_resend(to: str, subject: str, html: str) -> bool:
+RESEND_FALLBACK_FROM = "VYNEX <onboarding@resend.dev>"
+
+
+async def _send_resend(to: str, subject: str, html: str, _from: str | None = None) -> bool:
+    sender = _from or EMAIL_FROM
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.post(
                 RESEND_URL,
                 headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
-                json={"from": EMAIL_FROM, "to": [to], "subject": subject, "html": html, "reply_to": EMAIL_REPLY_TO},
+                json={"from": sender, "to": [to], "subject": subject, "html": html, "reply_to": EMAIL_REPLY_TO},
             )
     except httpx.TimeoutException:
         logger.error("Resend timeout for %s", to)
@@ -93,6 +97,11 @@ async def _send_resend(to: str, subject: str, html: str) -> bool:
         logger.error("Resend transport error: %s", exc)
         return False
     if res.status_code >= 400:
+        # Domain not verified → retry once with Resend's pre-verified sandbox sender
+        # so first-sends deliver without waiting for DNS propagation.
+        if res.status_code == 403 and "not verified" in res.text.lower() and sender != RESEND_FALLBACK_FROM:
+            logger.info("Resend domain not verified for %s, retrying with %s", sender, RESEND_FALLBACK_FROM)
+            return await _send_resend(to, subject, html, _from=RESEND_FALLBACK_FROM)
         logger.error("Resend error %s: %s", res.status_code, res.text)
         return False
     return True
