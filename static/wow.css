@@ -1,0 +1,369 @@
+/* ═══════════════════════════════════════════════════════════════
+   VYNEX wow.css — Visual polish layer
+   Loads after style.css to enrich without risking regression.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Global polish ─────────────────────────────────────────── */
+::selection { background: rgba(96,165,250,0.35); color: #fff; }
+html { scroll-behavior: smooth; }
+
+/* Scrollbar custom (WebKit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0a0e1a; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #1e293b, #334155);
+  border-radius: 8px;
+  border: 2px solid #0a0e1a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+}
+
+/* Focus ring accessibile e bello */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, details:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 3px;
+  border-radius: 8px;
+  transition: outline-offset .15s ease;
+}
+
+/* ─── Animated gradient orb dietro hero ───────────────────── */
+.hero { position: relative; overflow: hidden; }
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -20%; left: -10%;
+  width: 55vw; height: 55vw;
+  max-width: 900px; max-height: 900px;
+  background: radial-gradient(circle, rgba(59,130,246,0.22) 0%, rgba(139,92,246,0.14) 40%, transparent 70%);
+  filter: blur(60px);
+  z-index: 0;
+  animation: wow-orb-a 18s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  bottom: -25%; right: -15%;
+  width: 50vw; height: 50vw;
+  max-width: 820px; max-height: 820px;
+  background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(99,102,241,0.1) 40%, transparent 70%);
+  filter: blur(70px);
+  z-index: 0;
+  animation: wow-orb-b 22s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes wow-orb-a {
+  0%   { transform: translate(0,0) scale(1);   opacity: .9; }
+  50%  { transform: translate(8vw,5vh) scale(1.15); opacity: 1; }
+  100% { transform: translate(-3vw,8vh) scale(.95); opacity: .75; }
+}
+@keyframes wow-orb-b {
+  0%   { transform: translate(0,0) scale(1);    opacity: .8; }
+  50%  { transform: translate(-6vw,-4vh) scale(1.1); opacity: 1; }
+  100% { transform: translate(4vw,-8vh) scale(.9);  opacity: .7; }
+}
+.hero-inner { position: relative; z-index: 1; }
+
+/* ─── Mockup 3D tilt + float continuo ─────────────────────── */
+.hero-visual {
+  perspective: 1400px;
+  position: relative;
+}
+.mockup-card {
+  transform-style: preserve-3d;
+  transform:
+    rotateY(-10deg)
+    rotateX(5deg)
+    translateZ(0);
+  transition: transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .6s ease;
+  animation: wow-mockup-float 8s ease-in-out infinite;
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.55),
+    0 0 0 1px rgba(96,165,250,.08),
+    0 0 60px rgba(59,130,246,.15);
+  will-change: transform;
+}
+.hero-visual:hover .mockup-card {
+  transform: rotateY(-6deg) rotateX(2deg) translateZ(30px) scale(1.02);
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.7),
+    0 0 0 1px rgba(96,165,250,.18),
+    0 0 100px rgba(59,130,246,.25);
+}
+@keyframes wow-mockup-float {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -14px; }
+}
+
+/* Glow pulse sul bottone "Genera" dentro mockup */
+.mockup-card > div[style*="linear-gradient(135deg,var(--blue)"] {
+  position: relative;
+  animation: wow-cta-pulse 2.8s ease-in-out infinite;
+}
+@keyframes wow-cta-pulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(59,130,246,.35); }
+  50%      { box-shadow: 0 4px 28px rgba(59,130,246,.65), 0 0 40px rgba(139,92,246,.3); }
+}
+
+/* ─── Button micro-interactions (shimmer + press) ─────────── */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: transform .15s ease, box-shadow .25s ease;
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -150%;
+  width: 70%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: skewX(-20deg);
+  transition: left .7s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+.btn-primary:hover::after { left: 150%; }
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(59,130,246,.35);
+}
+.btn-primary:active { transform: translateY(0) scale(.98); }
+
+.btn-ghost {
+  transition: transform .15s ease, background .2s ease, border-color .2s ease;
+}
+.btn-ghost:hover { transform: translateY(-1px); }
+.btn-ghost:active { transform: translateY(0); }
+
+/* ─── Card entrance: scale+blur → focus ───────────────────── */
+.vnx-fade-in {
+  opacity: 0;
+  transform: translateY(24px) scale(.97);
+  filter: blur(6px);
+  transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1), filter .7s ease;
+}
+.vnx-fade-in.vnx-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+/* Stagger: ogni card della stessa row parte 120ms dopo la precedente */
+.pain-grid .pain-card:nth-child(2),
+.features-grid .feature-card:nth-child(2),
+.target-grid .target-card:nth-child(2),
+.pricing-grid .pricing-card:nth-child(2) { transition-delay: .12s; }
+.pain-grid .pain-card:nth-child(3),
+.features-grid .feature-card:nth-child(3),
+.pricing-grid .pricing-card:nth-child(3) { transition-delay: .24s; }
+.features-grid .feature-card:nth-child(4) { transition-delay: .36s; }
+.features-grid .feature-card:nth-child(5) { transition-delay: .48s; }
+.features-grid .feature-card:nth-child(6) { transition-delay: .60s; }
+
+/* Card 3D tilt lieve on hover */
+.pain-card, .feature-card, .target-card, .pricing-card {
+  transform-style: preserve-3d;
+  transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .4s ease;
+  will-change: transform;
+}
+.pain-card:hover, .feature-card:hover, .target-card:hover {
+  transform: translateY(-4px) rotateX(2deg) scale(1.015);
+  box-shadow: 0 20px 40px rgba(0,0,0,.35), 0 0 0 1px rgba(96,165,250,.2);
+}
+.pricing-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 24px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(96,165,250,.25);
+}
+.pricing-card.popular { position: relative; }
+.pricing-card.popular::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(59,130,246,.6), rgba(139,92,246,.6), rgba(236,72,153,.5));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: .8;
+  animation: wow-border-spin 6s linear infinite;
+  pointer-events: none;
+}
+@keyframes wow-border-spin {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* ─── Flow animation section (input → AI → 3 docs) ────────── */
+.flow-stage {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 64px 24px;
+  position: relative;
+}
+.flow-stage-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1.2fr;
+  gap: 20px;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(15,23,42,.5), rgba(15,23,42,.2));
+  border: 1px solid rgba(96,165,250,.15);
+  border-radius: 24px;
+  padding: 32px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04);
+  position: relative;
+  overflow: hidden;
+}
+.flow-stage-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(59,130,246,.1), transparent 60%);
+  pointer-events: none;
+}
+.flow-box {
+  background: rgba(4,6,15,.7);
+  border: 1px solid rgba(96,165,250,.2);
+  border-radius: 14px;
+  padding: 16px;
+  position: relative;
+  z-index: 1;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.flow-box-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #60a5fa;
+  margin-bottom: 10px;
+}
+.flow-box-content {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+.flow-arrow {
+  color: #60a5fa;
+  font-size: 22px;
+  animation: wow-flow-arrow 2.4s ease-in-out infinite;
+  position: relative; z-index: 1;
+}
+.flow-arrow:nth-of-type(2) { animation-delay: .8s; }
+@keyframes wow-flow-arrow {
+  0%, 100% { opacity: .3; transform: translateX(-4px); }
+  50%      { opacity: 1;  transform: translateX(2px); }
+}
+.flow-ai {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #fff;
+  box-shadow: 0 0 0 0 rgba(96,165,250,.5);
+  animation: wow-ai-pulse 2s ease-out infinite;
+  margin: 0 auto;
+  position: relative; z-index: 1;
+}
+@keyframes wow-ai-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(96,165,250,.55); }
+  70%  { box-shadow: 0 0 0 24px rgba(96,165,250,0); }
+  100% { box-shadow: 0 0 0 0 rgba(96,165,250,0); }
+}
+.flow-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative; z-index: 1;
+}
+.flow-doc {
+  background: rgba(15,23,42,.8);
+  border: 1px solid rgba(96,165,250,.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateX(16px);
+  animation: wow-doc-in .5s ease forwards;
+}
+.flow-doc:nth-child(1) { animation-delay: 1.0s; }
+.flow-doc:nth-child(2) { animation-delay: 1.4s; }
+.flow-doc:nth-child(3) { animation-delay: 1.8s; }
+.flow-doc::before {
+  content: "✓";
+  display: inline-flex;
+  width: 20px; height: 20px;
+  align-items: center; justify-content: center;
+  background: rgba(16,185,129,.15);
+  color: #10b981;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+@keyframes wow-doc-in {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 860px) {
+  .flow-stage-inner {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 24px;
+  }
+  .flow-arrow {
+    transform: rotate(90deg);
+    margin: 0 auto;
+  }
+  @keyframes wow-flow-arrow {
+    0%, 100% { opacity: .3; transform: rotate(90deg) translateX(-4px); }
+    50%      { opacity: 1;  transform: rotate(90deg) translateX(2px); }
+  }
+}
+
+/* ─── Logo wordmark animato (sulle pagine che usano .logo-img) ── */
+.logo-img {
+  filter: drop-shadow(0 0 12px rgba(96,165,250,.35));
+  transition: filter .3s ease, transform .3s ease;
+}
+.logo:hover .logo-img {
+  filter: drop-shadow(0 0 20px rgba(139,92,246,.6));
+  transform: scale(1.03);
+}
+
+/* ─── Highlight word animato nel hero-title ───────────────── */
+.hero-title .highlight {
+  background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6, #60a5fa);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  animation: wow-highlight-shift 6s ease-in-out infinite;
+}
+@keyframes wow-highlight-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ─── Reduce motion (accessibility) ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
