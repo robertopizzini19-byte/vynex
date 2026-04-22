@@ -45,6 +45,8 @@ class User(Base):
     referred_by_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     referral_bonus_months_granted = Column(Integer, default=0, nullable=False)
 
+    newsletter_opted_in = Column(Boolean, default=True, nullable=False)
+
     documents = relationship("Document", back_populates="user")
     team_members = relationship(
         "User",
@@ -146,11 +148,12 @@ class Lead(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     full_name = Column(String(255), nullable=True)
     company = Column(String(255), nullable=True)
-    source = Column(String(32), nullable=False, default="organic")  # demo|cold|organic
+    source = Column(String(32), nullable=False, default="organic")  # demo|cold|organic|newsletter
     status = Column(String(32), nullable=False, default="new")       # new|engaged|converted|bounced
     unsubscribed = Column(Boolean, default=False, nullable=False)
     unsubscribed_at = Column(DateTime, nullable=True)
     unsub_token = Column(String(64), unique=True, index=True, nullable=False)
+    newsletter_opted_in = Column(Boolean, default=False, nullable=False)
     notes = Column(Text, nullable=True)
     demo_input = Column(Text, nullable=True)  # testo che ha generato il demo
     demo_doc_ids = Column(String(255), nullable=True)  # CSV di Document.id generati in demo
@@ -268,6 +271,35 @@ class LeadSource(Base):
     ip = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class NewsletterIssue(Base):
+    """Issue della newsletter settimanale VYNEX — generata da Claude, inviata Lun/Mer/Ven 08:30.
+
+    Topic types: 'guide' (lun), 'template' (mer), 'insight' (ven).
+    Struttura email: hook + micro-valore + demo implicita VYNEX + CTA.
+    """
+    __tablename__ = "newsletter_issues"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String(160), unique=True, index=True, nullable=False)
+    topic_type = Column(String(20), nullable=False, index=True)  # guide | template | insight
+    subject = Column(String(200), nullable=False)
+    preheader = Column(String(200), nullable=True)
+    hook = Column(Text, nullable=False)
+    body_html = Column(Text, nullable=False)          # full rendered email HTML
+    body_plain = Column(Text, nullable=True)          # plain-text fallback
+    cta_text = Column(String(80), nullable=False, default="Prova VYNEX gratis")
+    cta_url = Column(String(500), nullable=False, default="/registrati")
+    status = Column(String(20), nullable=False, default="draft", index=True)  # draft|sent|failed
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    scheduled_for = Column(DateTime, nullable=True, index=True)
+    sent_at = Column(DateTime, nullable=True, index=True)
+    recipients_count = Column(Integer, default=0, nullable=False)
+    sent_count = Column(Integer, default=0, nullable=False)
+    failed_count = Column(Integer, default=0, nullable=False)
+    open_count = Column(Integer, default=0, nullable=False)
+    click_count = Column(Integer, default=0, nullable=False)
 
 
 class ReferralClick(Base):

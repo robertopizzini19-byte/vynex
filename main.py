@@ -998,6 +998,7 @@ async def dashboard(
         "usage": usage,
         "limit": user.monthly_limit,
         "upgrade_msg": upgrade_msg,
+        "q": q,
         "search_query": q,
         "page": page,
         "has_more": has_more,
@@ -2006,7 +2007,7 @@ async def api_demo_recovery(
 
 
 @app.post("/api/demo")
-@limiter.limit("3/hour")
+@limiter.limit("10/hour")
 async def api_demo(
     request: Request,
     email: str = Form(...),
@@ -2049,6 +2050,25 @@ async def api_demo(
     if len(full_name.strip()) < 2:
         return _preserve_redirect("/demo?error=Nome+non+valido")
 
+    # Anti-abuse: 1 demo / 24h per email. Reindirizza al recovery senza bruciare quota Haiku.
+    existing_lead = (await db.execute(
+        select(Lead).where(Lead.email == email_norm)
+    )).scalar_one_or_none()
+    if existing_lead and existing_lead.demo_input and existing_lead.last_engaged_at:
+        if (datetime.utcnow() - existing_lead.last_engaged_at) < timedelta(hours=24):
+            try:
+                base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+                link = f"{base_url}/demo/result/{existing_lead.unsub_token}"
+                await send_demo_recovery_email(existing_lead.email, existing_lead.full_name or "", link)
+            except Exception:
+                logger.exception("demo re-send failed lead=%s", existing_lead.id)
+            resp = RedirectResponse(
+                "/demo/recovery?message=Hai+gia%27+usato+la+demo+di+recente.+Ti+abbiamo+inviato+il+link+via+email.",
+                status_code=302,
+            )
+            resp.delete_cookie("vynex_demo_draft")
+            return resp
+
     try:
         docs = await genera_documenti(
             input_text.strip()[:2000],
@@ -2058,7 +2078,7 @@ async def api_demo(
     except Exception:
         logger.exception("demo generation failed")
         return _preserve_redirect(
-            "/demo?error=Generazione+non+riuscita.+Riprova+tra+1+minuto"
+            "/demo?error=Generazione+non+riuscita.+Riprova+tra+2+minuti"
         )
 
     lead, _created = await upsert_lead(
@@ -2078,6 +2098,14 @@ async def api_demo(
     })
     lead.last_engaged_at = datetime.utcnow()
     await db.commit()
+
+    # Invia sempre email coi 3 documenti: se chiude la tab, ha il link recovery.
+    try:
+        base_url = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+        result_link = f"{base_url}/demo/result/{lead.unsub_token}"
+        await send_demo_recovery_email(lead.email, lead.full_name or "", result_link)
+    except Exception:
+        logger.exception("demo result email failed lead=%s", lead.id)
 
     try:
         await enroll_lead_in_sequence(db, lead, SEQUENCE_LEAD_DEMO)
@@ -2664,12 +2692,25 @@ Chiama lo strumento save_blog_post con tutti i campi compilati."""
         suffix += 1
         slug = f"{slug_base}-{suffix}"[:120]
 
+    # Sanitize body_html: whitelist rigorosa su output Claude tool-use per prevenire XSS stored.
+    import bleach as _bleach
+    _BLOG_ALLOWED_TAGS = {"h2", "h3", "h4", "p", "ul", "ol", "li", "strong", "em", "a", "blockquote", "br", "code", "pre"}
+    _BLOG_ALLOWED_ATTRS = {"a": ["href", "title", "rel"]}
+    raw_body = data.get("body_html") or "<p>(vuoto)</p>"
+    safe_body = _bleach.clean(
+        raw_body,
+        tags=_BLOG_ALLOWED_TAGS,
+        attributes=_BLOG_ALLOWED_ATTRS,
+        protocols=["http", "https", "mailto"],
+        strip=True,
+    )
+
     post = BlogPost(
         slug=slug,
         title=title,
         meta_description=(data.get("meta_description") or "")[:300],
         hero_subtitle=(data.get("hero_subtitle") or "")[:300] or None,
-        body_html=data.get("body_html") or "<p>(vuoto)</p>",
+        body_html=safe_body,
         keyword_primary=keyword[:120],
         tags_csv=",".join(data.get("tags") or [])[:255],
         published=True,
@@ -3165,6 +3206,139 @@ async def admin_blog_list(request: Request, db: AsyncSession = Depends(get_db)):
         }
         for p in q.scalars().all()
     ]
+
+
+# ─── NEWSLETTER (subscribe + unsubscribe + admin preview/send) ──────────────
+
+@app.post("/api/newsletter/subscribe")
+@limiter.limit("6/minute")
+async def api_newsletter_subscribe(
+    request: Request,
+    email: str = Form(...),
+    full_name: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+):
+    import secrets as _sec
+    try:
+        valid = validate_email(email, check_deliverability=False)
+        email_norm = valid.normalized.lower()
+    except EmailNotValidError:
+        return JSONResponse({"ok": False, "error": "Email non valida"}, status_code=400)
+
+    lq = await db.execute(select(Lead).where(Lead.email == email_norm))
+    lead = lq.scalar_one_or_none()
+    if lead is None:
+        lead = Lead(
+            email=email_norm,
+            full_name=(full_name or "").strip()[:120] or None,
+            source="newsletter",
+            status="new",
+            unsub_token=_sec.token_urlsafe(24),
+            newsletter_opted_in=True,
+        )
+        db.add(lead)
+    else:
+        lead.newsletter_opted_in = True
+        lead.unsubscribed = False
+        lead.unsubscribed_at = None
+        if full_name and not lead.full_name:
+            lead.full_name = full_name.strip()[:120]
+    await db.commit()
+    return JSONResponse({"ok": True, "message": "Iscrizione confermata. Preparati: Lun/Mer/Ven 08:30."})
+
+
+@app.get("/newsletter/unsubscribe/lead/{token}", response_class=HTMLResponse)
+async def newsletter_unsub_lead(token: str, db: AsyncSession = Depends(get_db)):
+    from datetime import datetime as _dt
+    r = await db.execute(select(Lead).where(Lead.unsub_token == token))
+    lead = r.scalar_one_or_none()
+    if lead is not None:
+        lead.newsletter_opted_in = False
+        lead.unsubscribed = True
+        lead.unsubscribed_at = _dt.utcnow()
+        await db.commit()
+    return HTMLResponse(_unsub_page_html(bool(lead)))
+
+
+@app.get("/newsletter/unsubscribe/user/{user_id}/{token}", response_class=HTMLResponse)
+async def newsletter_unsub_user(user_id: int, token: str, db: AsyncSession = Depends(get_db)):
+    from newsletter import verify_user_unsub_token
+    if not verify_user_unsub_token(user_id, token):
+        return HTMLResponse(_unsub_page_html(False), status_code=403)
+    r = await db.execute(select(User).where(User.id == user_id))
+    u = r.scalar_one_or_none()
+    if u is not None:
+        u.newsletter_opted_in = False
+        await db.commit()
+    return HTMLResponse(_unsub_page_html(bool(u)))
+
+
+def _unsub_page_html(ok: bool) -> str:
+    if ok:
+        return """<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Disiscritto</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#04060f;color:#e2e8f0;font-family:-apple-system,Segoe UI,Inter,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+<div style="max-width:520px;padding:40px 32px;background:rgba(15,23,42,.7);border:1px solid rgba(96,165,250,.2);border-radius:20px;text-align:center">
+<div style="font-size:22px;font-weight:800;letter-spacing:3px;color:#60a5fa;margin-bottom:18px">VYNEX</div>
+<h1 style="font-size:26px;font-weight:800;margin:0 0 12px;color:#f1f5f9">Disiscrizione confermata.</h1>
+<p style="color:#94a3b8;line-height:1.7;margin:0 0 22px">Non riceverai più la newsletter. Se cambi idea puoi iscriverti di nuovo dal footer di VYNEX.</p>
+<a href="/" style="display:inline-block;padding:12px 22px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;text-decoration:none;border-radius:10px;font-weight:700">Torna alla home</a>
+</div></body></html>"""
+    return """<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Link non valido</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#04060f;color:#e2e8f0;font-family:-apple-system,Segoe UI,Inter,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+<div style="max-width:520px;padding:40px 32px;background:rgba(15,23,42,.7);border:1px solid rgba(239,68,68,.25);border-radius:20px;text-align:center">
+<h1 style="font-size:24px;font-weight:800;margin:0 0 12px;color:#fca5a5">Link non valido o scaduto.</h1>
+<p style="color:#94a3b8;line-height:1.7">Contatta robertopizzini19@gmail.com se hai bisogno di essere rimosso manualmente.</p>
+</div></body></html>"""
+
+
+@app.get("/admin/newsletter/preview/{issue_id}", response_class=HTMLResponse)
+async def admin_newsletter_preview(issue_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    _require_admin(request)
+    from models import NewsletterIssue
+    r = await db.execute(select(NewsletterIssue).where(NewsletterIssue.id == issue_id))
+    issue = r.scalar_one_or_none()
+    if issue is None:
+        return HTMLResponse("Not found", status_code=404)
+    html = (issue.body_html or "")\
+        .replace("{{UNSUB_URL}}", "#preview-unsub")\
+        .replace("{{NAME}}", "Roberto")
+    return HTMLResponse(html)
+
+
+@app.post("/admin/newsletter/run/{topic_type}")
+async def admin_newsletter_run(topic_type: str, request: Request):
+    _require_admin(request)
+    if topic_type not in ("guide", "template", "insight"):
+        return JSONResponse({"error": "topic_type must be guide|template|insight"}, status_code=400)
+    from newsletter import generate_and_send
+    try:
+        counts = await generate_and_send(topic_type)
+        return JSONResponse({"ok": True, **counts})
+    except Exception as exc:
+        logger.exception("admin newsletter run failed")
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+
+@app.post("/admin/newsletter/generate/{topic_type}")
+async def admin_newsletter_generate_only(topic_type: str, request: Request):
+    _require_admin(request)
+    if topic_type not in ("guide", "template", "insight"):
+        return JSONResponse({"error": "topic_type must be guide|template|insight"}, status_code=400)
+    from newsletter import generate_issue
+    try:
+        issue = await generate_issue(topic_type=topic_type)
+        return JSONResponse({
+            "ok": True,
+            "issue_id": issue.id,
+            "slug": issue.slug,
+            "subject": issue.subject,
+            "preview_url": f"/admin/newsletter/preview/{issue.id}",
+        })
+    except Exception as exc:
+        logger.exception("admin newsletter generate failed")
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 
 
 @app.exception_handler(404)

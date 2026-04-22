@@ -1,5 +1,44 @@
 <footer style="margin-top:80px;padding:60px 24px 40px;background:rgba(4,6,15,0.8);border-top:1px solid #1e293b">
   <div style="max-width:1080px;margin:0 auto">
+
+    <!-- Newsletter signup -->
+    <div style="margin:0 0 48px;padding:32px 28px;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08));border:1px solid rgba(96,165,250,0.25);border-radius:20px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center">
+      <div>
+        <div style="display:inline-block;padding:5px 12px;border:1px solid rgba(96,165,250,0.3);border-radius:999px;color:#60a5fa;font-size:11px;font-weight:700;letter-spacing:1.4px;margin-bottom:10px">NEWSLETTER</div>
+        <div style="color:#f1f5f9;font-size:18px;font-weight:800;line-height:1.3;margin-bottom:6px">3 email a settimana che valgono il tuo tempo.</div>
+        <div style="color:#94a3b8;font-size:13.5px;line-height:1.6">Guide pratiche, template pronti e insight di mercato per agenti di commercio italiani. Zero teoria. Lun/Mer/Ven mattina.</div>
+      </div>
+      <form id="newsletter-form" onsubmit="return vnxSubscribe(event)" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="email" name="email" required placeholder="La tua email"
+               style="padding:12px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;color:#f1f5f9;font-size:14px;min-width:220px;outline:none">
+        <button type="submit" style="padding:12px 22px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">Iscriviti</button>
+        <div id="newsletter-msg" style="flex-basis:100%;font-size:12px;color:#64748b;line-height:1.5;min-height:18px"></div>
+      </form>
+    </div>
+    <script>
+    window.vnxSubscribe = function(e) {
+      e.preventDefault();
+      var f = e.target, btn = f.querySelector('button'), msg = document.getElementById('newsletter-msg');
+      var email = f.email.value.trim();
+      if (!email) return false;
+      btn.disabled = true; btn.style.opacity = '0.6';
+      var data = new FormData(); data.append('email', email);
+      fetch('/api/newsletter/subscribe', { method: 'POST', body: data })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if (j.ok) {
+            msg.innerHTML = '<span style="color:#6ee7b7">✓ ' + (j.message || 'Iscritto.') + '</span>';
+            f.email.value = '';
+          } else {
+            msg.innerHTML = '<span style="color:#fca5a5">' + (j.error || 'Errore') + '</span>';
+          }
+        })
+        .catch(function(){ msg.innerHTML = '<span style="color:#fca5a5">Errore di rete. Riprova.</span>'; })
+        .finally(function(){ btn.disabled = false; btn.style.opacity = '1'; });
+      return false;
+    };
+    </script>
+
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:40px;margin-bottom:40px">
       <div>
         <div style="font-size:22px;font-weight:800;letter-spacing:3px;color:#60a5fa;margin-bottom:16px">VYNEX</div>

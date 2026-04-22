@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 
 from database import AsyncSessionLocal
 from acquisition import process_email_queue
@@ -136,6 +137,28 @@ async def _run_churn_winback() -> None:
         logger.exception("churn_winback cycle failed")
 
 
+async def _run_newsletter(topic_type: str) -> None:
+    """Generate + send the weekly VYNEX newsletter issue for a topic."""
+    try:
+        from newsletter import generate_and_send
+        counts = await generate_and_send(topic_type)
+        logger.info("newsletter(%s) cycle: %s", topic_type, counts)
+    except Exception:
+        logger.exception("newsletter(%s) cycle failed", topic_type)
+
+
+async def _run_newsletter_guide() -> None:
+    await _run_newsletter("guide")
+
+
+async def _run_newsletter_template() -> None:
+    await _run_newsletter("template")
+
+
+async def _run_newsletter_insight() -> None:
+    await _run_newsletter("insight")
+
+
 def start_scheduler() -> None:
     global _scheduler
     if _scheduler is not None:
@@ -187,10 +210,34 @@ def start_scheduler() -> None:
         next_run_time=None,
     )
 
+    # Newsletter: Mon/Wed/Fri 06:30 UTC (= 08:30 Europe/Rome CEST)
+    _scheduler.add_job(
+        _run_newsletter_guide,
+        trigger=CronTrigger(day_of_week="mon", hour=6, minute=30),
+        id="newsletter_guide",
+        max_instances=1,
+        coalesce=True,
+    )
+    _scheduler.add_job(
+        _run_newsletter_template,
+        trigger=CronTrigger(day_of_week="wed", hour=6, minute=30),
+        id="newsletter_template",
+        max_instances=1,
+        coalesce=True,
+    )
+    _scheduler.add_job(
+        _run_newsletter_insight,
+        trigger=CronTrigger(day_of_week="fri", hour=6, minute=30),
+        id="newsletter_insight",
+        max_instances=1,
+        coalesce=True,
+    )
+
     _scheduler.start()
     logger.info(
         "scheduler started: email_queue/5min, maintenance/6h, "
-        "stripe_reconcile/12h, nps_invites/24h, churn_winback/24h"
+        "stripe_reconcile/12h, nps_invites/24h, churn_winback/24h, "
+        "newsletter guide(mon)/template(wed)/insight(fri) @06:30 UTC"
     )
 
 

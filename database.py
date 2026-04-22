@@ -89,6 +89,11 @@ _PG_MIGRATIONS = [
     "CREATE INDEX IF NOT EXISTS ix_nps_responded ON nps_responses (responded_at)",
     "CREATE INDEX IF NOT EXISTS ix_api_keys_prefix ON api_keys (prefix)",
     "CREATE INDEX IF NOT EXISTS ix_api_keys_user_active ON api_keys (user_id, revoked_at)",
+    # Newsletter (sessione #32 — 2026-04-22)
+    "ALTER TABLE leads ADD COLUMN IF NOT EXISTS newsletter_opted_in BOOLEAN NOT NULL DEFAULT FALSE",
+    "CREATE INDEX IF NOT EXISTS ix_leads_newsletter_opt ON leads (newsletter_opted_in) WHERE newsletter_opted_in = TRUE",
+    "CREATE INDEX IF NOT EXISTS ix_newsletter_issues_status ON newsletter_issues (status, scheduled_for)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS newsletter_opted_in BOOLEAN NOT NULL DEFAULT TRUE",
 ]
 
 
