@@ -267,18 +267,8 @@ async def homepage(request: Request, db: AsyncSession = Depends(get_db)):
     user = await get_current_user(request, db)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    # A/B testing hero — cookie 30d, variant A/B 50/50 random al primo hit
-    import secrets as _sec
-    ab = request.cookies.get("vynex_ab_hero", "")
-    if ab not in ("A", "B"):
-        ab = "B" if (_sec.randbits(1) == 1) else "A"
     response = templates.TemplateResponse(
-        "index.html", {"request": request, "ab_variant": ab}
-    )
-    response.set_cookie(
-        "vynex_ab_hero", ab,
-        httponly=False, secure=_COOKIE_SECURE, samesite="lax",
-        max_age=60 * 60 * 24 * 30,
+        "index.html", {"request": request}
     )
     return response
 

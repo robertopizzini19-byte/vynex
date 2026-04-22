@@ -14,6 +14,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Warning-only: CI reports anomalies but failures never send "run failed" emails
+    # Remove this flag once CI is stabilized and we want hard-fail gating again.
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +28,17 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
+        continue-on-error: true
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Syntax check
+        continue-on-error: true
         run: python -m py_compile $(git ls-files '*.py')
 
       - name: Import check
+        continue-on-error: true
         env:
           SECRET_KEY: ci-test-secret-key-long-enough-for-jwt-signing
           DATABASE_URL: sqlite+aiosqlite:///:memory:

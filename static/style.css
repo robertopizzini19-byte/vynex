@@ -403,6 +403,7 @@ textarea {
 .hero {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -954,6 +955,7 @@ textarea {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-main {
@@ -962,6 +964,7 @@ textarea {
   padding: 36px 40px;
   max-width: calc(100vw - var(--sidebar-w));
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ─── SIDEBAR ────────────────────────────────────────────────────────────── */
@@ -971,6 +974,7 @@ textarea {
   top: 0;
   left: 0;
   height: 100vh;
+  height: 100dvh;
   background: rgba(8,12,26,.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1583,6 +1587,7 @@ textarea {
 .auth-split {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .auth-left {
@@ -1922,6 +1927,7 @@ textarea {
   .auth-right {
     padding: 40px 24px;
     min-height: 100vh;
+    min-height: 100dvh;
   }
   .nav-pub {
     padding: 0 20px;
@@ -2169,6 +2175,7 @@ textarea {
 /* ─── 404 PAGE ───────────────────────────────────────────────────────────── */
 .not-found {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -115,17 +115,17 @@ _LEAD_SOCIAL_PROOF = Campaign(
     key="lead_drip_3_social_proof",
     audience="lead",
     delay_hours=168,
-    subject="Siamo 47 agenti. Ti aspettiamo.",
+    subject="VYNEX è costruito in Italia, per l'Italia.",
     body_html=_wrap(
         """
-        <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">VYNEX è costruito <em>in</em> Italia, <em>per</em> Italia.</h1>
-        <p style="color:#cbd5e1;line-height:1.7">Niente AI generica tradotta male. Il modello è pre-addestrato sul linguaggio della vendita B2B italiana — partite IVA, tono formale ma non ingessato, strutture di offerta adatte ai nostri contratti.</p>
-        <p style="color:#cbd5e1;line-height:1.7">In questa settimana: 47 agenti attivi, 412 documenti generati, 23 contratti chiusi riportati.</p>
+        <h1 style="font-size:22px;color:#f1f5f9;line-height:1.3">Niente AI generica tradotta male.</h1>
+        <p style="color:#cbd5e1;line-height:1.7">Il modello è calibrato sul linguaggio della vendita B2B italiana — partite IVA, tono formale ma non ingessato, strutture di offerta adatte ai nostri contratti. Non è ChatGPT generico: è un assistente che conosce il mestiere dell'agente di commercio italiano.</p>
+        <p style="color:#cbd5e1;line-height:1.7">Se sei stufo di riscrivere i report a mano alle 21, VYNEX ti restituisce le ore. Punto.</p>
         <p style="text-align:center;margin:28px 0">{cta}</p>
         <p style="color:#94a3b8;line-height:1.7;font-size:14px">Il piano gratuito include 10 documenti/mese, per sempre. Carta di credito: non richiesta.</p>
         """,
         _unsub_footer(),
-    ).replace("{cta}", _btn("{base_url}/registrati", "Unisciti al gruppo")),
+    ).replace("{cta}", _btn("{base_url}/registrati", "Attiva il mio account")),
 )
 
 _LEAD_FINAL_OFFER = Campaign(
