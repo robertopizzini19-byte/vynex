@@ -11,7 +11,7 @@ logger = logging.getLogger("vynex.emailer")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "VYNEX <noreply@vynex.it>")
-EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "ciao@vynex.it")
+EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "robertopizzini19@gmail.com")
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
 
 RESEND_URL = "https://api.resend.com/emails"

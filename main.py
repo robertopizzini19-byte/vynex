@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends, Form, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_, update
@@ -225,6 +226,7 @@ app.add_middleware(UtmTrackingMiddleware)
 app.add_middleware(OriginCSRFMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["canonical_base"] = (
@@ -315,7 +317,7 @@ con il tuo ID traffico. Esempio:</p>
 <p>Il widget si adatta da 300px a 800px di larghezza. Altezza consigliata: 640-700px.</p>
 <h2>Referenze</h2>
 <p><a href="{base}/">Home VYNEX</a> · <a href="{base}/demo">Demo full-page</a> ·
-<a href="mailto:ciao@vynex.it">Supporto partner</a></p>
+<a href="mailto:robertopizzini19@gmail.com">Supporto partner</a></p>
 </body></html>"""
     return HTMLResponse(html)
 
@@ -1347,13 +1349,13 @@ async def ai_context_json():
         "author": {
             "@type": "Person",
             "name": "Roberto Pizzini",
-            "email": "ciao@vynex.it",
+            "email": "robertopizzini19@gmail.com",
         },
         "publisher": {
             "@type": "Organization",
             "name": "VYNEX",
             "url": base,
-            "email": "ciao@vynex.it",
+            "email": "robertopizzini19@gmail.com",
             "areaServed": {"@type": "Country", "name": "Italia"},
         },
         "offers": [
@@ -1421,7 +1423,7 @@ async def ai_context_json():
         },
         "contactPoint": {
             "@type": "ContactPoint",
-            "email": "ciao@vynex.it",
+            "email": "robertopizzini19@gmail.com",
             "contactType": "customer support",
             "availableLanguage": ["Italian"],
             "areaServed": "IT",
@@ -1477,7 +1479,7 @@ Fondato nel 2026 da Roberto Pizzini. Sede: Italia. Lingua: italiano. Target: age
 
 ## Contatti
 
-- Email: ciao@vynex.it
+- Email: robertopizzini19@gmail.com
 - Sito: {base}
 """
 
@@ -1549,7 +1551,7 @@ Roberto Pizzini è il fondatore e sviluppatore di VYNEX. VYNEX è un progetto in
 
 ## Contatti
 
-- Email: ciao@vynex.it
+- Email: robertopizzini19@gmail.com
 - Sito: {base}
 - Lingua supporto: italiano
 
