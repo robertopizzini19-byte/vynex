@@ -576,43 +576,52 @@ textarea {
 .mockup-dot-g { background: #10b981; }
 .mockup-title-bar {
   flex: 1;
+  height: 8px;
+  background: var(--glass);
+  border-radius: 4px;
+}
+
+/* Slogan payoff — sopra il mockup hero, centrato, premium */
+.vnx-slogan-banner {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 22px;
-  padding: 0 10px;
-  background: linear-gradient(135deg, rgba(59,130,246,.10), rgba(139,92,246,.08));
-  border: 1px solid rgba(96,165,250,.2);
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-}
-.vnx-slogan-bar {
+  gap: 14px;
+  margin: 0 auto 22px;
+  padding: 0;
+  text-align: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 11.5px;
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: .14em;
   text-transform: uppercase;
+  line-height: 1.1;
+}
+.vnx-slogan-banner-text {
   background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 55%, #f472b6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  white-space: nowrap;
-  animation: vnxSloganShimmer 3.6s ease-in-out infinite;
   background-size: 200% auto;
+  animation: vnxSloganShimmer 4s ease-in-out infinite;
+  white-space: nowrap;
 }
-.vnx-slogan-bar-accent {
-  background: linear-gradient(90deg, #f472b6 0%, #a78bfa 50%, #60a5fa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.vnx-slogan-banner-line {
+  flex: 1;
+  height: 1px;
+  max-width: 80px;
+  background: linear-gradient(90deg, transparent, rgba(96,165,250,.4), transparent);
 }
 @keyframes vnxSloganShimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .vnx-slogan-bar { animation: none; }
+  .vnx-slogan-banner-text { animation: none; }
+}
+@media (max-width: 540px) {
+  .vnx-slogan-banner-line { max-width: 30px; }
+  .vnx-slogan-banner { gap: 10px; letter-spacing: .1em; }
 }
 .mockup-lines {
   display: flex;
