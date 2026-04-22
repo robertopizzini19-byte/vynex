@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Genera documenti — VYNEX{% endblock %}
+{% block title %}Nuovo documento — VYNEX{% endblock %}
 {% block nav %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block body_class %}no-rails{% endblock %}
@@ -8,225 +8,144 @@
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
     <main class="app-main">
-        <div class="page-header">
-            <div>
-                <h1>Genera documenti</h1>
-                <p class="page-sub">Descrivi la visita — 3 documenti pronti in 30 secondi</p>
-            </div>
-            <div class="usage-badge">
-                <i data-lucide="file-text" style="width:13px;height:13px"></i>
-                {{ usage }}/{% if user.plan == "free" %}{{ limit }}{% else %}∞{% endif %} questo mese
-            </div>
+
+    {% if not can_generate %}
+
+    <div class="limit-compact">
+        <h2>Hai finito i documenti del mese</h2>
+        <p>Hai usato tutti i {{ limit }} documenti gratuiti. Pro sblocca documenti illimitati — 10 giorni gratis, nessuna carta subito.</p>
+        <a href="/checkout/pro" class="mini-hero-cta">
+            <i data-lucide="zap" style="width:16px;height:16px"></i>
+            Prova Pro — €49/mese
+        </a>
+    </div>
+
+    {% else %}
+
+    <section class="composer">
+
+        <div class="composer-hero">
+            <h1>Descrivi la tua visita</h1>
+            <p class="sub">Scrivi come parleresti a un collega. VYNEX crea 3 documenti in 30 secondi.</p>
         </div>
 
-        {% if not can_generate %}
-        <div class="limit-reached">
-            <div class="limit-icon"><i data-lucide="pause-circle"></i></div>
-            <h2>Limite mensile raggiunto</h2>
-            <p>Hai usato tutti i {{ limit }} documenti gratuiti di questo mese.<br>Passa a Pro per documenti illimitati — 10 giorni gratis.</p>
-            <a href="/checkout/pro" class="btn-primary btn-lg">
-                <i data-lucide="zap" style="width:18px;height:18px"></i>
-                Prova Pro gratis — €49/mese
-            </a>
-        </div>
-        {% else %}
-
-        <div class="genera-hero" id="input-panel">
-            <h1 class="genera-hero-title">Descrivi la tua visita</h1>
-            <p class="genera-hero-sub">Scrivi come parleresti a un collega. 3 documenti pronti in 30 secondi.</p>
-
-            <div class="genera-chips" role="group" aria-label="Template pronti">
-                <button type="button" class="chip" data-template="visita">📋 Visita standard</button>
-                <button type="button" class="chip" data-template="ordine">🛒 Ordine</button>
-                <button type="button" class="chip" data-template="reclamo">⚠️ Reclamo</button>
-                <button type="button" class="chip" data-template="prospecting">🎯 Prospecting</button>
-                <button type="button" class="chip" data-template="mandante">👔 Riunione mandante</button>
+        <form class="composer-shell" onsubmit="event.preventDefault(); generaDocumenti();">
+            <div class="composer-mandante">
+                <label for="azienda_mandante">Mandante</label>
+                <input type="text" id="azienda_mandante" placeholder="(opzionale) es. Ferramenta Italia SpA" value="{{ user.company_name or '' }}">
             </div>
 
-            <div class="genera-hero-textarea-wrap">
-                <textarea id="input_testo" class="genera-hero-textarea" placeholder="es. Oggi visita da Rossi della Ferramenta Bianchi a Bergamo. Interessato al catalogo primavera, linea utensili elettrici. Offerta: sconto 10% sul primo ordine, pagamento 30gg. Da richiamare il 5 aprile per conferma."></textarea>
-                <div class="genera-hero-footer">
-                    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-3)">
-                        <span><span id="char-count">0</span> / 2000</span>
-                        <span id="input-hint" class="input-hint">Più dettagli → documenti più precisi.</span>
-                        <span class="kbd-hint" title="Scorciatoia tastiera"><kbd id="kbd-meta">⌘</kbd> <kbd>Enter</kbd> per generare</span>
-                    </div>
-                    <button id="btn-genera" class="genera-hero-cta" onclick="generaDocumenti()">
-                        <span id="btn-text" style="display:inline-flex;align-items:center;gap:8px">
-                            <i data-lucide="sparkles" style="width:16px;height:16px"></i>
-                            Genera 3 documenti
-                        </span>
-                        <span id="btn-loading" style="display:none" class="loading-dots">
-                            <span class="dot"></span>
-                            <span class="dot"></span>
-                            <span class="dot"></span>
-                        </span>
-                    </button>
-                </div>
-            </div>
+            <textarea id="input_testo" class="composer-textarea" rows="8"
+                placeholder="Oggi ho visitato il signor Rossi della Ferramenta Bianchi a Bergamo. Era interessato alla linea cerniere serie 500 del catalogo primavera. Mi ha chiesto uno sconto del 10% su ordini sopra 200 pezzi, pagamento 60 gg. Da richiamare entro il 5 aprile per confermare l'ordine."></textarea>
 
-            <details style="margin-top:24px">
-                <summary style="cursor:pointer;font-size:13px;color:var(--text-3);list-style:none;display:inline-flex;align-items:center;gap:6px">
-                    <i data-lucide="building-2" style="width:13px;height:13px"></i> Specifica mandante (opzionale)
-                </summary>
-                <div style="margin-top:12px">
-                    <input type="text" id="azienda_mandante" placeholder="es. Ferramenta Italia SpA" value="{{ user.company_name or '' }}" style="width:100%;max-width:440px;padding:10px 14px;background:var(--glass);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit">
-                </div>
-            </details>
-
-            <div id="error-msg" class="alert-error" style="display:none;margin-top:16px"></div>
-        </div>
-
-        <div class="genera-layout" style="margin-top:32px;grid-template-columns:1fr;max-width:880px;margin-left:auto;margin-right:auto">
-
-            <!-- OUTPUT PANEL -->
-            <div id="output-panel" class="genera-panel output-panel" style="display:none">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Documenti generati</h2>
-                        <div id="cliente-info" class="cliente-chip"></div>
-                    </div>
-                    <button onclick="resetForm()" class="btn-ghost-sm" title="Nuovo documento">
-                        <i data-lucide="rotate-ccw" style="width:13px;height:13px"></i>
-                        Nuovo
-                    </button>
-                </div>
-
-                <div class="doc-tabs-pill">
-                    <button class="tab-pill active" onclick="showTab('report')" data-tab="report">
-                        <span>📋</span> Report
-                    </button>
-                    <button class="tab-pill" onclick="showTab('email')" data-tab="email">
-                        <span>✉️</span> Email
-                    </button>
-                    <button class="tab-pill" onclick="showTab('offerta')" data-tab="offerta">
-                        <span>📄</span> Offerta
-                    </button>
-                </div>
-
-                <div id="tab-report" class="tab-content active">
-                    <div class="doc-actions">
-                        <button onclick="copyDoc('report_visita')" class="btn-ghost-sm">
-                            <i data-lucide="copy" style="width:13px;height:13px"></i> Copia
-                        </button>
-                        <button onclick="showRigenera('report_visita')" class="btn-ghost-sm">
-                            <i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI
-                        </button>
-                    </div>
-                    <pre id="doc-report" class="doc-text"></pre>
-                    <div id="rigenera-report" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-report" placeholder="es. Rendi più formale, aggiungi sconto 15%…">
-                        <button onclick="rigeneraDoc('report_visita')" class="btn-primary btn-sm">Rigenera</button>
-                    </div>
-                </div>
-
-                <div id="tab-email" class="tab-content">
-                    <div class="doc-actions">
-                        <button onclick="copyDoc('email_followup')" class="btn-ghost-sm">
-                            <i data-lucide="copy" style="width:13px;height:13px"></i> Copia
-                        </button>
-                        <button onclick="showRigenera('email_followup')" class="btn-ghost-sm">
-                            <i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI
-                        </button>
-                    </div>
-                    <pre id="doc-email" class="doc-text"></pre>
-                    <div id="rigenera-email" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-email" placeholder="es. Tono più informale, aggiungi PS con scadenza…">
-                        <button onclick="rigeneraDoc('email_followup')" class="btn-primary btn-sm">Rigenera</button>
-                    </div>
-                </div>
-
-                <div id="tab-offerta" class="tab-content">
-                    <div class="doc-actions">
-                        <button onclick="copyDoc('offerta_commerciale')" class="btn-ghost-sm">
-                            <i data-lucide="copy" style="width:13px;height:13px"></i> Copia
-                        </button>
-                        <button onclick="showRigenera('offerta_commerciale')" class="btn-ghost-sm">
-                            <i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI
-                        </button>
-                    </div>
-                    <pre id="doc-offerta" class="doc-text"></pre>
-                    <div id="rigenera-offerta" class="rigenera-panel" style="display:none">
-                        <input type="text" id="istr-offerta" placeholder="es. Aggiungi sconto 10% per ordini > 500 pz…">
-                        <button onclick="rigeneraDoc('offerta_commerciale')" class="btn-primary btn-sm">Rigenera</button>
-                    </div>
-                </div>
-
-                <div class="output-footer">
-                    <a href="/dashboard" class="btn-ghost-sm">
-                        <i data-lucide="arrow-left" style="width:13px;height:13px"></i> Dashboard
-                    </a>
-                    <span class="output-saved">
-                        <i data-lucide="check-circle" style="width:13px;height:13px;color:var(--green)"></i>
-                        Salvato automaticamente
+            <div class="composer-footer">
+                <div class="composer-counter"><span id="char-count">0</span> / 2000</div>
+                <button type="submit" id="btn-genera" class="composer-generate">
+                    <span id="btn-text" style="display:inline-flex;align-items:center;gap:8px">
+                        <i data-lucide="sparkles" style="width:16px;height:16px"></i>
+                        Genera 3 documenti
                     </span>
+                    <span id="btn-loading" style="display:none;align-items:center;gap:6px">
+                        <span style="width:6px;height:6px;border-radius:50%;background:#fff;animation:dot-bounce 1.2s infinite"></span>
+                        <span style="width:6px;height:6px;border-radius:50%;background:#fff;animation:dot-bounce 1.2s infinite .15s"></span>
+                        <span style="width:6px;height:6px;border-radius:50%;background:#fff;animation:dot-bounce 1.2s infinite .3s"></span>
+                        Generazione…
+                    </span>
+                </button>
+            </div>
+        </form>
+
+        <p class="composer-hint">Premi <kbd>Ctrl</kbd>+<kbd>Invio</kbd> per generare — <kbd>⌘</kbd>+<kbd>Invio</kbd> su Mac</p>
+
+        <div id="error-msg" class="alert-error" style="display:none;margin-top:18px;padding:10px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-size:13.5px"></div>
+
+        <div id="output-panel" class="composer-output" style="display:none">
+            <div class="composer-output-head">
+                <div>
+                    <h2>I tuoi 3 documenti <span id="cliente-chip" class="cliente-chip" style="display:none"></span></h2>
+                </div>
+                <button type="button" class="reset-btn" onclick="resetForm()">
+                    <i data-lucide="rotate-ccw" style="width:13px;height:13px"></i>
+                    Nuovo
+                </button>
+            </div>
+
+            <div class="doc-tabs-min">
+                <button type="button" class="active" onclick="showTab('report')" data-tab="report">📋 Report</button>
+                <button type="button" onclick="showTab('email')" data-tab="email">✉️ Email</button>
+                <button type="button" onclick="showTab('offerta')" data-tab="offerta">📄 Offerta</button>
+            </div>
+
+            <div id="tab-report" class="doc-panel active">
+                <pre id="doc-report"></pre>
+                <div class="doc-actions-row">
+                    <button class="doc-action-btn" onclick="copyDoc('report_visita')"><i data-lucide="copy" style="width:13px;height:13px"></i> Copia</button>
+                    <button class="doc-action-btn" onclick="showRigenera('report_visita')"><i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI</button>
+                </div>
+                <div id="rigenera-report" class="rigenera-row" style="display:none">
+                    <input type="text" id="istr-report" placeholder="es. Rendi più formale, aggiungi sconto 15%…">
+                    <button onclick="rigeneraDoc('report_visita')">Rigenera</button>
+                </div>
+            </div>
+
+            <div id="tab-email" class="doc-panel">
+                <pre id="doc-email"></pre>
+                <div class="doc-actions-row">
+                    <button class="doc-action-btn" onclick="copyDoc('email_followup')"><i data-lucide="copy" style="width:13px;height:13px"></i> Copia</button>
+                    <button class="doc-action-btn" onclick="showRigenera('email_followup')"><i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI</button>
+                </div>
+                <div id="rigenera-email" class="rigenera-row" style="display:none">
+                    <input type="text" id="istr-email" placeholder="es. Tono più informale, aggiungi PS…">
+                    <button onclick="rigeneraDoc('email_followup')">Rigenera</button>
+                </div>
+            </div>
+
+            <div id="tab-offerta" class="doc-panel">
+                <pre id="doc-offerta"></pre>
+                <div class="doc-actions-row">
+                    <button class="doc-action-btn" onclick="copyDoc('offerta_commerciale')"><i data-lucide="copy" style="width:13px;height:13px"></i> Copia</button>
+                    <button class="doc-action-btn" onclick="showRigenera('offerta_commerciale')"><i data-lucide="wand-2" style="width:13px;height:13px"></i> Affina con AI</button>
+                </div>
+                <div id="rigenera-offerta" class="rigenera-row" style="display:none">
+                    <input type="text" id="istr-offerta" placeholder="es. Aggiungi sconto 10% sopra 500 pz…">
+                    <button onclick="rigeneraDoc('offerta_commerciale')">Rigenera</button>
                 </div>
             </div>
         </div>
-        {% endif %}
+
+    </section>
+
+    {% endif %}
     </main>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<style>@keyframes dot-bounce{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1.15)}}</style>
 <script>
 let currentDocId = null;
 let currentDocs = {};
 
 const textarea = document.getElementById('input_testo');
 const charCount = document.getElementById('char-count');
-const inputHint = document.getElementById('input-hint');
-
-const CHIP_TEMPLATES = {
-  visita: "Oggi visita da [Nome Referente] di [Azienda] a [Città]. Discusso [argomento/catalogo/prodotto]. [Interessi principali]. Offerta: [sconto/condizioni]. Next step: [data richiamo/prossima visita/invio materiale].",
-  ordine: "Ordine da [Azienda] — referente [Nome]. Articoli: [codici/quantità]. Importo: [€]. Pagamento: [condizioni]. Consegna: [data/modalità]. Note: [urgenze/vincoli].",
-  reclamo: "Reclamo da [Azienda] — [Nome referente]. Problema: [descrizione]. Impatto cliente: [operativo/economico]. Richiesta: [sostituzione/nota di credito/risoluzione]. Urgenza: [bassa/media/alta].",
-  prospecting: "Primo contatto con [Azienda] — interlocutore [Nome, ruolo]. Settore: [X]. Volumi potenziali: [stima]. Competitor attuale: [nome]. Interesse mostrato: [basso/medio/alto]. Prossima mossa: [invio materiale/appuntamento].",
-  mandante: "Riunione con mandante [Nome Azienda]. Temi: [obiettivi trimestre/target/nuova linea]. Decisioni prese: [punti chiave]. Azioni assegnate a me: [task + deadline]. Prossima review: [data]."
-};
-
-function refreshHint() {
-  if (!inputHint || !textarea) return;
-  var len = textarea.value.length;
-  if (len === 0) { inputHint.textContent = "Più dettagli metti → documenti più precisi."; inputHint.style.color = ""; }
-  else if (len < 80) { inputHint.textContent = "Aggiungi cliente, budget, condizioni, next step."; inputHint.style.color = "#f59e0b"; }
-  else if (len < 200) { inputHint.textContent = "Buono. Se puoi, specifica tempistiche e obiezioni."; inputHint.style.color = "#60a5fa"; }
-  else { inputHint.textContent = "Ottimo livello di dettaglio — sarai soddisfatto del risultato."; inputHint.style.color = "#10b981"; }
-}
-
-if (textarea) textarea.addEventListener('input', () => { charCount.textContent = textarea.value.length; refreshHint(); });
-
-document.querySelectorAll('.chip[data-template]').forEach(function(btn){
-  btn.addEventListener('click', function(){
-    var key = btn.getAttribute('data-template');
-    var tpl = CHIP_TEMPLATES[key];
-    if (!tpl || !textarea) return;
-    textarea.value = tpl;
-    textarea.focus();
-    if (charCount) charCount.textContent = textarea.value.length;
-    refreshHint();
-  });
-});
-
-// Keyboard shortcut Cmd/Ctrl + Enter → generate
-var kbdMeta = document.getElementById('kbd-meta');
-var isMac = /Mac|iPhone|iPad/.test(navigator.platform || '');
-if (kbdMeta) kbdMeta.textContent = isMac ? '⌘' : 'Ctrl';
+const counterEl = document.querySelector('.composer-counter');
 if (textarea) {
-  textarea.addEventListener('keydown', function(e){
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault();
-      var btn = document.getElementById('btn-genera');
-      if (btn && !btn.disabled) btn.click();
-    }
-  });
-  // Auto-focus textarea on page load for magical feel
-  setTimeout(function(){ try { textarea.focus(); } catch(e){} }, 200);
+    textarea.addEventListener('input', () => {
+        const n = textarea.value.length;
+        charCount.textContent = n;
+        if (counterEl) counterEl.classList.toggle('warn', n > 1800);
+    });
+    textarea.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            generaDocumenti();
+        }
+    });
 }
 
 async function generaDocumenti() {
-    const input = document.getElementById('input_testo').value.trim();
-    const mandante = document.getElementById('azienda_mandante').value.trim();
+    const input = (document.getElementById('input_testo').value || '').trim();
+    const mandante = (document.getElementById('azienda_mandante').value || '').trim();
     if (!input || input.length < 20) { showError('Aggiungi più dettagli sulla visita (almeno 20 caratteri).'); return; }
     setLoading(true); hideError();
     try {
@@ -241,23 +160,25 @@ async function generaDocumenti() {
         document.getElementById('doc-report').textContent = data.report_visita;
         document.getElementById('doc-email').textContent = data.email_followup;
         document.getElementById('doc-offerta').textContent = data.offerta_commerciale;
+        const chip = document.getElementById('cliente-chip');
         if (data.cliente_nome || data.azienda_cliente) {
-            document.getElementById('cliente-info').textContent = [data.azienda_cliente, data.cliente_nome].filter(Boolean).join(' · ');
-            document.getElementById('cliente-info').style.display = 'inline-block';
+            chip.textContent = [data.azienda_cliente, data.cliente_nome].filter(Boolean).join(' · ');
+            chip.style.display = 'inline-flex';
+        } else {
+            chip.style.display = 'none';
         }
         const op = document.getElementById('output-panel');
-        op.style.display = 'flex';
-        op.classList.add('fade-in');
+        op.style.display = 'block';
         if (window.lucide) lucide.createIcons();
-        setTimeout(() => op.scrollIntoView({behavior: 'smooth', block: 'nearest'}), 100);
+        setTimeout(() => op.scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     } catch(e) { showError('Errore di connessione. Riprova.'); }
     finally { setLoading(false); }
 }
 
 function showTab(tab) {
-    document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector(`.tab-pill[data-tab="${tab}"]`).classList.add('active');
+    document.querySelectorAll('.doc-tabs-min button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.doc-panel').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.doc-tabs-min button[data-tab="${tab}"]`).classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
@@ -283,7 +204,7 @@ function showRigenera(tipo) {
 async function rigeneraDoc(tipo) {
     const m = {report_visita:'report', email_followup:'email', offerta_commerciale:'offerta'};
     const s = m[tipo];
-    const istruzione = document.getElementById(`istr-${s}`).value.trim();
+    const istruzione = (document.getElementById(`istr-${s}`).value || '').trim();
     if (!istruzione) { document.getElementById(`istr-${s}`).focus(); return; }
     const btn = event.target; btn.disabled = true; btn.textContent = '…';
     try {
@@ -303,7 +224,6 @@ async function rigeneraDoc(tipo) {
 
 function resetForm() {
     document.getElementById('output-panel').style.display = 'none';
-    document.getElementById('output-panel').classList.remove('fade-in');
     document.getElementById('input_testo').value = '';
     if (charCount) charCount.textContent = '0';
     currentDocId = null; currentDocs = {};
@@ -312,9 +232,12 @@ function resetForm() {
 }
 
 function setLoading(l) {
-    document.getElementById('btn-genera').disabled = l;
-    document.getElementById('btn-text').style.display = l ? 'none' : 'flex';
-    document.getElementById('btn-loading').style.display = l ? 'flex' : 'none';
+    const btn = document.getElementById('btn-genera');
+    const t = document.getElementById('btn-text');
+    const ld = document.getElementById('btn-loading');
+    btn.disabled = l;
+    t.style.display = l ? 'none' : 'inline-flex';
+    ld.style.display = l ? 'inline-flex' : 'none';
 }
 function showError(msg) { const e = document.getElementById('error-msg'); e.textContent = msg; e.style.display = 'block'; }
 function hideError() { document.getElementById('error-msg').style.display = 'none'; }

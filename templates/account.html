@@ -9,160 +9,140 @@
 <div class="app-layout">
     {% include "partials/sidebar.html" %}
     <main class="app-main">
-        <div class="page-header">
-            <div>
+
+        <section class="mini-hero">
+            <div class="mini-hero-text">
                 <h1>Il tuo account</h1>
-                <p class="page-sub">Gestisci dati, abbonamento e cancellazione</p>
+                <p class="mini-hero-sub">Gestisci piano e dati personali.</p>
             </div>
-        </div>
+        </section>
 
         {% if message %}<div class="alert-success" style="margin-bottom:16px">{{ message }}</div>{% endif %}
 
-        <div class="account-tabs" role="tablist">
-            <button type="button" class="account-tab is-active" role="tab" data-tab="profilo"><i data-lucide="user-circle" style="width:15px;height:15px"></i> Profilo</button>
-            <button type="button" class="account-tab" role="tab" data-tab="sicurezza"><i data-lucide="shield" style="width:15px;height:15px"></i> Sicurezza</button>
-            <button type="button" class="account-tab" role="tab" data-tab="privacy"><i data-lucide="database" style="width:15px;height:15px"></i> Privacy & dati</button>
-            <button type="button" class="account-tab" role="tab" data-tab="danger"><i data-lucide="alert-triangle" style="width:15px;height:15px"></i> Zona pericolo</button>
-        </div>
-
-        <!-- TAB: PROFILO -->
-        <div class="account-tab-panel is-active" data-panel="profilo">
-        {% if user.plan == "free" %}
-        <div class="pro-upsell">
+        <div class="acct-plan">
             <div>
-                <span class="pro-upsell-badge">Pro · 10 giorni gratis</span>
-                <h3 class="pro-upsell-title">Documenti illimitati. Nessuna carta per iniziare.</h3>
-                <ul class="pro-upsell-benefits">
-                    <li>Documenti illimitati ogni mese</li>
-                    <li>Priorità di elaborazione AI</li>
-                    <li>Export PDF e DOCX</li>
-                    <li>Disdici quando vuoi</li>
+                <div class="acct-plan-label">Piano attuale</div>
+                <div class="acct-plan-name">{{ user.plan.upper() }}</div>
+                <ul class="acct-plan-feats">
+                    {% if user.plan == "free" %}
+                    <li>10 documenti / mese</li>
+                    <li>Report + Email + Offerta</li>
+                    <li>Storico documenti</li>
+                    {% else %}
+                    <li>Documenti illimitati</li>
+                    <li>Priorità AI</li>
+                    <li>Affinamento con istruzioni</li>
+                    <li>Export PDF</li>
+                    {% endif %}
                 </ul>
-                <div class="pro-upsell-price">€49/mese dopo il trial · annulla in 1 click</div>
             </div>
-            <a href="/checkout/pro" class="pro-upsell-cta">Attiva trial 10 gg →</a>
+            {% if user.plan == "free" %}
+            <a href="/checkout/pro" class="acct-plan-cta">Passa a Pro →</a>
+            {% else %}
+            <a href="/portale-fatturazione" class="acct-plan-cta ghost">Gestisci piano</a>
+            {% endif %}
         </div>
-        {% endif %}
-        <div class="account-grid">
-            <div class="account-card account-card--wide">
-                <h2 class="account-card-title">Il tuo piano</h2>
-                <dl class="account-dl">
-                    <dt>Piano</dt><dd><span class="stat-plan stat-plan-{{ user.plan }}">{{ user.plan.upper() }}</span></dd>
-                    <dt>Email verificata</dt><dd>
+
+        <div class="acct-block">
+            <h2>Dati personali</h2>
+            {% if error %}<div class="alert-error" style="margin-bottom:14px;padding:10px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-size:13.5px">{{ error }}</div>{% endif %}
+            <form action="/api/account/update" method="POST">
+                <div class="acct-field">
+                    <label for="full_name">Nome</label>
+                    <input type="text" id="full_name" name="full_name" value="{{ user.full_name }}" required minlength="2" maxlength="120">
+                </div>
+                <div class="acct-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" required maxlength="255">
+                </div>
+                <div class="acct-field">
+                    <label for="company_name">Azienda mandante <span style="text-transform:none;color:#475569;font-weight:400">— opzionale</span></label>
+                    <input type="text" id="company_name" name="company_name" value="{{ user.company_name or '' }}" maxlength="120">
+                </div>
+                <button type="submit" class="acct-save">Salva modifiche</button>
+            </form>
+        </div>
+
+        <details class="acct-advanced">
+            <summary>Opzioni avanzate</summary>
+            <div class="acct-advanced-body">
+
+                <div class="acct-row">
+                    <div class="lbl">
+                        <h4>Email verificata</h4>
+                        <p>
+                            {% if user.email_verified %}
+                            Sì — verificata il {{ user.email_verified_at.strftime("%d/%m/%Y") if user.email_verified_at else "-" }}.
+                            {% else %}
+                            Non verificata. Controlla la casella di posta.
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="act">
                         {% if user.email_verified %}
-                            <span style="color:#10b981">✓ Sì</span>
+                        <span style="color:#6ee7b7;font-size:13px;font-weight:700">✓ Verificata</span>
                         {% else %}
-                            <span style="color:#f59e0b">Non verificata</span>
-                            <button type="button" id="btn-rinvia-verifica" class="btn-ghost btn-sm" style="margin-left:8px">Rinvia email</button>
+                        <button type="button" id="btn-rinvia-verifica">Rinvia email</button>
                         {% endif %}
-                    </dd>
-                    <dt>Iscritto il</dt><dd>{{ user.created_at.strftime("%d/%m/%Y") }}</dd>
-                </dl>
-                {% if user.plan != "free" %}
-                <a href="/portale-fatturazione" class="btn-ghost btn-sm">Gestisci abbonamento</a>
-                {% else %}
-                <a href="/checkout/pro" class="btn-primary btn-sm">Prova Pro — 10 giorni gratis →</a>
-                {% endif %}
-            </div>
+                    </div>
+                </div>
 
-            <div class="account-card account-card--wide">
-                <h2 class="account-card-title">Dati personali</h2>
-                <p class="account-warning" style="color:var(--text-2)">
-                    Aggiorna nome, email o azienda mandante. Se cambi l'email riceverai un nuovo link di verifica.
-                </p>
-                {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
-                <form action="/api/account/update" method="POST" class="account-form">
-                    <label>
-                        <span>Nome completo</span>
-                        <input type="text" name="full_name" value="{{ user.full_name }}" required minlength="2" maxlength="120">
-                    </label>
-                    <label>
-                        <span>Email</span>
-                        <input type="email" name="email" value="{{ user.email }}" required maxlength="255">
-                    </label>
-                    <label>
-                        <span>Azienda mandante <span style="color:var(--text-3);font-weight:400">(opzionale)</span></span>
-                        <input type="text" name="company_name" value="{{ user.company_name or '' }}" maxlength="120">
-                    </label>
-                    <button type="submit" class="btn-primary btn-sm">Salva modifiche</button>
-                </form>
-            </div>
-        </div>
-        </div>
+                <div class="acct-row">
+                    <div class="lbl">
+                        <h4>Cambia password</h4>
+                        <p>Richiede la password attuale. Tutti i dispositivi verranno disconnessi.</p>
+                    </div>
+                    <div class="act">
+                        <button type="button" onclick="var f=document.getElementById('pwd-form');f.style.display=f.style.display==='none'?'block':'none';">Modifica</button>
+                    </div>
+                </div>
 
-        <!-- TAB: SICUREZZA -->
-        <div class="account-tab-panel" data-panel="sicurezza">
-        <div class="account-grid">
-            <div class="account-card">
-                <h2 class="account-card-title">Cambia password</h2>
-                <p class="account-warning" style="color:var(--text-2)">
-                    Dopo il cambio ti sarà richiesto di rifare il login su tutti i dispositivi.
-                </p>
-                <form action="/api/account/password" method="POST" class="account-form">
-                    <label>
-                        <span>Password attuale</span>
+                <form action="/api/account/password" method="POST" id="pwd-form" style="display:none;margin-top:6px;padding:14px;background:rgba(4,6,15,.45);border:1px solid rgba(96,165,250,.12);border-radius:10px">
+                    <div class="acct-field">
+                        <label>Password attuale</label>
                         <input type="password" name="current_password" required>
-                    </label>
-                    <label>
-                        <span>Nuova password</span>
+                    </div>
+                    <div class="acct-field">
+                        <label>Nuova password</label>
                         <input type="password" name="new_password" required minlength="8">
-                    </label>
-                    <button type="submit" class="btn-primary btn-sm">Aggiorna password</button>
+                    </div>
+                    <button type="submit" class="acct-save">Aggiorna password</button>
                 </form>
-            </div>
 
-            <div class="account-card">
-                <h2 class="account-card-title">Sicurezza sessioni</h2>
-                <p class="account-warning" style="color:var(--text-2)">
-                    Disconnetti l'account da <strong>tutti i dispositivi</strong> dove è attualmente loggato.
-                    Usa questa funzione se pensi che qualcuno abbia accesso al tuo account.
-                </p>
-                <button type="button" id="btn-logout-all" class="btn-ghost btn-sm">Disconnetti tutti i dispositivi</button>
-            </div>
-        </div>
-        </div>
+                <div class="acct-row">
+                    <div class="lbl">
+                        <h4>Disconnetti tutti i dispositivi</h4>
+                        <p>Usa questa funzione se sospetti un accesso non autorizzato.</p>
+                    </div>
+                    <div class="act">
+                        <button type="button" id="btn-logout-all">Disconnetti tutti</button>
+                    </div>
+                </div>
 
-        <!-- TAB: PRIVACY -->
-        <div class="account-tab-panel" data-panel="privacy">
-        <div class="account-grid">
-            <div class="account-card account-card--wide">
-                <h2 class="account-card-title">Esporta i tuoi dati</h2>
-                <p class="account-warning" style="color:var(--text-2)">
-                    Scarica tutti i tuoi dati personali e documenti in formato JSON, come previsto dall'<strong>art. 15 del GDPR</strong> (diritto di accesso).
-                </p>
-                <a href="/api/export-data" class="btn-ghost btn-sm" download>Scarica dati (JSON)</a>
-            </div>
-        </div>
-        </div>
+                <div class="acct-row">
+                    <div class="lbl">
+                        <h4>Esporta i tuoi dati</h4>
+                        <p>Scarica documenti e dati personali in JSON (GDPR art. 15).</p>
+                    </div>
+                    <div class="act">
+                        <a href="/api/export-data" download>Scarica JSON</a>
+                    </div>
+                </div>
 
-        <!-- TAB: DANGER -->
-        <div class="account-tab-panel" data-panel="danger">
-        <div class="account-grid">
-            <div class="account-card account-card--wide account-danger">
-                <h2 class="account-card-title">Elimina account</h2>
-                <p class="account-warning">
-                    Questa azione è <strong>permanente e irreversibile</strong>. Cancella definitivamente:
-                </p>
-                <ul class="account-warning-list">
-                    <li>Tutti i tuoi documenti generati</li>
-                    <li>I tuoi dati personali (nome, email, azienda)</li>
-                    <li>L'abbonamento attivo (Stripe viene notificato)</li>
-                </ul>
-                {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
-                <form action="/api/delete-account" method="POST" class="account-danger-form">
-                    <label>
-                        <span>Password attuale</span>
+                <div class="acct-danger-zone">
+                    <h4>Elimina account</h4>
+                    <p>Azione <strong>permanente e irreversibile</strong>. Cancella documenti, dati personali e abbonamento attivo.</p>
+                    <form action="/api/delete-account" method="POST">
+                        <label>Password attuale</label>
                         <input type="password" name="password" required minlength="8">
-                    </label>
-                    <label>
-                        <span>Scrivi <code>ELIMINA</code> per confermare</span>
+                        <label>Scrivi <code style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);padding:1px 6px;border-radius:4px;color:#fca5a5">ELIMINA</code> per confermare</label>
                         <input type="text" name="confirm" required pattern="ELIMINA" placeholder="ELIMINA">
-                    </label>
-                    <button type="submit" class="btn-danger">Elimina definitivamente il mio account</button>
-                </form>
+                        <button type="submit" class="btn-danger-sm">Elimina definitivamente</button>
+                    </form>
+                </div>
+
             </div>
-        </div>
-        </div>
+        </details>
 
     </main>
 </div>
@@ -170,41 +150,18 @@
 
 {% block scripts %}
 <script>
-// Account tabs
-(function(){
-    var tabs = document.querySelectorAll('.account-tab');
-    var panels = document.querySelectorAll('.account-tab-panel');
-    function activate(key) {
-        tabs.forEach(function(t){ t.classList.toggle('is-active', t.getAttribute('data-tab') === key); });
-        panels.forEach(function(p){ p.classList.toggle('is-active', p.getAttribute('data-panel') === key); });
-        try { history.replaceState(null, '', '#' + key); } catch(e){}
-    }
-    tabs.forEach(function(t){ t.addEventListener('click', function(){ activate(t.getAttribute('data-tab')); }); });
-    var initial = (location.hash || '').replace('#', '');
-    if (initial && document.querySelector('[data-panel="' + initial + '"]')) activate(initial);
-})();
-
 const rinviaBtn = document.getElementById('btn-rinvia-verifica');
 if (rinviaBtn) {
     rinviaBtn.addEventListener('click', async () => {
-        rinviaBtn.disabled = true;
-        rinviaBtn.textContent = 'Invio...';
+        rinviaBtn.disabled = true; rinviaBtn.textContent = 'Invio…';
         try {
             const res = await fetch('/api/rinvia-verifica', { method: 'POST' });
             const data = await res.json();
-            if (res.ok) {
-                rinviaBtn.textContent = data.status === 'sent' ? 'Email inviata ✓' : 'Già verificata';
-            } else {
-                rinviaBtn.textContent = 'Errore — riprova';
-                rinviaBtn.disabled = false;
-            }
-        } catch (e) {
-            rinviaBtn.textContent = 'Errore — riprova';
-            rinviaBtn.disabled = false;
-        }
+            rinviaBtn.textContent = res.ok ? (data.status === 'sent' ? 'Email inviata ✓' : 'Già verificata') : 'Errore';
+            if (!res.ok) rinviaBtn.disabled = false;
+        } catch (e) { rinviaBtn.textContent = 'Errore'; rinviaBtn.disabled = false; }
     });
 }
-
 const logoutAllBtn = document.getElementById('btn-logout-all');
 if (logoutAllBtn) {
     logoutAllBtn.addEventListener('click', async () => {
@@ -212,9 +169,7 @@ if (logoutAllBtn) {
         try {
             const res = await fetch('/api/logout-all', { method: 'POST' });
             if (res.ok) window.location.href = '/login?error=Disconnesso+da+tutti+i+dispositivi';
-        } catch (e) {
-            alert('Errore. Riprova.');
-        }
+        } catch (e) { alert('Errore. Riprova.'); }
     });
 }
 </script>
