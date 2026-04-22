@@ -6,109 +6,72 @@
 {% block body %}
 <div class="auth-scene">
 
-    <!-- LEFT — value proposition -->
-    <aside class="auth-left-new">
-        <a href="/" class="logo-wordmark" aria-label="Torna alla home VYNEX">
-            <img src="/static/logo-wordmark.svg" alt="VYNEX">
-        </a>
+    <div class="auth-topbar">
+        <a href="/" class="auth-logo-mark" aria-label="Torna alla home VYNEX">VYNEX</a>
+        <a href="/login" class="back-link">Hai un account? Accedi →</a>
+    </div>
 
-        <div>
-            <div class="auth-kicker">Setup in 30 secondi · Nessuna carta</div>
-            <h1>Inizia <em>gratis</em>.<br>Senza carta. Senza fregature.</h1>
-            <p class="auth-lead">10 documenti gratuiti ogni mese, per sempre. Il piano Pro include 10 giorni di prova gratuita con documenti illimitati — disdici quando vuoi.</p>
+    <div class="auth-intro">
+        <h1>Inizia <em>gratis</em>.</h1>
+        <p>10 documenti gratis ogni mese, per sempre. Senza carta di credito. Attivo in 30 secondi.</p>
+    </div>
 
-            <ul class="auth-benefits-new" style="margin-top:26px;max-width:440px">
-                <li>10 documenti al mese gratis, per sempre</li>
-                <li>Nessuna carta di credito richiesta per iniziare</li>
-                <li>Report + Email + Offerta in 30 secondi</li>
-                <li>Italiano professionale nativo, non traduzione</li>
-                <li>Dati in EU (Frankfurt) · GDPR compliant</li>
-            </ul>
-        </div>
+    <main class="auth-card-new">
+        {% if error %}
+        <div class="alert-error">{{ error }}</div>
+        {% endif %}
 
-        <div class="auth-testimonial">
-            <p>Prima impiegavo 2 ore al giorno a scrivere report. Con VYNEX sono 10 minuti. Il mandante riceve anche documenti più puliti.</p>
-            <div class="author"><strong>Marco B.</strong> · Agente plurimandatario, Milano</div>
-        </div>
+        {% if oauth_google %}
+        <div id="g_id_onload"
+             data-client_id="{{ google_client_id }}"
+             data-login_uri="{{ base_url }}/auth/google/verify"
+             data-auto_prompt="false"></div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="filled_blue"
+             data-text="signup_with"
+             data-size="large"
+             data-locale="it"
+             data-logo_alignment="left"
+             data-width="400"
+             style="margin:0 auto 6px;display:flex;justify-content:center"></div>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <div class="auth-divider-new">oppure con email</div>
+        {% endif %}
 
-        <div class="auth-stats-new">
-            <div class="auth-stat-new">
-                <div class="v">30s</div>
-                <div class="l">per 3 documenti</div>
+        <form action="/api/registrati" method="post" class="auth-form-new" novalidate>
+            <div class="form-group-new">
+                <label for="full_name">Nome e cognome</label>
+                <input type="text" id="full_name" name="full_name" required placeholder="Mario Rossi" autocomplete="name" minlength="2" maxlength="120">
             </div>
-            <div class="auth-stat-new">
-                <div class="v">~20h</div>
-                <div class="l">risparmiate/mese</div>
+            <div class="form-group-new">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
             </div>
-            <div class="auth-stat-new">
-                <div class="v">10</div>
-                <div class="l">documenti free/mese</div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- RIGHT — form card -->
-    <main class="auth-right-new">
-        <div class="auth-card-new">
-            <h2>Crea il tuo account</h2>
-            <p class="auth-card-sub">Gratis · Nessuna carta · Attivo in 30 secondi</p>
-
-            {% if error %}
-            <div class="alert-error">{{ error }}</div>
-            {% endif %}
-
-            {% if oauth_google %}
-            <div id="g_id_onload"
-                 data-client_id="{{ google_client_id }}"
-                 data-login_uri="{{ base_url }}/auth/google/verify"
-                 data-auto_prompt="false"></div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-shape="rectangular"
-                 data-theme="filled_blue"
-                 data-text="signup_with"
-                 data-size="large"
-                 data-locale="it"
-                 data-logo_alignment="left"
-                 data-width="368"
-                 style="margin:0 auto 4px;display:flex;justify-content:center"></div>
-            <script src="https://accounts.google.com/gsi/client" async defer></script>
-            <div class="auth-divider-new">oppure con email</div>
-            {% endif %}
-
-            <form action="/api/registrati" method="post" class="auth-form-new" novalidate>
-                <div class="form-group-new">
-                    <label for="full_name">Nome e cognome</label>
-                    <input type="text" id="full_name" name="full_name" required placeholder="Mario Rossi" autocomplete="name" minlength="2" maxlength="120">
+            <div class="form-group-new">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="8" placeholder="Minimo 8 caratteri" autocomplete="new-password">
+                <div class="pw-meter" data-score="0" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
                 </div>
-                <div class="form-group-new">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
-                </div>
-                <div class="form-group-new">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="8" placeholder="Minimo 8 caratteri" autocomplete="new-password">
-                    <div class="pw-meter" data-score="0" aria-hidden="true">
-                        <span></span><span></span><span></span><span></span>
-                    </div>
-                    <div class="pw-meter-label" id="pw-meter-label">Usa almeno 8 caratteri · meglio se con numeri o simboli</div>
-                </div>
-
-                <label class="terms">
-                    <input type="checkbox" name="accept_terms" value="on" required>
-                    <span>Accetto i <a href="/termini" target="_blank">Termini e Condizioni</a> e la <a href="/privacy" target="_blank">Privacy Policy</a>. Dati conservati in EU.</span>
-                </label>
-
-                <button type="submit" class="auth-cta-new">Crea account gratis →</button>
-            </form>
-
-            <div class="auth-trust-new">
-                <strong>L'account è attivo subito.</strong> Riceverai un'email di benvenuto — se non arriva entro 5 minuti, controlla lo spam. Puoi accedere alla dashboard immediatamente. Per dubbi: <a href="mailto:robertopizzini19@gmail.com">robertopizzini19@gmail.com</a>.
+                <div class="pw-meter-label" id="pw-meter-label">Usa almeno 8 caratteri</div>
             </div>
 
-            <p class="auth-switch-new">Hai già un account? <a href="/login">Accedi</a></p>
-        </div>
+            <label class="terms">
+                <input type="checkbox" name="accept_terms" value="on" required>
+                <span>Accetto i <a href="/termini" target="_blank">Termini</a> e la <a href="/privacy" target="_blank">Privacy</a>.</span>
+            </label>
+
+            <button type="submit" class="auth-cta-new">Crea account gratis</button>
+        </form>
     </main>
+
+    <div class="auth-trustrow">
+        <span>10 documenti/mese</span>
+        <span>Nessuna carta</span>
+        <span>Dati in EU</span>
+    </div>
 
 </div>
 
@@ -126,7 +89,7 @@
     if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
     if (/\d/.test(v) && /[^A-Za-z0-9]/.test(v)) s++;
     meter.setAttribute('data-score', String(s));
-    var labels = ['Usa almeno 8 caratteri · meglio se con numeri o simboli', 'Debole — aggiungi più caratteri', 'Debole — aggiungi un numero', 'Buona', 'Robusta'];
+    var labels = ['Usa almeno 8 caratteri', 'Debole — aggiungi caratteri', 'Debole — aggiungi un numero', 'Buona', 'Robusta'];
     lbl.textContent = labels[s];
     lbl.style.color = ['#64748b','#fca5a5','#f59e0b','#60a5fa','#6ee7b7'][s];
   });

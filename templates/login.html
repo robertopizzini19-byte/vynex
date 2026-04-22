@@ -6,90 +6,53 @@
 {% block body %}
 <div class="auth-scene">
 
-    <!-- LEFT — welcome back + value -->
-    <aside class="auth-left-new">
-        <a href="/" class="logo-wordmark" aria-label="Torna alla home VYNEX">
-            <img src="/static/logo-wordmark.svg" alt="VYNEX">
-        </a>
+    <div class="auth-topbar">
+        <a href="/" class="auth-logo-mark" aria-label="Torna alla home VYNEX">VYNEX</a>
+        <a href="/registrati" class="back-link">Nuovo qui? Registrati →</a>
+    </div>
 
-        <div>
-            <div class="auth-kicker">Bentornato · Italia</div>
-            <h1>Riprendi da <em>dove eri</em>.<br>Le tue visite ti aspettano.</h1>
-            <p class="auth-lead">Accedi per tornare alla tua dashboard. Storico completo dei documenti, affinamento AI e nuove generazioni in 30 secondi.</p>
+    <div class="auth-intro">
+        <h1>Bentornato.</h1>
+        <p>Accedi al tuo account per continuare a generare documenti commerciali in 30 secondi.</p>
+    </div>
 
-            <ul class="auth-benefits-new" style="margin-top:26px;max-width:440px">
-                <li>Report di visita professionale</li>
-                <li>Email follow-up personalizzata</li>
-                <li>Offerta commerciale pronta</li>
-                <li>Affina con istruzioni in italiano</li>
-            </ul>
-        </div>
+    <main class="auth-card-new">
+        {% if error %}
+        <div class="alert-error">{{ error }}</div>
+        {% endif %}
 
-        <div class="auth-testimonial">
-            <p>Dopo 3 settimane con VYNEX ho recuperato un pomeriggio pieno a settimana. Quel pomeriggio ora è di vendita attiva, non di scartoffie.</p>
-            <div class="author"><strong>Luca D.</strong> · Agente commercio, Verona</div>
-        </div>
+        {% if oauth_google %}
+        <div id="g_id_onload"
+             data-client_id="{{ google_client_id }}"
+             data-login_uri="{{ base_url }}/auth/google/verify"
+             data-auto_prompt="false"></div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="filled_blue"
+             data-text="continue_with"
+             data-size="large"
+             data-locale="it"
+             data-logo_alignment="left"
+             data-width="400"
+             style="margin:0 auto 6px;display:flex;justify-content:center"></div>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <div class="auth-divider-new">oppure con email</div>
+        {% endif %}
 
-        <div class="auth-stats-new">
-            <div class="auth-stat-new">
-                <div class="v">30s</div>
-                <div class="l">per 3 documenti</div>
+        <form action="/api/login" method="post" class="auth-form-new" novalidate>
+            <div class="form-group-new">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
             </div>
-            <div class="auth-stat-new">
-                <div class="v">∞</div>
-                <div class="l">doc illimitati su Pro</div>
+            <div class="form-group-new">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
             </div>
-            <div class="auth-stat-new">
-                <div class="v">🇮🇹</div>
-                <div class="l">italiano nativo</div>
-            </div>
-        </div>
-    </aside>
+            <button type="submit" class="auth-cta-new">Accedi</button>
+        </form>
 
-    <!-- RIGHT — login card -->
-    <main class="auth-right-new">
-        <div class="auth-card-new">
-            <h2>Bentornato</h2>
-            <p class="auth-card-sub">Accedi al tuo account VYNEX</p>
-
-            {% if error %}
-            <div class="alert-error">{{ error }}</div>
-            {% endif %}
-
-            {% if oauth_google %}
-            <div id="g_id_onload"
-                 data-client_id="{{ google_client_id }}"
-                 data-login_uri="{{ base_url }}/auth/google/verify"
-                 data-auto_prompt="false"></div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-shape="rectangular"
-                 data-theme="filled_blue"
-                 data-text="continue_with"
-                 data-size="large"
-                 data-locale="it"
-                 data-logo_alignment="left"
-                 data-width="368"
-                 style="margin:0 auto 4px;display:flex;justify-content:center"></div>
-            <script src="https://accounts.google.com/gsi/client" async defer></script>
-            <div class="auth-divider-new">oppure con email</div>
-            {% endif %}
-
-            <form action="/api/login" method="post" class="auth-form-new" novalidate>
-                <div class="form-group-new">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required placeholder="mario.rossi@email.it" autocomplete="email">
-                </div>
-                <div class="form-group-new">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
-                </div>
-                <button type="submit" class="auth-cta-new">Accedi →</button>
-            </form>
-
-            <p class="auth-switch-new"><a href="/recupera-password">Password dimenticata?</a></p>
-            <p class="auth-switch-new">Non hai un account? <a href="/registrati">Registrati gratis</a></p>
-        </div>
+        <p style="margin:16px 0 0;text-align:center;font-size:13px"><a href="/recupera-password" style="color:#60a5fa;text-decoration:none">Password dimenticata?</a></p>
     </main>
 
 </div>
