@@ -1003,6 +1003,14 @@ textarea {
   min-height: 100vh;
   min-height: 100dvh;
 }
+/* Per-page micro shift richiesto Roberto 23/04 */
+body.page-dashboard .app-main,
+body.page-account .app-main {
+  padding-left: clamp(88px, 13vw, 320px);  /* shift a destra */
+}
+body.page-genera .app-main {
+  padding-left: clamp(40px, 8vw, 180px);   /* shift a sinistra */
+}
 .app-main > * {
   display: block;
   width: 100%;
