@@ -3130,7 +3130,7 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
     from reportlab.lib import colors
     from reportlab.platypus import (
         BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer,
-        PageBreak, Table, TableStyle, KeepTogether,
+        PageBreak, Table, TableStyle, KeepTogether, Flowable,
     )
     from reportlab.lib.enums import TA_LEFT, TA_CENTER
 
@@ -3512,11 +3512,13 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
     for si, section in enumerate(_CHECKLIST_CONTENT["sections"]):
         flow.append(PageBreak())
         # Wrapper che updata _state.section_idx ogni volta che viene "disegnato"
-        class _SecMarker:
-            def __init__(self, idx): self.idx = idx
+        class _SecMarker(Flowable):
+            def __init__(self, idx):
+                super().__init__()
+                self.idx = idx
             def wrap(self, aW, aH): return (0, 0)
-            def draw(self_m):
-                _state["section_idx"] = self_m.idx
+            def draw(self):
+                _state["section_idx"] = self.idx
         flow.append(_SecMarker(si + 1))
 
         kicker = f"FASE {si+1} DI {len(_CHECKLIST_CONTENT['sections'])}  ·  {section.get('time', '')}"
@@ -3639,7 +3641,7 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
         bonus_body_style,
     )
     email_body = Paragraph(
-        '<font color="#334155" size="10.5" face="Courier"><b>Oggetto:</b> Seguito visita del [data] — [riferimento prodotto]<br/><br/>'
+        '<font color="#334155" size="10.5" name="Courier"><b>Oggetto:</b> Seguito visita del [data] — [riferimento prodotto]<br/><br/>'
         'Gentile [Sig./Sig.ra cognome],<br/><br/>'
         'grazie per il tempo dedicatomi durante la <b>visita del [data]</b>. '
         'Come concordato, le confermo le condizioni discusse su [prodotto/servizio]:<br/><br/>'
@@ -3669,7 +3671,7 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
         bonus_body_style,
     )
     off_body = Paragraph(
-        '<font color="#334155" size="10.5" face="Courier"><b>PROPOSTA COMMERCIALE N.</b> 2026/PP-[ddmm]/[SIGLA]<br/>'
+        '<font color="#334155" size="10.5" name="Courier"><b>PROPOSTA COMMERCIALE N.</b> 2026/PP-[ddmm]/[SIGLA]<br/>'
         '<b>Data emissione:</b> [data]  ·  <b>Validita\':</b> [N giorni]<br/><br/>'
         'Spett.le [Ragione Sociale Cliente]<br/>'
         'All\'attenzione di [Sig./Sig.ra Cognome]<br/><br/>'
