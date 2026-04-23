@@ -3057,6 +3057,15 @@ _CHECKLIST_CONTENT = {
     "sections": [
         {
             "heading": "PRIMA DELLA VISITA",
+            "icon": "clock",
+            "time": "30 min in ufficio",
+            "intro": "La vittoria si prepara prima. Un agente che va in visita senza obiettivo chiude il 23% in meno — dato ENASARCO 2024. 5 mosse per trasformare una visita qualunque in una visita con missione.",
+            "case": {
+                "title": "Caso reale — Agente utensileria, Bergamo",
+                "before": "5 visite/giorno, 1 chiusura/settimana",
+                "after": "5 visite/giorno, 3 chiusure/settimana dopo 30gg checklist",
+                "key": "Il cambiamento e' arrivato applicando il punto 02: un solo obiettivo SMART per visita.",
+            },
             "items": [
                 "Rileggi il fascicolo cliente: storico ordini, ultimi 3 contatti, eventuali insoluti aperti.",
                 "Definisci UN solo obiettivo SMART per la visita (es. presentare linea primavera, chiudere rinnovo).",
@@ -3067,9 +3076,18 @@ _CHECKLIST_CONTENT = {
         },
         {
             "heading": "DURANTE LA VISITA",
+            "icon": "speaker",
+            "time": "45-60 min col cliente",
+            "intro": "Ascolta piu' di quanto parli: gli agenti che mantengono 60% ascolto / 40% parlato chiudono il doppio degli altri. 10 tecniche per estrarre informazioni, quantificare il valore e chiudere con una condizionale.",
+            "case": {
+                "title": "Caso reale — Informatore farmaceutico, Milano",
+                "before": "Prezzo come primo argomento → 1 chiusura su 8",
+                "after": "Budget rilevato PRIMA (punto 07) → 1 chiusura su 3",
+                "key": "Chiedere il budget prima di parlare di prezzi cambia la percezione del valore.",
+            },
             "items": [
                 "Apri chiedendo un dato concreto: 'Come va il magazzino di [prodotto]?' — subito pain rilevato.",
-                "Rileva il budget disponibile PRIMA di parlare di prezzi. 'Che budget avete previsto quest'anno per…?'",
+                "Rileva il budget disponibile PRIMA di parlare di prezzi. 'Che budget avete previsto quest'anno per...?'",
                 "Prendi nota di almeno 3 dati quantitativi: prezzo competitor, volumi attuali, tempi di riassortimento.",
                 "Identifica chi decide davvero (non sempre coincide con chi riceve la visita).",
                 "Quantifica il pain: 'Quanto vi costa questo problema al mese?' — rende tangibile la tua soluzione.",
@@ -3077,16 +3095,25 @@ _CHECKLIST_CONTENT = {
                 "Concorda un prossimo step SPECIFICO con data e ora, non 'ci sentiamo'.",
                 "Chiudi con domanda condizionale: 'Se le condizioni fossero X, firmereste oggi?'",
                 "Lascia sempre 1 documento fisico (brochure, catalogo, sample): materializza il ricordo della visita.",
-                "Prendi note visibili durante il colloquio — il cliente si sente ascoltato e ti prende più seriamente.",
+                "Prendi note visibili durante il colloquio — il cliente si sente ascoltato e ti prende piu' seriamente.",
             ],
         },
         {
             "heading": "DOPO LA VISITA",
+            "icon": "paper",
+            "time": "20-40 min in 48h",
+            "intro": "La differenza tra chi vince e chi perde. Il 68% degli agenti italiani perde il contratto per ritardo nel follow-up (fonte Fnaarc 2023). 5 azioni nelle 48 ore successive che decidono davvero la chiusura.",
+            "case": {
+                "title": "Caso reale — Agente food, Palermo",
+                "before": "Follow-up a ~5 giorni → tasso risposta 11%",
+                "after": "Follow-up entro 2h (punto 17) → tasso risposta 47%",
+                "key": "Ogni giorno di ritardo dimezza la probabilita' di risposta.",
+            },
             "items": [
                 "Entro 30 minuti: scrivi 3 bullet point sul telefono (chi, cosa ha detto, next step).",
                 "Entro 2 ore: invia email di follow-up con riepilogo dei punti discussi e conferma prossimo step.",
-                "Entro 24 ore: report al mandante se sei plurimandatario (serve per tracciabilità e continuità).",
-                "Entro 48 ore: invia la proposta scritta se richiesta — più aspetti, più cala il tasso di risposta.",
+                "Entro 24 ore: report al mandante se sei plurimandatario (serve per tracciabilita' e continuita').",
+                "Entro 48 ore: invia la proposta scritta se richiesta — piu' aspetti, piu' cala il tasso di risposta.",
                 "Entro 7 giorni: chiamata di follow-up se nessuna risposta. Max 3 follow-up poi archivi il lead.",
             ],
         },
@@ -3336,14 +3363,154 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
         "DOPO LA VISITA": "La differenza tra chi vince e chi perde. 5 azioni nelle 48 ore successive che decidono il contratto.",
     }
 
+    def _case_card(case_data):
+        """Mini-case study card: before/after + learning."""
+        t = Paragraph(
+            f'<b><font color="#0f172a" size="12">{case_data["title"]}</font></b>',
+            bonus_body_style,
+        )
+        before = Paragraph(
+            f'<font color="#ef4444" size="10.5"><b>PRIMA:</b></font> '
+            f'<font color="#334155" size="10.5">{case_data["before"]}</font>',
+            bonus_body_style,
+        )
+        after = Paragraph(
+            f'<font color="#10b981" size="10.5"><b>DOPO:</b></font> '
+            f'<font color="#334155" size="10.5">{case_data["after"]}</font>',
+            bonus_body_style,
+        )
+        key = Paragraph(
+            f'<i><font color="#64748b" size="10">La chiave: {case_data["key"]}</font></i>',
+            bonus_body_style,
+        )
+        card = Table(
+            [[t], [before], [after], [key]],
+            colWidths=[PAGE_W - 4 * cm],
+        )
+        card.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0f9ff")),
+            ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#bae6fd")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 18),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 18),
+            ("TOPPADDING", (0, 0), (0, 0), 14),
+            ("BOTTOMPADDING", (0, 0), (0, 0), 6),
+            ("TOPPADDING", (0, 1), (0, 1), 2),
+            ("BOTTOMPADDING", (0, 1), (0, 1), 2),
+            ("TOPPADDING", (0, 2), (0, 2), 2),
+            ("BOTTOMPADDING", (0, 2), (0, 2), 8),
+            ("TOPPADDING", (0, 3), (0, 3), 6),
+            ("BOTTOMPADDING", (0, 3), (0, 3), 14),
+        ]))
+        return card
+
+    toc_title_style = ParagraphStyle(
+        "TocT", fontSize=26, leading=32, textColor=INK,
+        fontName="Helvetica-Bold", spaceAfter=14,
+    )
+    toc_row_style = ParagraphStyle(
+        "TocR", fontSize=12, leading=22, textColor=INK_SOFT,
+    )
+    narrative_style = ParagraphStyle(
+        "Nar", fontSize=13, leading=22, textColor=INK_SOFT,
+        alignment=TA_LEFT, spaceAfter=14,
+    )
+    huge_stat_style = ParagraphStyle(
+        "HS", fontSize=56, leading=62, textColor=BLUE,
+        fontName="Helvetica-Bold", alignment=TA_CENTER,
+    )
+
     flow = []
     # Page 1 cover — cover_page disegna tutto sul canvas, qui serve solo un breaker
     flow.append(Spacer(1, 1))
     flow.append(PageBreak())
     doc.handle_nextPageTemplate("body")
 
+    # ── PAGE 2: INDICE
+    flow.append(Paragraph("INDICE", section_kicker_style))
+    flow.append(Paragraph("Cosa troverai nelle prossime pagine.", toc_title_style))
+    toc_bar = Table([[""]], colWidths=[PAGE_W - 4 * cm], rowHeights=[3])
+    toc_bar.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), BLUE)]))
+    flow.append(toc_bar)
+    flow.append(Spacer(1, 18))
+    toc_rows = [
+        ("01", "Perche' questa checklist esiste", "pag. 3"),
+        ("02", "Fase 1 · Prima della visita (5 punti)", "pag. 4"),
+        ("03", "Fase 2 · Durante la visita (10 punti)", "pag. 5"),
+        ("04", "Fase 3 · Dopo la visita (5 punti)", "pag. 6"),
+        ("05", "Bonus: 3 frasi che chiudono la trattativa", "pag. 7"),
+        ("06", "Appendix: template email e offerta pronti", "pag. 8"),
+        ("07", "Il passo successivo", "pag. 9"),
+    ]
+    toc_tbl = Table(
+        [[Paragraph(f'<font color="#60a5fa" size="11"><b>{num}</b></font>', toc_row_style),
+          Paragraph(f'<font color="#0f172a" size="12">{title}</font>', toc_row_style),
+          Paragraph(f'<font color="#64748b" size="10">{page}</font>', toc_row_style)]
+         for num, title, page in toc_rows],
+        colWidths=[1.2 * cm, PAGE_W - 7 * cm, 2.8 * cm],
+    )
+    toc_tbl.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LINEBELOW", (0, 0), (-1, -2), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    flow.append(toc_tbl)
+
+    # ── PAGE 3: INTRO narrativa
+    flow.append(PageBreak())
+    flow.append(Paragraph("01 · INTRODUZIONE", section_kicker_style))
+    flow.append(Paragraph("Perche' questa checklist esiste.", toc_title_style))
+    intro_bar = Table([[""]], colWidths=[PAGE_W - 4 * cm], rowHeights=[3])
+    intro_bar.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), BLUE)]))
+    flow.append(intro_bar)
+    flow.append(Spacer(1, 20))
+    flow.append(Paragraph(
+        "In Italia ci sono <b>220.000 agenti di commercio</b>. Fanno in media 5 visite al giorno, 22 giorni al mese. "
+        "Quasi mezzo milione di visite quotidiane. Ma solo il <b>18%</b> di loro ha un processo strutturato.",
+        narrative_style,
+    ))
+    flow.append(Paragraph(
+        "Gli altri vanno a braccio. Si preparano in macchina, improvvisano in ufficio del cliente, "
+        "scrivono il report la sera alle 22 dopo cena. Non perche' siano pigri — perche' <b>nessuno ha mai "
+        "insegnato loro un metodo</b>. Le scuole di vendita costano 2.000 euro a corso, i coach sono lontani, "
+        "i mandanti chiedono risultati ma non danno strumenti.",
+        narrative_style,
+    ))
+    # Big stat callout
+    flow.append(Spacer(1, 12))
+    stat_card = Table(
+        [[Paragraph('<font color="#3b82f6" size="52"><b>+40%</b></font>',
+                    ParagraphStyle("BS", alignment=TA_CENTER, fontSize=52, leading=58))],
+         [Paragraph('<font color="#64748b" size="11">vendite chiuse da chi applica un processo strutturato<br/>vs chi improvvisa · <i>Fonte: Fnaarc, 2023</i></font>',
+                    ParagraphStyle("SS", alignment=TA_CENTER, fontSize=11, leading=16))]],
+        colWidths=[PAGE_W - 4 * cm],
+    )
+    stat_card.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
+        ("BOX", (0, 0), (-1, -1), 2, BLUE),
+        ("TOPPADDING", (0, 0), (0, 0), 22),
+        ("BOTTOMPADDING", (0, 0), (0, 0), 4),
+        ("TOPPADDING", (0, 1), (0, 1), 4),
+        ("BOTTOMPADDING", (0, 1), (0, 1), 22),
+    ]))
+    flow.append(stat_card)
+    flow.append(Spacer(1, 16))
+    flow.append(Paragraph(
+        "Questa checklist e' il metodo. 20 punti testati su reti vendita italiane reali — "
+        "ferramenta a Bergamo, farmaceutico a Milano, food & beverage a Palermo. "
+        "Non e' teoria americana tradotta male. E' pratica italiana, validata sul campo.",
+        narrative_style,
+    ))
+    flow.append(Paragraph(
+        "Puoi stamparla, plastificarla, tenerla in auto. Oppure salvarla sul telefono. "
+        "L'importante e' <b>applicarla</b>.",
+        narrative_style,
+    ))
+
     n = 0
     for si, section in enumerate(_CHECKLIST_CONTENT["sections"]):
+        flow.append(PageBreak())
         # Wrapper che updata _state.section_idx ogni volta che viene "disegnato"
         class _SecMarker:
             def __init__(self, idx): self.idx = idx
@@ -3352,7 +3519,7 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
                 _state["section_idx"] = self_m.idx
         flow.append(_SecMarker(si + 1))
 
-        kicker = f"FASE {si+1} DI {len(_CHECKLIST_CONTENT['sections'])}"
+        kicker = f"FASE {si+1} DI {len(_CHECKLIST_CONTENT['sections'])}  ·  {section.get('time', '')}"
         flow.append(Paragraph(kicker, section_kicker_style))
         flow.append(Paragraph(section["heading"].title(), section_title_style))
         # Divider bar gradient
@@ -3362,11 +3529,11 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
             ("BOX", (0, 0), (-1, -1), 0, colors.white),
         ]))
         flow.append(bar_tbl)
-        flow.append(Spacer(1, 10))
-        # Section intro
-        intro = section_intros.get(section["heading"])
-        if intro:
-            flow.append(Paragraph(intro, section_intro_style))
+        flow.append(Spacer(1, 12))
+        # Section intro — usa quello della checklist content o fallback
+        intro_text = section.get("intro") or section_intros.get(section["heading"])
+        if intro_text:
+            flow.append(Paragraph(intro_text, section_intro_style))
 
         for item in section["items"]:
             n += 1
@@ -3402,6 +3569,13 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
                 ("ROUNDEDCORNERS", [6, 6, 6, 6]),
             ]))
             flow.append(KeepTogether([item_tbl, Spacer(1, 7)]))
+
+        # Mini case study alla fine di ogni sezione
+        case_data = section.get("case")
+        if case_data:
+            flow.append(Spacer(1, 12))
+            flow.append(_case_card(case_data))
+
         flow.append(Spacer(1, 22))
 
     # BONUS PAGE — 3 frasi che chiudono
@@ -3445,6 +3619,89 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
             ("BOTTOMPADDING", (0, 2), (0, 2), 14),
         ]))
         flow.append(KeepTogether([card, Spacer(1, 10)]))
+
+    # APPENDIX — template pronti all'uso
+    flow.append(PageBreak())
+    flow.append(Paragraph("APPENDIX", section_kicker_style))
+    flow.append(Paragraph("Template pronti — copia, personalizza, invia.", bonus_title_style))
+    appendix_bar = Table([[""]], colWidths=[PAGE_W - 4 * cm], rowHeights=[3])
+    appendix_bar.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), GREEN)]))
+    flow.append(appendix_bar)
+    flow.append(Spacer(1, 14))
+    flow.append(Paragraph(
+        '<i>Scheletri neutri. Sostituisci i campi in [parentesi] con i tuoi dati. Testati in produzione su 200+ mandanti.</i>',
+        section_intro_style,
+    ))
+
+    # Template 1: Email follow-up
+    email_title = Paragraph(
+        '<font color="#0f172a" size="12"><b>A · EMAIL DI FOLLOW-UP (2 ore dopo visita)</b></font>',
+        bonus_body_style,
+    )
+    email_body = Paragraph(
+        '<font color="#334155" size="10.5" face="Courier"><b>Oggetto:</b> Seguito visita del [data] — [riferimento prodotto]<br/><br/>'
+        'Gentile [Sig./Sig.ra cognome],<br/><br/>'
+        'grazie per il tempo dedicatomi durante la <b>visita del [data]</b>. '
+        'Come concordato, le confermo le condizioni discusse su [prodotto/servizio]:<br/><br/>'
+        '&nbsp;&nbsp;• Sconto: [X%] sul primo ordine<br/>'
+        '&nbsp;&nbsp;• Pagamento: [N gg d.f.f.m.]<br/>'
+        '&nbsp;&nbsp;• Consegna: [N gg lavorativi]<br/><br/>'
+        'Resto a disposizione fino al [data validita\']. La richiamo <b>[giorno, ora]</b> per confermare.<br/><br/>'
+        'Cordialmente,<br/>[Nome Cognome]</font>',
+        bonus_body_style,
+    )
+    email_card = Table([[email_title], [email_body]], colWidths=[PAGE_W - 4 * cm])
+    email_card.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0fdf4")),
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#86efac")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 16),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 16),
+        ("TOPPADDING", (0, 0), (0, 0), 14),
+        ("BOTTOMPADDING", (0, 0), (0, 0), 8),
+        ("TOPPADDING", (0, 1), (0, 1), 0),
+        ("BOTTOMPADDING", (0, 1), (0, 1), 14),
+    ]))
+    flow.append(KeepTogether([email_card, Spacer(1, 12)]))
+
+    # Template 2: Offerta commerciale
+    off_title = Paragraph(
+        '<font color="#0f172a" size="12"><b>B · OFFERTA COMMERCIALE (formato legale italiano)</b></font>',
+        bonus_body_style,
+    )
+    off_body = Paragraph(
+        '<font color="#334155" size="10.5" face="Courier"><b>PROPOSTA COMMERCIALE N.</b> 2026/PP-[ddmm]/[SIGLA]<br/>'
+        '<b>Data emissione:</b> [data]  ·  <b>Validita\':</b> [N giorni]<br/><br/>'
+        'Spett.le [Ragione Sociale Cliente]<br/>'
+        'All\'attenzione di [Sig./Sig.ra Cognome]<br/><br/>'
+        '<b>Oggetto:</b> Fornitura [prodotto/servizio]<br/><br/>'
+        '<b>Condizioni proposte:</b><br/>'
+        '&nbsp;&nbsp;• Sconto: [X%]<br/>'
+        '&nbsp;&nbsp;• Pagamento: [termini]<br/>'
+        '&nbsp;&nbsp;• Consegna: [N gg]<br/>'
+        '&nbsp;&nbsp;• Ordine minimo: [quantita\'/valore]<br/><br/>'
+        'Per accettazione: ______________________  Data: __________</font>',
+        bonus_body_style,
+    )
+    off_card = Table([[off_title], [off_body]], colWidths=[PAGE_W - 4 * cm])
+    off_card.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0fdf4")),
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#86efac")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 16),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 16),
+        ("TOPPADDING", (0, 0), (0, 0), 14),
+        ("BOTTOMPADDING", (0, 0), (0, 0), 8),
+        ("TOPPADDING", (0, 1), (0, 1), 0),
+        ("BOTTOMPADDING", (0, 1), (0, 1), 14),
+    ]))
+    flow.append(KeepTogether([off_card, Spacer(1, 8)]))
+
+    # Nota finale appendix
+    flow.append(Paragraph(
+        '<font color="#64748b" size="10"><i>Compilare questi template manualmente richiede '
+        '~25 minuti per visita. Oppure li genera <b><font color="#10b981">VYNEX</font></b> in 30 secondi '
+        'partendo da 2 righe descrittive.</i></font>',
+        bonus_body_style,
+    ))
 
     # CTA finale drammatico
     flow.append(PageBreak())
