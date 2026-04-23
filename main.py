@@ -47,7 +47,7 @@ from stripe_handler import (
 from rate_limit import limiter, rate_limit_exceeded_handler, RateLimitExceeded
 from emailer import (
     send_welcome_email, send_password_reset_email, send_verification_email,
-    send_demo_recovery_email,
+    send_demo_recovery_email, send_lead_magnet_email,
 )
 from logging_setup import configure_logging, RequestIdMiddleware, user_id_var
 from oauth_google import (
@@ -3188,6 +3188,7 @@ async def api_lead_magnet_checklist(
     except EmailNotValidError:
         return RedirectResponse("/?error=Email+non+valida", status_code=302)
 
+    lead = None
     try:
         lead, _c = await upsert_lead(
             db, email=email_norm,
@@ -3203,6 +3204,21 @@ async def api_lead_magnet_checklist(
         )
     except Exception:
         logger.exception("lead_magnet capture failed")
+
+    # Invia email con PDF link + enroll nella sequence drip (fire-and-forget,
+    # non blocca il redirect al download se l'email fallisce).
+    try:
+        base = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
+        pdf_link = f"{base}/lead-magnet/checklist-visita.pdf"
+        await send_lead_magnet_email(email_norm, (full_name or "").strip(), pdf_link)
+    except Exception:
+        logger.exception("lead_magnet email send failed email=%s", email_norm)
+
+    if lead is not None:
+        try:
+            await enroll_lead_in_sequence(db, lead, SEQUENCE_LEAD_DEMO)
+        except Exception:
+            logger.exception("lead_magnet drip enroll failed lead=%s", lead.id)
 
     # Redirect direct al PDF — download immediato
     return RedirectResponse("/lead-magnet/checklist-visita.pdf", status_code=302)

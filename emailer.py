@@ -131,6 +131,24 @@ async def send_welcome_email(to: str, name: str) -> bool:
     return await _send(to, "Benvenuto su VYNEX", _wrap(body))
 
 
+async def send_lead_magnet_email(to: str, name: str, pdf_link: str) -> bool:
+    first = (name.split()[0] if name else "ciao")
+    body = f"""
+    <h1 style="font-size:22px;color:#f1f5f9;margin:0 0 14px">La tua checklist è pronta, {first}.</h1>
+    <p style="color:#cbd5e1;line-height:1.7;margin:0 0 16px">Grazie per aver scaricato <strong style="color:#f1f5f9">La visita commerciale perfetta in 20 punti</strong>.
+    È una checklist pratica testata su reti vendita italiane reali: cosa fare <strong>prima</strong>, <strong>durante</strong> e <strong>dopo</strong> ogni visita per chiudere più contratti e non perdere clienti.</p>
+    <p style="text-align:center;margin:28px 0"><a href="{pdf_link}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">📄 Scarica la checklist PDF</a></p>
+    <p style="color:#94a3b8;line-height:1.7;font-size:14px;margin:0 0 10px">Salvati questa email: il link funziona sempre, così la ritrovi quando vuoi.</p>
+    <div style="margin-top:32px;padding:20px 22px;background:rgba(59,130,246,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:12px">
+      <div style="font-size:13px;font-weight:700;color:#60a5fa;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">Bonus — provalo adesso</div>
+      <p style="color:#cbd5e1;line-height:1.6;margin:0 0 14px;font-size:14.5px">La checklist te la fai da sola se usi <strong style="color:#f1f5f9">VYNEX</strong>: scrivi 2 righe post-visita, VYNEX ti prepara report + email di follow-up + offerta commerciale in 30 secondi.</p>
+      <a href="{BASE_URL}/demo" style="display:inline-block;background:rgba(15,23,42,.8);border:1px solid #334155;color:#f1f5f9;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:13.5px;font-weight:600">Prova VYNEX gratis (senza account) →</a>
+    </div>
+    <p style="color:#64748b;font-size:12px;line-height:1.7;margin:28px 0 0">Nei prossimi giorni ti manderò 2-3 email con altri template e guide pratiche per agenti. Zero spam. Puoi disiscriverti in un click.</p>
+    """
+    return await _send(to, "📄 La tua checklist VYNEX — 20 punti per la visita perfetta", _wrap(body))
+
+
 async def send_demo_recovery_email(to: str, name: str, result_link: str) -> bool:
     first = name.split()[0] if name else "ciao"
     body = f"""
