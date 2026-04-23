@@ -998,7 +998,7 @@ textarea {
 .app-main {
   flex: 1;
   margin-left: var(--sidebar-w);
-  padding: 48px clamp(24px, 3vw, 48px) 96px clamp(56px, 8vw, 180px);
+  padding: 48px clamp(24px, 2vw, 40px) 96px clamp(120px, 18vw, 420px);
   max-width: calc(100vw - var(--sidebar-w));
   min-height: 100vh;
   min-height: 100dvh;
@@ -1006,8 +1006,8 @@ textarea {
 .app-main > * {
   display: block;
   width: 100%;
-  max-width: 920px;
-  margin-left: auto;
+  max-width: 880px;
+  margin-left: 0;
   margin-right: auto;
   box-sizing: border-box;
 }
