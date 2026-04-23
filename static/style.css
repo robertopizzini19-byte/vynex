@@ -567,7 +567,7 @@ textarea {
 }
 .mockup-title-slogan {
   position: absolute;
-  left: 50%;
+  left: 42%;
   top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
@@ -577,14 +577,17 @@ textarea {
   font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #60a5fa;
+  background: linear-gradient(135deg, var(--blue), var(--blue-d));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
   line-height: 1;
 }
 @media (max-width: 500px) {
-  .mockup-title-slogan { font-size: 13px; letter-spacing: .1em; }
+  .mockup-title-slogan { font-size: 13px; letter-spacing: .1em; left: 44%; }
 }
 .mockup-dots {
   display: flex;
