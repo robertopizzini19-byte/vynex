@@ -722,7 +722,7 @@
         </div>
 
         <div class="vnx-showcase-visual" aria-hidden="true">
-            <div class="vnx-showcase-frame">
+            <div class="vnx-showcase-frame" id="vnx-showcase-frame">
                 <div class="vnx-showcase-frame-bar">
                     <span></span><span></span><span></span>
                     <div class="vnx-showcase-frame-url">vynex.it/genera</div>
@@ -736,22 +736,29 @@
                     <div class="vnx-showcase-docs">
                         <div class="vnx-showcase-doc" style="--delay:0s">
                             <div class="vnx-showcase-doc-tag">📋 Report</div>
-                            <div class="vnx-showcase-doc-line line-full"></div>
-                            <div class="vnx-showcase-doc-line line-md"></div>
-                            <div class="vnx-showcase-doc-line line-full"></div>
-                            <div class="vnx-showcase-doc-line line-sm"></div>
+                            <div class="vnx-showcase-doc-content">
+                                <div><strong>Report visita — Ferramenta Bianchi</strong></div>
+                                <div>Cliente: Sig. Rossi · Bergamo · 23 aprile</div>
+                                <div><strong>Accordi:</strong> sconto 10% primo ordine, 30 gg d.f.f.m.</div>
+                                <div><strong>Next:</strong> richiamo 5 aprile ore 10:00, conferma ordine.</div>
+                            </div>
                         </div>
-                        <div class="vnx-showcase-doc" style="--delay:.3s">
+                        <div class="vnx-showcase-doc" style="--delay:.35s">
                             <div class="vnx-showcase-doc-tag">✉️ Email</div>
-                            <div class="vnx-showcase-doc-line line-full"></div>
-                            <div class="vnx-showcase-doc-line line-md"></div>
-                            <div class="vnx-showcase-doc-line line-full"></div>
+                            <div class="vnx-showcase-doc-content">
+                                <div><strong>Oggetto:</strong> Seguito visita 23 aprile — sconto confermato</div>
+                                <div>Gentile Sig. Rossi,</div>
+                                <div>le confermo lo <strong>sconto del 10%</strong> sul primo ordine, pagamento 30 gg. La richiamo il 5 aprile alle 10:00.</div>
+                            </div>
                         </div>
-                        <div class="vnx-showcase-doc" style="--delay:.6s">
+                        <div class="vnx-showcase-doc" style="--delay:.7s">
                             <div class="vnx-showcase-doc-tag">📄 Offerta</div>
-                            <div class="vnx-showcase-doc-line line-full"></div>
-                            <div class="vnx-showcase-doc-line line-md"></div>
-                            <div class="vnx-showcase-doc-line line-sm"></div>
+                            <div class="vnx-showcase-doc-content">
+                                <div><strong>PROPOSTA N° 2026/PP-2304/FB</strong></div>
+                                <div>Spett.le Ferramenta Bianchi · Bergamo</div>
+                                <div><strong>Sconto:</strong> 10% · <strong>Pagamento:</strong> 30 gg d.f.f.m.</div>
+                                <div><strong>Validità:</strong> 5 aprile 2026</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -759,6 +766,45 @@
         </div>
     </div>
 </section>
+
+<script>
+(function(){
+    var frame = document.getElementById('vnx-showcase-frame');
+    if (!frame) return;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { frame.classList.add('is-playing'); return; }
+
+    function replay() {
+        frame.classList.remove('is-playing');
+        // Force reflow so animation restarts
+        void frame.offsetWidth;
+        frame.classList.add('is-playing');
+    }
+
+    var seen = false;
+    var loopId = null;
+    function startLoop() {
+        if (loopId) return;
+        replay();
+        loopId = setInterval(replay, 7000);
+    }
+    function stopLoop() {
+        if (loopId) { clearInterval(loopId); loopId = null; }
+    }
+
+    if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function(entries){
+            entries.forEach(function(e){
+                if (e.isIntersecting) { seen = true; startLoop(); }
+                else if (seen) { stopLoop(); }
+            });
+        }, { threshold: 0.25 });
+        io.observe(frame);
+    } else {
+        startLoop();
+    }
+})();
+</script>
 
 <!-- SETTORI — social proof verticale -->
 <section class="vnx-sectors vnx-fade-in" aria-labelledby="sectors-title">
