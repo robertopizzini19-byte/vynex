@@ -568,35 +568,23 @@ textarea {
 .mockup-title-slogan {
   position: absolute;
   left: 50%;
-  top: 0;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
-  height: 18px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12.5px;
+  font-size: 18px;
   font-weight: 800;
-  letter-spacing: .16em;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 55%, #f472b6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200% auto;
-  animation: vnxSloganShimmer 4s ease-in-out infinite;
+  color: #60a5fa;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
-}
-@keyframes vnxSloganShimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mockup-title-slogan { animation: none; }
+  line-height: 1;
 }
 @media (max-width: 500px) {
-  .mockup-title-slogan { font-size: 10.5px; letter-spacing: .12em; }
+  .mockup-title-slogan { font-size: 13px; letter-spacing: .1em; }
 }
 .mockup-dots {
   display: flex;
