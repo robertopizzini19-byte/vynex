@@ -227,22 +227,58 @@ async def genera_documenti(input_testo: str, nome_agente: str, azienda_mandante:
         dict con chiavi: report_visita, email_followup, offerta_commerciale,
                          cliente_nome, azienda_cliente, tokens_used, generation_time_ms
     """
-    mandante_info = f"\nL'agente rappresenta il mandante: {azienda_mandante}" if azienda_mandante else ""
+    # Calcolo date servito al modello così non deve fare aritmetica (dove
+    # sbaglia ~30% delle volte): oggi, scadenza offerta +30gg calendario,
+    # consegna +10gg lavorativi (skip sab/dom, ignoriamo festivi).
+    from datetime import date as _date, timedelta as _td
+    _today = _date.today()
+    _scad_offerta = _today + _td(days=30)
+    _d = _today
+    _lav = 0
+    while _lav < 10:
+        _d = _d + _td(days=1)
+        if _d.weekday() < 5:  # 0-4 = lun-ven
+            _lav += 1
+    _consegna_prova = _d
+    _mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"]
+    def _it(d):
+        return f"{d.day} {_mesi[d.month-1]} {d.year}"
 
-    prompt = f"""L'agente di commercio {nome_agente} ha descritto così la sua visita/chiamata:
+    mandante_line = (
+        f"\n\nMANDANTE (nome esatto da inserire nel REPORT header e firma EMAIL/OFFERTA): {azienda_mandante}"
+        if azienda_mandante else
+        "\n\nMANDANTE: NON fornito — OMETTI completamente la riga mandante (non scrivere [da completare])."
+    )
 
-"{input_testo}"
-{mandante_info}
+    prompt = f"""L'agente di commercio "{nome_agente}" ha descritto così la sua visita/chiamata:
+
+\"\"\"
+{input_testo}
+\"\"\"
+{mandante_line}
+
+CONTESTO TEMPORALE (usa ESATTAMENTE queste date, non calcolare a mente):
+- Data di oggi (emissione documenti): {_it(_today)}
+- Scadenza offerta (+30 gg calendario): {_it(_scad_offerta)}
+- Consegna stimata ordine di prova (+10 gg lavorativi): {_it(_consegna_prova)}
 
 Usa lo strumento `crea_documenti_commerciali` per generare i 3 documenti.
 
-Linee guida obbligatorie:
-- Estrai cliente, azienda, prodotti, sconti, date, obiezioni dal testo
-- Italiano professionale ma naturale, non robotico né template ovvio
-- Date in formato italiano (es. 5 aprile 2026)
-- Se un'informazione manca usa [da completare] come placeholder
-- Il report è per il mandante (interno), l'email è per il cliente (calda ma pro),
-  l'offerta è formale con condizioni chiare"""
+LINEE GUIDA OBBLIGATORIE:
+1. Estrai cliente, azienda, prodotti, sconti, date, obiezioni dal testo.
+2. Italiano professionale ma naturale, non robotico né template ovvio.
+3. Date in formato italiano discorsivo (es. "25 aprile 2026").
+4. VIETATO usare "[da completare]", "[Azienda]", "[Titolo]", "[Contatti]" o qualsiasi placeholder con parentesi quadre nei documenti. Se un dato non è noto:
+   - Se è il MANDANTE e non è fornito sopra → OMETTI la riga.
+   - Se sono TERMINI DI PAGAMENTO non specificati → scrivi "Da concordare in fase di conferma d'ordine".
+   - Se è la firma → firma SEMPRE con il nome esatto dell'agente ({nome_agente}) + "{azienda_mandante or ''}" se fornito, SENZA placeholder vuoti.
+5. FIRMA STANDARD (da usare nelle 3 firme di Report/Email/Offerta):
+   Nome: {nome_agente}
+   Ruolo: Agente Commerciale
+   Mandante: {azienda_mandante or "(nessun mandante → ometti la riga)"}
+6. Il REPORT è per il mandante (interno, operativo). Header DEVE includere "Mandante: {azienda_mandante or 'N/D'}" se fornito.
+7. L'EMAIL è per il cliente: tono Lei di cortesia ("La ringrazio", "troverà", "La ricontatterò"). MAI "voi/troverete/avrete" in corpo email.
+8. L'OFFERTA è formale con condizioni chiare, usa le date esatte dal CONTESTO TEMPORALE sopra — non inventarne altre. Se l'input menziona "ordine di prova" includi sezione finale "Ordine di prova suggerito" con calcolo valore."""
 
     t0 = time.perf_counter()
     # max_tokens=4096: 3 documenti ~600-900 tokens ognuno + overhead schema
