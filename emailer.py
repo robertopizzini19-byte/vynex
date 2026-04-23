@@ -149,18 +149,59 @@ async def send_welcome_email(to: str, name: str) -> bool:
 
 async def send_lead_magnet_email(to: str, name: str, pdf_link: str) -> bool:
     first = (name.split()[0] if name else "ciao")
+    # Preheader (invisible) — shown in inbox preview next to subject
+    preheader = "4 pagine pratiche: 20 punti azione, 3 frasi che chiudono, scaricala ora."
     body = f"""
-    <h1 style="font-size:22px;color:#f1f5f9;margin:0 0 14px">La tua checklist è pronta, {first}.</h1>
-    <p style="color:#cbd5e1;line-height:1.7;margin:0 0 16px">Grazie per aver scaricato <strong style="color:#f1f5f9">La visita commerciale perfetta in 20 punti</strong>.
-    È una checklist pratica testata su reti vendita italiane reali: cosa fare <strong>prima</strong>, <strong>durante</strong> e <strong>dopo</strong> ogni visita per chiudere più contratti e non perdere clienti.</p>
-    <p style="text-align:center;margin:28px 0"><a href="{pdf_link}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">📄 Scarica la checklist PDF</a></p>
-    <p style="color:#94a3b8;line-height:1.7;font-size:14px;margin:0 0 10px">Salvati questa email: il link funziona sempre, così la ritrovi quando vuoi.</p>
-    <div style="margin-top:32px;padding:20px 22px;background:rgba(59,130,246,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:12px">
-      <div style="font-size:13px;font-weight:700;color:#60a5fa;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">Bonus — provalo adesso</div>
-      <p style="color:#cbd5e1;line-height:1.6;margin:0 0 14px;font-size:14.5px">La checklist te la fai da sola se usi <strong style="color:#f1f5f9">VYNEX</strong>: scrivi 2 righe post-visita, VYNEX ti prepara report + email di follow-up + offerta commerciale in 30 secondi.</p>
-      <a href="{BASE_URL}/demo" style="display:inline-block;background:rgba(15,23,42,.8);border:1px solid #334155;color:#f1f5f9;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:13.5px;font-weight:600">Prova VYNEX gratis (senza account) →</a>
+    <!-- preheader -->
+    <div style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">{preheader}</div>
+
+    <!-- Hero emoji badge -->
+    <div style="text-align:center;margin:0 0 14px">
+      <span style="display:inline-block;padding:8px 16px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:100px;font-size:11px;font-weight:800;letter-spacing:1.4px;color:#ffffff;text-transform:uppercase">✨ Checklist premium · PDF 4 pagine</span>
     </div>
-    <p style="color:#64748b;font-size:12px;line-height:1.7;margin:28px 0 0">Nei prossimi giorni ti manderò 2-3 email con altri template e guide pratiche per agenti. Zero spam. Puoi disiscriverti in un click.</p>
+
+    <h1 style="font-size:26px;line-height:1.2;font-weight:900;color:#f1f5f9;margin:0 0 14px;text-align:center;letter-spacing:-.01em">La tua checklist è pronta, {first}.</h1>
+
+    <p style="color:#cbd5e1;line-height:1.7;margin:0 0 22px;font-size:15.5px;text-align:center">Quattro pagine tascabili, zero fuffa. <strong style="color:#f1f5f9">20 punti azionabili</strong> validati su reti vendita italiane reali: prima, durante e dopo la visita.</p>
+
+    <!-- CTA button wrap with pseudo-3D -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 14px">
+      <tr><td align="center">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr><td style="border-radius:12px;background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 100%);box-shadow:0 8px 24px rgba(59,130,246,.35)">
+            <a href="{pdf_link}" target="_blank" style="display:inline-block;padding:16px 36px;font-size:16px;font-weight:800;color:#ffffff;text-decoration:none;letter-spacing:.3px">📄&nbsp;&nbsp;Scarica la checklist PDF</a>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+    <p style="color:#94a3b8;line-height:1.6;font-size:12.5px;text-align:center;margin:0 0 28px">Il link è permanente. Salva questa email, ritrovi la checklist quando vuoi.</p>
+
+    <!-- Cosa trovi dentro -->
+    <div style="padding:24px 22px;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.18);border-radius:14px;margin:0 0 24px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#60a5fa;text-transform:uppercase;margin-bottom:14px">Cosa trovi dentro</div>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr><td style="padding:5px 0;color:#e2e8f0;font-size:14px;line-height:1.65"><span style="color:#60a5fa;font-weight:800">01.</span>&nbsp; <strong>5 punti</strong> per preparare la visita (vittoria si prepara in ufficio)</td></tr>
+        <tr><td style="padding:5px 0;color:#e2e8f0;font-size:14px;line-height:1.65"><span style="color:#8b5cf6;font-weight:800">02.</span>&nbsp; <strong>10 tecniche</strong> per ascoltare, quantificare e chiudere</td></tr>
+        <tr><td style="padding:5px 0;color:#e2e8f0;font-size:14px;line-height:1.65"><span style="color:#ec4899;font-weight:800">03.</span>&nbsp; <strong>5 azioni</strong> nelle 48h dopo che decidono il contratto</td></tr>
+        <tr><td style="padding:5px 0;color:#e2e8f0;font-size:14px;line-height:1.65"><span style="color:#10b981;font-weight:800">✦</span>&nbsp; <strong>Bonus:</strong> 3 frasi testate che chiudono la trattativa</td></tr>
+      </table>
+    </div>
+
+    <!-- Quote block -->
+    <div style="padding:22px 24px;background:rgba(15,23,42,0.7);border-left:3px solid #60a5fa;border-radius:0 10px 10px 0;margin:0 0 28px">
+      <p style="color:#cbd5e1;line-height:1.7;margin:0;font-style:italic;font-size:14.5px">"Gli ultimi 5 punti — report, email di follow-up, offerta — sono quelli che rubano le ore la sera. Puoi scriverli tu. Oppure li scrive <strong style="color:#f1f5f9;font-style:normal">VYNEX</strong> in 30 secondi."</p>
+      <p style="color:#94a3b8;font-size:12px;margin:10px 0 0">— Roberto Pizzini, fondatore VYNEX</p>
+    </div>
+
+    <!-- Bonus CTA -->
+    <div style="padding:24px 22px;background:linear-gradient(135deg,rgba(59,130,246,0.10),rgba(139,92,246,0.08));border:1px solid rgba(96,165,250,0.25);border-radius:14px;margin:0 0 24px;text-align:center">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#f472b6;text-transform:uppercase;margin-bottom:10px">Bonus — Provalo ora</div>
+      <p style="color:#cbd5e1;line-height:1.6;margin:0 0 16px;font-size:14.5px">La parte <strong style="color:#f1f5f9">"dopo la visita"</strong> della checklist? VYNEX la fa in 30 secondi. Scrivi due righe, ricevi 3 documenti pronti.</p>
+      <a href="{BASE_URL}/demo" style="display:inline-block;background:rgba(15,23,42,.85);border:1px solid #60a5fa;color:#60a5fa;padding:12px 24px;border-radius:10px;text-decoration:none;font-size:13.5px;font-weight:700">Prova la demo gratis →</a>
+      <div style="color:#64748b;font-size:11px;margin-top:10px">Senza account · senza carta · 30 secondi</div>
+    </div>
+
+    <p style="color:#64748b;font-size:12.5px;line-height:1.7;margin:0;text-align:center">Nei prossimi 14 giorni ti mando 3 email con template pratici. Zero spam, disiscrizione 1 click.</p>
     """
     return await _send(to, "📄 La tua checklist VYNEX — 20 punti per la visita perfetta", _wrap(body))
 

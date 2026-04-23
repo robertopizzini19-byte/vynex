@@ -3095,12 +3095,11 @@ _CHECKLIST_CONTENT = {
 
 
 def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
-    """PDF premium: cover gradient + accent bar per pagina + numerazione pill + footer brand.
-    ReportLab-only, zero font esterni (Helvetica-base), safe su Railway.
-    """
+    """PDF premium editoriale: cover gradient + watermark sezioni + item card con check +
+    bonus page + CTA finale. ReportLab-only (Helvetica), safe su Railway."""
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import cm, mm
+    from reportlab.lib.units import cm
     from reportlab.lib import colors
     from reportlab.platypus import (
         BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer,
@@ -3110,107 +3109,186 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
 
     PAGE_W, PAGE_H = A4
     BLUE = colors.HexColor("#3b82f6")
+    BLUE_L = colors.HexColor("#60a5fa")
+    BLUE_XL = colors.HexColor("#93c5fd")
     PURPLE = colors.HexColor("#8b5cf6")
     PINK = colors.HexColor("#f472b6")
+    GREEN = colors.HexColor("#10b981")
     INK = colors.HexColor("#0f172a")
     INK_SOFT = colors.HexColor("#334155")
     MUTED = colors.HexColor("#64748b")
-    LIGHT_BG = colors.HexColor("#f8fafc")
+    CARD_BG = colors.HexColor("#f8fafc")
+    CARD_BG_BLUE = colors.HexColor("#eff6ff")
     DARK_BG = colors.HexColor("#04060f")
+    DARK_CARD = colors.HexColor("#0b1020")
+
+    # Shared state for body pages: current section number for watermark
+    _state = {"section_idx": 0, "section_total": 3}
 
     buf = io.BytesIO()
 
     def cover_page(c, doc):
         c.saveState()
-        # Dark background full-bleed
+        # Full-bleed dark bg
         c.setFillColor(DARK_BG)
         c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
-        # Gradient bands (simulated: 3 stripes at top)
-        for i, (col, y_off) in enumerate([(BLUE, 0), (PURPLE, 4), (PINK, 8)]):
-            c.setFillColor(col)
-            c.setFillAlpha(0.35 - i * 0.08)
-            c.rect(0, PAGE_H - 6 - y_off, PAGE_W, 3, fill=1, stroke=0)
+        # Aurora-like gradient glow top-left (multiple translucent circles simulate blur)
+        for r, a in [(9 * cm, 0.15), (6 * cm, 0.12), (3.5 * cm, 0.10)]:
+            c.setFillColor(BLUE)
+            c.setFillAlpha(a)
+            c.circle(3 * cm, PAGE_H - 3 * cm, r, fill=1, stroke=0)
+        for r, a in [(8 * cm, 0.12), (5 * cm, 0.10)]:
+            c.setFillColor(PURPLE)
+            c.setFillAlpha(a)
+            c.circle(PAGE_W - 2 * cm, PAGE_H - 8 * cm, r, fill=1, stroke=0)
         c.setFillAlpha(1.0)
-        # Logo wordmark
+
+        # Gradient bands top (3 thin stripes)
+        for i, col in enumerate([BLUE, PURPLE, PINK]):
+            c.setFillColor(col)
+            c.setFillAlpha(0.85 - i * 0.12)
+            c.rect(0, PAGE_H - 4 - i * 3, PAGE_W, 2.5, fill=1, stroke=0)
+        c.setFillAlpha(1.0)
+
+        # Huge "20" watermark (background)
         c.setFillColor(colors.HexColor("#60a5fa"))
-        c.setFont("Helvetica-Bold", 28)
-        c.drawString(2 * cm, PAGE_H - 3.5 * cm, "VYNEX")
+        c.setFillAlpha(0.06)
+        c.setFont("Helvetica-Bold", 380)
+        c.drawRightString(PAGE_W - 0.5 * cm, PAGE_H / 2 - 6 * cm, "20")
+        c.setFillAlpha(1.0)
+
+        # Logo wordmark
+        c.setFillColor(BLUE_L)
+        c.setFont("Helvetica-Bold", 30)
+        c.drawString(2 * cm, PAGE_H - 3.8 * cm, "VYNEX")
         c.setFillColor(MUTED)
-        c.setFont("Helvetica", 9)
-        c.drawString(2 * cm, PAGE_H - 4.1 * cm, "TU CHIUDI.  VYNEX SCRIVE.")
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(2 * cm, PAGE_H - 4.5 * cm, "TU CHIUDI.  VYNEX SCRIVE.")
+
+        # Edition tag top-right
+        c.setFillColor(colors.HexColor("#1e3a8a"))
+        c.setFillAlpha(0.4)
+        c.roundRect(PAGE_W - 5.2 * cm, PAGE_H - 4.0 * cm, 3.2 * cm, 0.7 * cm, 0.35 * cm, fill=1, stroke=0)
+        c.setFillAlpha(1.0)
+        c.setStrokeColor(colors.HexColor("#1d4ed8"))
+        c.setLineWidth(0.8)
+        c.roundRect(PAGE_W - 5.2 * cm, PAGE_H - 4.0 * cm, 3.2 * cm, 0.7 * cm, 0.35 * cm, fill=0, stroke=1)
+        c.setFillColor(BLUE_XL)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.drawString(PAGE_W - 5.0 * cm, PAGE_H - 3.55 * cm, "EDIZIONE 2026")
+
         # Kicker pill
         c.setFillColor(colors.HexColor("#1e3a8a"))
-        c.roundRect(2 * cm, PAGE_H - 6.5 * cm, 4.8 * cm, 0.7 * cm, 0.35 * cm, fill=1, stroke=0)
-        c.setFillColor(colors.HexColor("#93c5fd"))
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(2.35 * cm, PAGE_H - 6.05 * cm, "GUIDA PRATICA · PDF GRATIS")
+        c.roundRect(2 * cm, PAGE_H - 7.2 * cm, 5.8 * cm, 0.8 * cm, 0.4 * cm, fill=1, stroke=0)
+        c.setFillColor(BLUE_XL)
+        c.setFont("Helvetica-Bold", 9.5)
+        c.drawString(2.4 * cm, PAGE_H - 6.7 * cm, "GUIDA PRATICA  ·  PDF GRATIS  ·  3 PAGINE")
+
         # Big title
         c.setFillColor(colors.white)
-        c.setFont("Helvetica-Bold", 34)
-        c.drawString(2 * cm, PAGE_H - 9.0 * cm, "La visita commerciale")
-        c.setFillColor(colors.HexColor("#93c5fd"))
-        c.drawString(2 * cm, PAGE_H - 10.8 * cm, "perfetta in 20 punti.")
+        c.setFont("Helvetica-Bold", 40)
+        c.drawString(2 * cm, PAGE_H - 10.3 * cm, "La visita")
+        c.drawString(2 * cm, PAGE_H - 12.5 * cm, "commerciale")
+        c.setFillColor(BLUE_XL)
+        c.drawString(2 * cm, PAGE_H - 14.7 * cm, "perfetta.")
+        # Number highlight 20 punti
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica", 20)
+        c.drawString(2 * cm, PAGE_H - 16.4 * cm, "in ")
+        c.setFillColor(BLUE_L)
+        c.setFont("Helvetica-Bold", 22)
+        c.drawString(3.1 * cm, PAGE_H - 16.4 * cm, "20 punti")
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica", 20)
+        c.drawString(6.5 * cm, PAGE_H - 16.4 * cm, "azionabili oggi.")
+
         # Subtitle
         c.setFillColor(colors.HexColor("#cbd5e1"))
-        c.setFont("Helvetica", 12)
-        sub = "Checklist testata su reti vendita italiane reali:"
-        sub2 = "cosa fare prima, durante e dopo la visita per chiudere piu' contratti."
-        c.drawString(2 * cm, PAGE_H - 12.5 * cm, sub)
-        c.drawString(2 * cm, PAGE_H - 13.2 * cm, sub2)
+        c.setFont("Helvetica", 11.5)
+        c.drawString(2 * cm, PAGE_H - 18.0 * cm, "Checklist testata su reti vendita italiane reali: cosa fare")
+        c.drawString(2 * cm, PAGE_H - 18.6 * cm, "prima, durante e dopo la visita per chiudere piu' contratti.")
+
         # Stats row (3 boxes)
-        box_w, box_h, gap = 5.2 * cm, 2.2 * cm, 0.5 * cm
-        box_y = PAGE_H - 17.5 * cm
-        stats = [("20", "PUNTI AZIONE"), ("3", "FASI CHIAVE"), ("~3h", "RISPARMIATE/DIE")]
-        for i, (big, small) in enumerate(stats):
+        box_w, box_h, gap = 5.2 * cm, 2.6 * cm, 0.5 * cm
+        box_y = PAGE_H - 22.0 * cm
+        stats = [
+            ("20", "PUNTI AZIONE", "ciascuno con esempio concreto"),
+            ("3", "FASI CHIAVE", "prima, durante, dopo"),
+            ("3 ORE", "RISPARMIATE/DIE", "se applichi la checklist"),
+        ]
+        for i, (big, small, tiny) in enumerate(stats):
             x = 2 * cm + i * (box_w + gap)
             c.setFillColor(colors.HexColor("#0f172a"))
-            c.setStrokeColor(colors.HexColor("#1e293b"))
-            c.setLineWidth(1)
-            c.roundRect(x, box_y, box_w, box_h, 0.4 * cm, fill=1, stroke=1)
-            c.setFillColor(colors.HexColor("#60a5fa"))
-            c.setFont("Helvetica-Bold", 24)
-            c.drawString(x + 0.6 * cm, box_y + 1.05 * cm, big)
+            c.setStrokeColor(colors.HexColor("#1e40af"))
+            c.setLineWidth(1.2)
+            c.roundRect(x, box_y, box_w, box_h, 0.45 * cm, fill=1, stroke=1)
+            c.setFillColor(BLUE_L)
+            c.setFont("Helvetica-Bold", 26)
+            c.drawString(x + 0.7 * cm, box_y + 1.4 * cm, big)
+            c.setFillColor(colors.HexColor("#e2e8f0"))
+            c.setFont("Helvetica-Bold", 8.5)
+            c.drawString(x + 0.7 * cm, box_y + 0.85 * cm, small)
             c.setFillColor(MUTED)
-            c.setFont("Helvetica-Bold", 8)
-            c.drawString(x + 0.6 * cm, box_y + 0.45 * cm, small)
+            c.setFont("Helvetica", 7.5)
+            c.drawString(x + 0.7 * cm, box_y + 0.35 * cm, tiny)
+
         # Footer cover
         c.setStrokeColor(colors.HexColor("#1e293b"))
         c.setLineWidth(0.5)
         c.line(2 * cm, 2.4 * cm, PAGE_W - 2 * cm, 2.4 * cm)
+        c.setFillColor(BLUE_L)
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(2 * cm, 1.7 * cm, "vynex.it")
         c.setFillColor(MUTED)
         c.setFont("Helvetica", 9)
-        c.drawString(2 * cm, 1.8 * cm, "vynex.it  ·  Intelligenza Artificiale italiana per agenti commerciali")
+        c.drawString(3.3 * cm, 1.7 * cm, "·  Intelligenza Artificiale italiana per agenti commerciali")
         if lead_name:
             c.setFillColor(colors.HexColor("#94a3b8"))
-            c.drawRightString(PAGE_W - 2 * cm, 1.8 * cm, f"Preparata per {lead_name}")
+            c.setFont("Helvetica-Oblique", 9)
+            c.drawRightString(PAGE_W - 2 * cm, 1.7 * cm, f"Preparata per {lead_name}")
         c.restoreState()
 
     def body_page(c, doc):
         c.saveState()
-        # Light gradient bar top
+        # Accent bar top (3 thin stripes gradient)
         for i, col in enumerate([BLUE, PURPLE, PINK]):
             c.setFillColor(col)
-            c.setFillAlpha(0.9 - i * 0.1)
+            c.setFillAlpha(0.9 - i * 0.15)
             c.rect(0, PAGE_H - 3 - i * 2, PAGE_W, 2, fill=1, stroke=0)
         c.setFillAlpha(1.0)
-        # Top header
-        c.setFillColor(colors.HexColor("#60a5fa"))
+
+        # Ghost section number as watermark (bottom right, subtle)
+        sec = _state.get("section_idx", 0)
+        if sec > 0:
+            c.setFillColor(BLUE_L)
+            c.setFillAlpha(0.04)
+            c.setFont("Helvetica-Bold", 300)
+            c.drawRightString(PAGE_W - 0.5 * cm, 1.5 * cm, f"{sec:02d}")
+            c.setFillAlpha(1.0)
+
+        # Header: VYNEX + path
+        c.setFillColor(BLUE_L)
         c.setFont("Helvetica-Bold", 11)
-        c.drawString(2 * cm, PAGE_H - 1.4 * cm, "VYNEX")
+        c.drawString(2 * cm, PAGE_H - 1.5 * cm, "VYNEX")
         c.setFillColor(MUTED)
         c.setFont("Helvetica", 8.5)
-        c.drawString(3.2 * cm, PAGE_H - 1.4 * cm, "· La visita commerciale perfetta in 20 punti")
-        c.drawRightString(PAGE_W - 2 * cm, PAGE_H - 1.4 * cm, "vynex.it")
-        # Footer with slogan
+        c.drawString(3.3 * cm, PAGE_H - 1.5 * cm, "·  La visita commerciale perfetta in 20 punti")
+        c.setFillColor(BLUE_L)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.drawRightString(PAGE_W - 2 * cm, PAGE_H - 1.5 * cm, "vynex.it")
+
+        # Footer: slogan + page number
         c.setStrokeColor(colors.HexColor("#e2e8f0"))
         c.setLineWidth(0.5)
         c.line(2 * cm, 1.8 * cm, PAGE_W - 2 * cm, 1.8 * cm)
-        c.setFillColor(colors.HexColor("#60a5fa"))
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(2 * cm, 1.2 * cm, "TU CHIUDI.  VYNEX SCRIVE.")
+        c.setFillColor(BLUE_L)
+        c.setFont("Helvetica-Bold", 9.5)
+        c.drawString(2 * cm, 1.15 * cm, "TU CHIUDI.")
+        c.setFillColor(INK)
+        c.drawString(4.5 * cm, 1.15 * cm, "VYNEX SCRIVE.")
         c.setFillColor(MUTED)
         c.setFont("Helvetica", 8)
-        c.drawRightString(PAGE_W - 2 * cm, 1.2 * cm, f"Pagina {doc.page}")
+        c.drawRightString(PAGE_W - 2 * cm, 1.15 * cm, f"Pagina {doc.page}")
         c.restoreState()
 
     doc = BaseDocTemplate(
@@ -3228,98 +3306,189 @@ def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
         PageTemplate(id="body", frames=[frame_body], onPage=body_page),
     ])
 
-    section_style = ParagraphStyle(
-        "Sec", fontSize=16, leading=22, textColor=INK,
-        fontName="Helvetica-Bold", spaceBefore=6, spaceAfter=14,
+    section_title_style = ParagraphStyle(
+        "Sec", fontSize=20, leading=26, textColor=INK,
+        fontName="Helvetica-Bold", spaceBefore=0, spaceAfter=8,
     )
     section_kicker_style = ParagraphStyle(
-        "SecK", fontSize=9, leading=12, textColor=BLUE,
-        fontName="Helvetica-Bold", spaceBefore=0, spaceAfter=4,
-        alignment=TA_LEFT,
+        "SecK", fontSize=9.5, leading=14, textColor=BLUE,
+        fontName="Helvetica-Bold", spaceBefore=0, spaceAfter=6,
+    )
+    section_intro_style = ParagraphStyle(
+        "SecI", fontSize=10.5, leading=16, textColor=MUTED,
+        fontName="Helvetica-Oblique", spaceBefore=0, spaceAfter=14,
     )
     item_text_style = ParagraphStyle(
         "It", fontSize=11, leading=16.5, textColor=INK_SOFT,
         alignment=TA_LEFT,
     )
+    bonus_title_style = ParagraphStyle(
+        "BT", fontSize=18, leading=24, textColor=INK,
+        fontName="Helvetica-Bold", spaceAfter=8,
+    )
+    bonus_body_style = ParagraphStyle(
+        "BB", fontSize=11, leading=16.5, textColor=INK_SOFT, spaceAfter=10,
+    )
+
+    section_intros = {
+        "PRIMA DELLA VISITA": "La vittoria si prepara in ufficio. 5 mosse che trasformano una visita qualunque in una visita con obiettivo.",
+        "DURANTE LA VISITA": "Ascolta piu' di quanto parli. 10 tecniche per estrarre informazioni, quantificare il valore e chiudere con una condizionale.",
+        "DOPO LA VISITA": "La differenza tra chi vince e chi perde. 5 azioni nelle 48 ore successive che decidono il contratto.",
+    }
 
     flow = []
-    # Page 1 cover is handled entirely by canvas; push a spacer + breaker
+    # Page 1 cover — cover_page disegna tutto sul canvas, qui serve solo un breaker
     flow.append(Spacer(1, 1))
     flow.append(PageBreak())
-    # Now body pages
     doc.handle_nextPageTemplate("body")
 
     n = 0
     for si, section in enumerate(_CHECKLIST_CONTENT["sections"]):
-        kicker = ["FASE 1 DI 3", "FASE 2 DI 3", "FASE 3 DI 3"][si] if si < 3 else f"FASE {si+1}"
+        # Wrapper che updata _state.section_idx ogni volta che viene "disegnato"
+        class _SecMarker:
+            def __init__(self, idx): self.idx = idx
+            def wrap(self, aW, aH): return (0, 0)
+            def draw(self_m):
+                _state["section_idx"] = self_m.idx
+        flow.append(_SecMarker(si + 1))
+
+        kicker = f"FASE {si+1} DI {len(_CHECKLIST_CONTENT['sections'])}"
         flow.append(Paragraph(kicker, section_kicker_style))
-        flow.append(Paragraph(section["heading"], section_style))
-        # Bar gradient under section title
-        bar_tbl = Table(
-            [[""]],
-            colWidths=[PAGE_W - 4 * cm],
-            rowHeights=[2],
-        )
+        flow.append(Paragraph(section["heading"].title(), section_title_style))
+        # Divider bar gradient
+        bar_tbl = Table([[""]], colWidths=[PAGE_W - 4 * cm], rowHeights=[3])
         bar_tbl.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), BLUE),
             ("BOX", (0, 0), (-1, -1), 0, colors.white),
-            ("LEFTPADDING", (0, 0), (-1, -1), 0),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ]))
         flow.append(bar_tbl)
-        flow.append(Spacer(1, 14))
+        flow.append(Spacer(1, 10))
+        # Section intro
+        intro = section_intros.get(section["heading"])
+        if intro:
+            flow.append(Paragraph(intro, section_intro_style))
+
         for item in section["items"]:
             n += 1
             safe = item.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             num_para = Paragraph(
-                f'<font color="#60a5fa" size="13"><b>{n:02d}</b></font>',
-                ParagraphStyle("Num", alignment=TA_CENTER, fontSize=13, leading=15),
+                f'<font color="#ffffff" size="12"><b>{n:02d}</b></font>',
+                ParagraphStyle("Num", alignment=TA_CENTER, fontSize=12, leading=14),
             )
             text_para = Paragraph(safe, item_text_style)
+            # Check mark verde
+            check_para = Paragraph(
+                f'<font color="#10b981" size="14"><b>&#10003;</b></font>',
+                ParagraphStyle("Chk", alignment=TA_CENTER, fontSize=14, leading=14),
+            )
             item_tbl = Table(
-                [[num_para, text_para]],
-                colWidths=[1.2 * cm, PAGE_W - 5.2 * cm],
+                [[num_para, text_para, check_para]],
+                colWidths=[1.25 * cm, PAGE_W - 6.5 * cm, 1 * cm],
             )
             item_tbl.setStyle(TableStyle([
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#eff6ff")),
-                ("BOX", (0, 0), (0, 0), 0, colors.white),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("ROUNDEDCORNERS", [4, 4, 4, 4]),
+                # Num cell gradient-like: solid blue
+                ("BACKGROUND", (0, 0), (0, 0), BLUE),
+                # Text + check: light card
+                ("BACKGROUND", (1, 0), (2, 0), CARD_BG),
+                ("LINEBEFORE", (1, 0), (1, 0), 0, colors.white),
+                ("BOX", (0, 0), (-1, -1), 0, colors.white),
+                ("LEFTPADDING", (0, 0), (0, 0), 6),
+                ("RIGHTPADDING", (0, 0), (0, 0), 6),
+                ("LEFTPADDING", (1, 0), (-1, -1), 12),
+                ("RIGHTPADDING", (1, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("ROUNDEDCORNERS", [6, 6, 6, 6]),
             ]))
-            flow.append(KeepTogether([item_tbl, Spacer(1, 6)]))
-        flow.append(Spacer(1, 20))
+            flow.append(KeepTogether([item_tbl, Spacer(1, 7)]))
+        flow.append(Spacer(1, 22))
 
-    # CTA card finale
-    cta_title = Paragraph(
-        '<b><font color="#0f172a" size="14">Vuoi automatizzare tutto il punto "DOPO"?</font></b>',
-        item_text_style,
-    )
-    cta_body = Paragraph(
-        '<font color="#334155" size="11">Gli ultimi 5 punti della checklist — report, email di follow-up, offerta — '
-        'li scrive VYNEX in 30 secondi da 2 righe di testo. In italiano professionale.</font>',
-        item_text_style,
-    )
+    # BONUS PAGE — 3 frasi che chiudono
+    flow.append(PageBreak())
+    flow.append(Paragraph("BONUS", section_kicker_style))
+    flow.append(Paragraph("3 frasi che chiudono la trattativa.", bonus_title_style))
+    bonus_bar = Table([[""]], colWidths=[PAGE_W - 4 * cm], rowHeights=[3])
+    bonus_bar.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PURPLE)]))
+    flow.append(bonus_bar)
+    flow.append(Spacer(1, 14))
+    flow.append(Paragraph(
+        '<i>"Testate su cento trattative reali. Funzionano quando le condizioni sono gia' + "'" + ' allineate."</i>',
+        section_intro_style,
+    ))
+
+    bonus_phrases = [
+        ("La condizionale", "Se confermo oggi le condizioni che le ho mostrato, possiamo partire con il primo ordine entro 15 giorni?",
+         "Trasforma un interesse in una scelta binaria senza pressione."),
+        ("Il default sociale", "Altri tre clienti nel suo settore hanno preso questa soluzione a queste condizioni. Ha senso che veda se funziona anche per lei.",
+         "Riduce il rischio percepito citando precedenti. Usa nomi reali se il cliente lo permette."),
+        ("L'inversione", "Cosa dovrebbe succedere oggi, durante questa visita, perche' lei firmi entro venerdi'?",
+         "Fa esprimere al cliente i suoi criteri di decisione. Ottieni la mappa per chiudere."),
+    ]
+    for i, (title, phrase, why) in enumerate(bonus_phrases):
+        t_para = Paragraph(f'<b><font color="#0f172a" size="13">{i+1:02d}. {title}</font></b>', bonus_body_style)
+        phrase_para = Paragraph(f'<font color="#1e40af" size="12"><i>"{phrase}"</i></font>', bonus_body_style)
+        why_para = Paragraph(f'<font color="#64748b" size="10">Perche\' funziona: {why}</font>', bonus_body_style)
+        card = Table(
+            [[t_para], [phrase_para], [why_para]],
+            colWidths=[PAGE_W - 4 * cm],
+        )
+        card.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), CARD_BG),
+            ("LEFTPADDING", (0, 0), (-1, -1), 18),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 18),
+            ("TOPPADDING", (0, 0), (0, 0), 14),
+            ("BOTTOMPADDING", (0, 0), (0, 0), 6),
+            ("TOPPADDING", (0, 1), (0, 1), 6),
+            ("BOTTOMPADDING", (0, 1), (0, 1), 6),
+            ("TOPPADDING", (0, 2), (0, 2), 6),
+            ("BOTTOMPADDING", (0, 2), (0, 2), 14),
+        ]))
+        flow.append(KeepTogether([card, Spacer(1, 10)]))
+
+    # CTA finale drammatico
+    flow.append(PageBreak())
+    flow.append(Spacer(1, 3 * cm))
+    flow.append(Paragraph(
+        '<font color="#64748b" size="10"><b>IL PASSO SUCCESSIVO</b></font>',
+        section_kicker_style,
+    ))
+    flow.append(Paragraph(
+        'Hai appena letto 20 punti. Gli ultimi 5 — report, email, offerta — li puoi scrivere da solo ogni sera.',
+        ParagraphStyle("Q", fontSize=15, leading=22, textColor=INK, fontName="Helvetica-Bold", spaceAfter=8),
+    ))
+    flow.append(Paragraph(
+        '<font color="#334155"><b>Oppure</b> li puoi scrivere in 30 secondi con VYNEX, l\'Intelligenza Artificiale italiana che ricorda ogni cliente.</font>',
+        ParagraphStyle("Q2", fontSize=13, leading=20, textColor=INK_SOFT, spaceAfter=22),
+    ))
+
+    # CTA premium button-simulated
     cta_link = Paragraph(
-        '<b><font color="#3b82f6" size="12">→ Prova la demo gratis su vynex.it/demo</font></b>',
-        item_text_style,
+        '<b><font color="#ffffff" size="13">&nbsp;&nbsp;&nbsp;Prova la demo gratis &nbsp;&nbsp;&rarr;&nbsp;&nbsp;&nbsp;</font></b>',
+        ParagraphStyle("CTA", alignment=TA_CENTER, fontSize=13),
     )
-    cta_tbl = Table(
-        [[cta_title], [Spacer(1, 6)], [cta_body], [Spacer(1, 10)], [cta_link]],
-        colWidths=[PAGE_W - 4 * cm],
-    )
+    cta_tbl = Table([[cta_link]], colWidths=[PAGE_W - 4 * cm], rowHeights=[1.4 * cm])
     cta_tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
-        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#93c5fd")),
-        ("LEFTPADDING", (0, 0), (-1, -1), 18),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 18),
-        ("TOPPADDING", (0, 0), (-1, -1), 14),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+        ("BACKGROUND", (0, 0), (-1, -1), BLUE),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]))
-    flow.append(KeepTogether([Spacer(1, 10), cta_tbl]))
+    flow.append(cta_tbl)
+    flow.append(Spacer(1, 10))
+    flow.append(Paragraph(
+        '<font color="#64748b" size="10">vynex.it/demo  ·  senza account  ·  senza carta  ·  30 secondi</font>',
+        ParagraphStyle("CTAsub", alignment=TA_CENTER, fontSize=10, leading=16),
+    ))
+    flow.append(Spacer(1, 30))
+    # Quote signature
+    flow.append(Paragraph(
+        '<font color="#60a5fa" size="14"><b>TU CHIUDI.  VYNEX SCRIVE.</b></font>',
+        ParagraphStyle("Sig", alignment=TA_CENTER, fontSize=14, leading=20),
+    ))
+    flow.append(Paragraph(
+        '<font color="#94a3b8" size="9">— Roberto Pizzini, fondatore</font>',
+        ParagraphStyle("SigAu", alignment=TA_CENTER, fontSize=9, leading=14),
+    ))
 
     doc.build(flow)
     pdf = buf.getvalue()
