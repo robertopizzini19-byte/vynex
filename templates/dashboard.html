@@ -16,7 +16,7 @@
         {# ─── HERO ────────────────────────────────────────────────── #}
         <section class="mini-hero">
             <div class="mini-hero-text">
-                <h1>Ciao, {{ user.full_name.split()[0] }} 👋</h1>
+                <h1>Ciao, <span class="vnx-gradient-text">{{ user.full_name.split()[0] }}</span> 👋</h1>
                 <p class="mini-hero-sub">
                     {% if user.plan == "free" %}
                         {% if (limit - usage) > 0 %}
