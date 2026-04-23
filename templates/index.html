@@ -722,7 +722,7 @@
         </div>
 
         <div class="vnx-showcase-visual" aria-hidden="true">
-            <div class="vnx-showcase-frame" id="vnx-showcase-frame">
+            <div class="vnx-showcase-frame" id="vnx-showcase-frame" data-stage="input">
                 <div class="vnx-showcase-frame-bar">
                     <span></span><span></span><span></span>
                     <div class="vnx-showcase-frame-url">vynex.it/genera</div>
@@ -730,36 +730,34 @@
                 <div class="vnx-showcase-frame-body">
                     <div class="vnx-showcase-typing">
                         <span class="vnx-showcase-typing-label">Descrivi la visita</span>
-                        <div class="vnx-showcase-typing-text">Oggi Rossi della Ferramenta Bianchi, Bergamo. Catalogo primavera, sconto 10%, richiamo il 5 aprile<span class="vnx-showcase-caret">|</span></div>
+                        <div class="vnx-showcase-typing-text"><span id="vnx-showcase-typer"></span><span id="vnx-showcase-caret" class="vnx-showcase-caret">|</span></div>
                     </div>
-                    <div class="vnx-showcase-arrow">↓ <span>VYNEX elabora in 28s</span></div>
-                    <div class="vnx-showcase-docs">
-                        <div class="vnx-showcase-doc" style="--delay:0s">
-                            <div class="vnx-showcase-doc-tag">📋 Report</div>
-                            <div class="vnx-showcase-doc-content">
-                                <div><strong>Report visita — Ferramenta Bianchi</strong></div>
-                                <div>Cliente: Sig. Rossi · Bergamo · 23 aprile</div>
-                                <div><strong>Accordi:</strong> sconto 10% primo ordine, 30 gg d.f.f.m.</div>
-                                <div><strong>Next:</strong> richiamo 5 aprile ore 10:00, conferma ordine.</div>
-                            </div>
-                        </div>
-                        <div class="vnx-showcase-doc" style="--delay:.35s">
-                            <div class="vnx-showcase-doc-tag">✉️ Email</div>
-                            <div class="vnx-showcase-doc-content">
-                                <div><strong>Oggetto:</strong> Seguito visita 23 aprile — sconto confermato</div>
-                                <div>Gentile Sig. Rossi,</div>
-                                <div>le confermo lo <strong>sconto del 10%</strong> sul primo ordine, pagamento 30 gg. La richiamo il 5 aprile alle 10:00.</div>
-                            </div>
-                        </div>
-                        <div class="vnx-showcase-doc" style="--delay:.7s">
-                            <div class="vnx-showcase-doc-tag">📄 Offerta</div>
-                            <div class="vnx-showcase-doc-content">
-                                <div><strong>PROPOSTA N° 2026/PP-2304/FB</strong></div>
-                                <div>Spett.le Ferramenta Bianchi · Bergamo</div>
-                                <div><strong>Sconto:</strong> 10% · <strong>Pagamento:</strong> 30 gg d.f.f.m.</div>
-                                <div><strong>Validità:</strong> 5 aprile 2026</div>
-                            </div>
-                        </div>
+
+                    <button type="button" class="vnx-showcase-cta-btn" id="vnx-showcase-cta-btn" aria-hidden="true" tabindex="-1">
+                        <span id="vnx-showcase-cta-label">✦ Genera 3 documenti</span>
+                    </button>
+
+                    <div class="vnx-showcase-tabs" role="tablist">
+                        <div class="vnx-showcase-tab is-active" data-sc-tab="report">📋 Report</div>
+                        <div class="vnx-showcase-tab" data-sc-tab="email">✉️ Email</div>
+                        <div class="vnx-showcase-tab" data-sc-tab="offerta">📄 Offerta</div>
+                    </div>
+
+                    <div class="vnx-showcase-doc" id="vnx-showcase-doc">
+                        <div class="vnx-showcase-doc-body" data-sc-body="report"></div>
+                        <div class="vnx-showcase-doc-body" data-sc-body="email" hidden></div>
+                        <div class="vnx-showcase-doc-body" data-sc-body="offerta" hidden></div>
+                    </div>
+
+                    <div class="vnx-showcase-badges">
+                        <span class="vnx-showcase-badge vnx-showcase-badge-green" id="vnx-showcase-stamp">✓ Generato in 28s</span>
+                        <span class="vnx-showcase-badge vnx-showcase-badge-blue">📋 Copia</span>
+                    </div>
+
+                    <div id="vnx-showcase-loader" class="vnx-showcase-loader" aria-hidden="true" hidden>
+                        <div class="vnx-showcase-dots"><span></span><span></span><span></span></div>
+                        <div class="vnx-showcase-loader-t">VYNEX sta scrivendo…</div>
+                        <div class="vnx-showcase-loader-s">Lettura visita · Report · Email · Offerta</div>
                     </div>
                 </div>
             </div>
@@ -772,31 +770,208 @@
     var frame = document.getElementById('vnx-showcase-frame');
     if (!frame) return;
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { frame.classList.add('is-playing'); return; }
 
-    function replay() {
-        frame.classList.remove('is-playing');
-        // Force reflow so animation restarts
-        void frame.offsetWidth;
-        frame.classList.add('is-playing');
+    var typer = document.getElementById('vnx-showcase-typer');
+    var caret = document.getElementById('vnx-showcase-caret');
+    var ctaLabel = document.getElementById('vnx-showcase-cta-label');
+    var loader = document.getElementById('vnx-showcase-loader');
+    var tabs = frame.querySelectorAll('.vnx-showcase-tab');
+    var stamp = document.getElementById('vnx-showcase-stamp');
+    var bodies = {
+        report: frame.querySelector('[data-sc-body="report"]'),
+        email: frame.querySelector('[data-sc-body="email"]'),
+        offerta: frame.querySelector('[data-sc-body="offerta"]'),
+    };
+
+    var examples = [
+        {
+            text: "Visita del 23 aprile a Ferramenta Bianchi (Bergamo), sig. Rossi. Catalogo primavera utensili elettrici serie X-450, sconto 10% primo ordine 200 pz. Pagamento 30 gg d.f.f.m. Richiamo 5 aprile.",
+            seconds: 28,
+            docs: {
+                report: [
+                    '<strong>REPORT DI VISITA COMMERCIALE</strong>',
+                    'Data: 23 aprile 2026 · Cliente: Sig. Rossi · Ferramenta Bianchi (BG)',
+                    '<strong>Obiettivo:</strong> catalogo primavera — serie utensili X-450.',
+                    '<strong>Svolgimento:</strong> presentata gamma 2026, interesse su 200 pz.',
+                    '<strong>Accordi:</strong> sconto 10% primo ordine · 30 gg d.f.f.m.',
+                    '<strong>Next step:</strong> 5 aprile ore 10:00 — chiamata conferma ordine.'
+                ],
+                email: [
+                    '<strong>Oggetto:</strong> Seguito visita 23 aprile — offerta serie X-450',
+                    'Gentile Sig. Rossi,',
+                    'grazie per il tempo dedicatomi durante la <strong>visita del 23 aprile</strong>.',
+                    'Come concordato, le confermo le condizioni sulla serie X-450:',
+                    '<strong>sconto 10%</strong>, pagamento 30 gg data fattura fine mese.',
+                    'La richiamo il <strong>5 aprile alle 10:00</strong> per confermare l\'ordine.',
+                    'Cordialmente, Roberto Pizzini'
+                ],
+                offerta: [
+                    '<strong>PROPOSTA COMMERCIALE N° 2026/PP-2304/FB</strong>',
+                    'Data emissione: 23 aprile 2026 · Validità: 7 giorni',
+                    'Spett.le Ferramenta Bianchi — Bergamo · Sig. Rossi',
+                    '<strong>Oggetto:</strong> Fornitura utensili elettrici serie X-450',
+                    '<strong>Sconto:</strong> 10% · <strong>Pagamento:</strong> 30 gg d.f.f.m.',
+                    '<strong>Ordine di prova:</strong> 200 pz · valore con sconto applicato',
+                    'Per accettazione: ______________________'
+                ]
+            }
+        },
+        {
+            text: "Visita del 23 aprile a Gualtieri Srl (Torino), ing. Gualtieri. Ordine utensileria valore €2.300. Richiesto pagamento 60 gg — da verificare con mandante. Conferma entro 48h.",
+            seconds: 31,
+            docs: {
+                report: [
+                    '<strong>REPORT DI VISITA COMMERCIALE</strong>',
+                    'Data: 23 aprile 2026 · Cliente: Ing. Gualtieri · Gualtieri Srl (TO)',
+                    '<strong>Obiettivo:</strong> finalizzazione ordine utensileria €2.300.',
+                    '<strong>Svolgimento:</strong> quantità/referenze concordate, chiede 60 gg.',
+                    '<strong>Risultato:</strong> ordine accettato salvo approvazione mandante.',
+                    '<strong>Next:</strong> 25 aprile ore 09:00 verifica · 17:00 conferma cliente.'
+                ],
+                email: [
+                    '<strong>Oggetto:</strong> Ordine €2.300 — verifica su pagamento 60 gg',
+                    'Gentile Ing. Gualtieri,',
+                    'la ringrazio per l\'ordine confermato durante la <strong>visita del 23 aprile</strong>.',
+                    'Sto sottoponendo al mandante la Sua richiesta di <strong>pagamento 60 gg</strong>.',
+                    'Le confermo esito entro <strong>venerdì 25 aprile</strong>.',
+                    'Cordialmente, Roberto Pizzini'
+                ],
+                offerta: [
+                    '<strong>PROPOSTA COMMERCIALE N° 2026/PP-2304/GU</strong>',
+                    'Data emissione: 23 aprile 2026 · Validità: 15 giorni',
+                    'Spett.le Gualtieri Srl — Torino · Ing. Gualtieri',
+                    '<strong>Oggetto:</strong> Fornitura utensileria · Valore €2.300',
+                    '<strong>Pagamento proposto:</strong> 60 gg (approvazione mandante)',
+                    '<strong>Consegna:</strong> 7 gg lavorativi da conferma ordine',
+                    'Per accettazione: ______________________'
+                ]
+            }
+        },
+        {
+            text: "Visita del 23 aprile a Farmacia Donato, dott. Donato. Interessato nuova linea integratori. Richiesto campione + scheda tecnica entro venerdì. Valuta prova gamma 30 gg.",
+            seconds: 27,
+            docs: {
+                report: [
+                    '<strong>REPORT DI VISITA COMMERCIALE</strong>',
+                    'Data: 23 aprile 2026 · Cliente: Dott. Donato · Farmacia Donato',
+                    '<strong>Obiettivo:</strong> lancio nuova linea integratori.',
+                    '<strong>Svolgimento:</strong> presentata linea, interesse alto.',
+                    '<strong>Accordi:</strong> invio campione + scheda tecnica entro 25 aprile.',
+                    '<strong>Next:</strong> 2 maggio — call esito prova gamma 30 gg.'
+                ],
+                email: [
+                    '<strong>Oggetto:</strong> Campione e scheda tecnica — consegna venerdì',
+                    'Gentile Dott. Donato,',
+                    'grazie per l\'interesse mostrato durante la <strong>visita del 23 aprile</strong>.',
+                    'Entro <strong>venerdì 25 aprile</strong> Le farò recapitare il campione',
+                    'e la scheda tecnica completa.',
+                    'La richiamo <strong>venerdì 2 maggio</strong> per raccogliere il riscontro.',
+                    'Cordialmente, Roberto Pizzini'
+                ],
+                offerta: [
+                    '<strong>PROPOSTA COMMERCIALE N° 2026/PP-2304/DO</strong>',
+                    'Data emissione: 23 aprile 2026 · Validità: 30 giorni',
+                    'Spett.le Farmacia Donato · Dott. Donato',
+                    '<strong>Oggetto:</strong> Prova gamma nuova linea integratori · 30 gg',
+                    '<strong>Prima fornitura:</strong> condizioni di lancio dedicate',
+                    '<strong>Consegna campione + scheda:</strong> entro 25 aprile 2026',
+                    'Per accettazione: ______________________'
+                ]
+            }
+        }
+    ];
+
+    var idx = 0;
+    var currentDocs = null;
+    var timers = [];
+
+    function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+    function setStage(s) { frame.setAttribute('data-stage', s); }
+
+    function typeText(text, done) {
+        if (reduce) { typer.textContent = text; done(); return; }
+        typer.textContent = '';
+        var i = 0;
+        (function step() {
+            if (i >= text.length) { done(); return; }
+            typer.textContent = text.slice(0, ++i);
+            timers.push(setTimeout(step, 12 + Math.random() * 16));
+        })();
     }
 
-    var seen = false;
-    var loopId = null;
+    function renderBody(name) {
+        if (!currentDocs || !bodies[name]) return;
+        var c = bodies[name];
+        c.innerHTML = '';
+        (currentDocs[name] || []).forEach(function(line, i){
+            var el = document.createElement('div');
+            el.className = 'vnx-showcase-line';
+            el.style.animationDelay = (i * 70) + 'ms';
+            el.innerHTML = line;
+            c.appendChild(el);
+        });
+    }
+
+    function activateTab(name) {
+        tabs.forEach(function(t){
+            t.classList.toggle('is-active', t.dataset.scTab === name);
+        });
+        Object.keys(bodies).forEach(function(k){
+            bodies[k].hidden = (k !== name);
+        });
+        renderBody(name);
+    }
+
+    function run() {
+        clearTimers();
+        var ex = examples[idx % examples.length];
+        idx++;
+        currentDocs = ex.docs;
+
+        setStage('input');
+        tabs.forEach(function(t){ t.classList.toggle('is-active', t.dataset.scTab === 'report'); });
+        Object.keys(bodies).forEach(function(k){ bodies[k].hidden = (k !== 'report'); bodies[k].innerHTML = ''; });
+        loader.hidden = true;
+        caret.style.display = 'inline-block';
+        if (stamp) stamp.textContent = '✓ Generato in ' + ex.seconds + 's';
+        if (ctaLabel) ctaLabel.textContent = '✦ Genera 3 documenti';
+
+        typeText(ex.text, function(){
+            timers.push(setTimeout(function(){
+                caret.style.display = 'none';
+                setStage('loading');
+                loader.hidden = false;
+                if (ctaLabel) ctaLabel.textContent = '✦ Sto generando…';
+                timers.push(setTimeout(function(){
+                    loader.hidden = true;
+                    if (ctaLabel) ctaLabel.textContent = '✦ 3 documenti pronti';
+                    setStage('output');
+                    activateTab('report');
+                    timers.push(setTimeout(function(){ activateTab('email'); }, 1800));
+                    timers.push(setTimeout(function(){ activateTab('offerta'); }, 3300));
+                    timers.push(setTimeout(function(){ activateTab('report'); setStage('done'); }, 4800));
+                    timers.push(setTimeout(run, 8000));
+                }, reduce ? 200 : 1400));
+            }, 400));
+        });
+    }
+
+    var running = false;
     function startLoop() {
-        if (loopId) return;
-        replay();
-        loopId = setInterval(replay, 7000);
+        if (running) return;
+        running = true;
+        timers.push(setTimeout(run, 400));
     }
     function stopLoop() {
-        if (loopId) { clearInterval(loopId); loopId = null; }
+        running = false;
+        clearTimers();
     }
 
     if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function(entries){
             entries.forEach(function(e){
-                if (e.isIntersecting) { seen = true; startLoop(); }
-                else if (seen) { stopLoop(); }
+                if (e.isIntersecting) startLoop();
+                else stopLoop();
             });
         }, { threshold: 0.25 });
         io.observe(frame);
