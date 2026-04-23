@@ -2606,11 +2606,7 @@ body.no-rails .page-brand-rail { display: none !important; }
    one primary action per screen, max-width 900px centered.
    ═══════════════════════════════════════════════════════════ */
 
-.app-main {
-  max-width: 900px !important;
-  margin: 0 auto !important;
-  padding: 48px clamp(20px, 4vw, 40px) 80px !important;
-}
+/* .app-main rules moved to style.css (source-of-truth) — removed !important overrides that shadowed layout changes */
 
 .mini-hero {
   margin-bottom: 36px;
