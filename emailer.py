@@ -109,14 +109,30 @@ async def _send_resend(to: str, subject: str, html: str, _from: str | None = Non
 
 def _wrap(body_html: str) -> str:
     return f"""<!DOCTYPE html>
-<html lang="it"><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#04060f;font-family:-apple-system,Segoe UI,Inter,sans-serif;color:#f1f5f9">
-<div style="max-width:560px;margin:0 auto;padding:40px 24px">
-  <div style="font-size:22px;font-weight:800;letter-spacing:3px;color:#60a5fa;margin-bottom:24px">VYNEX</div>
-  {body_html}
-  <div style="margin-top:40px;padding-top:24px;border-top:1px solid #1e293b;color:#64748b;font-size:12px">
-    VYNEX — AI per agenti commerciali italiani<br>
-    <a href="{BASE_URL}" style="color:#60a5fa">{BASE_URL}</a> · <a href="mailto:{EMAIL_REPLY_TO}" style="color:#60a5fa">{EMAIL_REPLY_TO}</a>
+<html lang="it"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VYNEX</title>
+</head>
+<body style="margin:0;padding:0;background:#04060f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;color:#f1f5f9;line-height:1.6;-webkit-font-smoothing:antialiased">
+<div style="max-width:600px;margin:0 auto;padding:0">
+  <!-- HERO gradient banner -->
+  <div style="background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 55%,#ec4899 100%);padding:32px 28px;text-align:center;border-radius:0 0 4px 4px">
+    <div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#ffffff;text-shadow:0 2px 12px rgba(0,0,0,0.18);margin:0">VYNEX</div>
+    <div style="font-size:10.5px;font-weight:700;letter-spacing:2.4px;color:rgba(255,255,255,0.85);margin-top:8px">TU CHIUDI.&nbsp;&nbsp;VYNEX SCRIVE.</div>
+  </div>
+
+  <!-- Card content -->
+  <div style="background:#0b1020;border:1px solid #1e293b;border-top:none;padding:36px 32px;color:#e2e8f0">
+    {body_html}
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:24px 28px;background:#04060f;color:#64748b;font-size:12px;text-align:center;line-height:1.7">
+    <div style="font-size:13px;font-weight:800;letter-spacing:2px;color:#60a5fa;margin-bottom:8px">VYNEX</div>
+    Intelligenza Artificiale italiana per agenti commerciali<br>
+    <a href="{BASE_URL}" style="color:#60a5fa;text-decoration:none">{BASE_URL}</a>
+    &nbsp;·&nbsp;
+    <a href="mailto:{EMAIL_REPLY_TO}" style="color:#60a5fa;text-decoration:none">{EMAIL_REPLY_TO}</a>
   </div>
 </div></body></html>"""
 

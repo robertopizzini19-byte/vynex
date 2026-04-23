@@ -3095,64 +3095,232 @@ _CHECKLIST_CONTENT = {
 
 
 def _render_checklist_pdf(lead_name: str | None = None) -> bytes:
+    """PDF premium: cover gradient + accent bar per pagina + numerazione pill + footer brand.
+    ReportLab-only, zero font esterni (Helvetica-base), safe su Railway.
+    """
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import cm
+    from reportlab.lib.units import cm, mm
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-    from reportlab.lib.enums import TA_LEFT
+    from reportlab.platypus import (
+        BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer,
+        PageBreak, Table, TableStyle, KeepTogether,
+    )
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+
+    PAGE_W, PAGE_H = A4
+    BLUE = colors.HexColor("#3b82f6")
+    PURPLE = colors.HexColor("#8b5cf6")
+    PINK = colors.HexColor("#f472b6")
+    INK = colors.HexColor("#0f172a")
+    INK_SOFT = colors.HexColor("#334155")
+    MUTED = colors.HexColor("#64748b")
+    LIGHT_BG = colors.HexColor("#f8fafc")
+    DARK_BG = colors.HexColor("#04060f")
 
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(
+
+    def cover_page(c, doc):
+        c.saveState()
+        # Dark background full-bleed
+        c.setFillColor(DARK_BG)
+        c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+        # Gradient bands (simulated: 3 stripes at top)
+        for i, (col, y_off) in enumerate([(BLUE, 0), (PURPLE, 4), (PINK, 8)]):
+            c.setFillColor(col)
+            c.setFillAlpha(0.35 - i * 0.08)
+            c.rect(0, PAGE_H - 6 - y_off, PAGE_W, 3, fill=1, stroke=0)
+        c.setFillAlpha(1.0)
+        # Logo wordmark
+        c.setFillColor(colors.HexColor("#60a5fa"))
+        c.setFont("Helvetica-Bold", 28)
+        c.drawString(2 * cm, PAGE_H - 3.5 * cm, "VYNEX")
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawString(2 * cm, PAGE_H - 4.1 * cm, "TU CHIUDI.  VYNEX SCRIVE.")
+        # Kicker pill
+        c.setFillColor(colors.HexColor("#1e3a8a"))
+        c.roundRect(2 * cm, PAGE_H - 6.5 * cm, 4.8 * cm, 0.7 * cm, 0.35 * cm, fill=1, stroke=0)
+        c.setFillColor(colors.HexColor("#93c5fd"))
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(2.35 * cm, PAGE_H - 6.05 * cm, "GUIDA PRATICA · PDF GRATIS")
+        # Big title
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 34)
+        c.drawString(2 * cm, PAGE_H - 9.0 * cm, "La visita commerciale")
+        c.setFillColor(colors.HexColor("#93c5fd"))
+        c.drawString(2 * cm, PAGE_H - 10.8 * cm, "perfetta in 20 punti.")
+        # Subtitle
+        c.setFillColor(colors.HexColor("#cbd5e1"))
+        c.setFont("Helvetica", 12)
+        sub = "Checklist testata su reti vendita italiane reali:"
+        sub2 = "cosa fare prima, durante e dopo la visita per chiudere piu' contratti."
+        c.drawString(2 * cm, PAGE_H - 12.5 * cm, sub)
+        c.drawString(2 * cm, PAGE_H - 13.2 * cm, sub2)
+        # Stats row (3 boxes)
+        box_w, box_h, gap = 5.2 * cm, 2.2 * cm, 0.5 * cm
+        box_y = PAGE_H - 17.5 * cm
+        stats = [("20", "PUNTI AZIONE"), ("3", "FASI CHIAVE"), ("~3h", "RISPARMIATE/DIE")]
+        for i, (big, small) in enumerate(stats):
+            x = 2 * cm + i * (box_w + gap)
+            c.setFillColor(colors.HexColor("#0f172a"))
+            c.setStrokeColor(colors.HexColor("#1e293b"))
+            c.setLineWidth(1)
+            c.roundRect(x, box_y, box_w, box_h, 0.4 * cm, fill=1, stroke=1)
+            c.setFillColor(colors.HexColor("#60a5fa"))
+            c.setFont("Helvetica-Bold", 24)
+            c.drawString(x + 0.6 * cm, box_y + 1.05 * cm, big)
+            c.setFillColor(MUTED)
+            c.setFont("Helvetica-Bold", 8)
+            c.drawString(x + 0.6 * cm, box_y + 0.45 * cm, small)
+        # Footer cover
+        c.setStrokeColor(colors.HexColor("#1e293b"))
+        c.setLineWidth(0.5)
+        c.line(2 * cm, 2.4 * cm, PAGE_W - 2 * cm, 2.4 * cm)
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawString(2 * cm, 1.8 * cm, "vynex.it  ·  Intelligenza Artificiale italiana per agenti commerciali")
+        if lead_name:
+            c.setFillColor(colors.HexColor("#94a3b8"))
+            c.drawRightString(PAGE_W - 2 * cm, 1.8 * cm, f"Preparata per {lead_name}")
+        c.restoreState()
+
+    def body_page(c, doc):
+        c.saveState()
+        # Light gradient bar top
+        for i, col in enumerate([BLUE, PURPLE, PINK]):
+            c.setFillColor(col)
+            c.setFillAlpha(0.9 - i * 0.1)
+            c.rect(0, PAGE_H - 3 - i * 2, PAGE_W, 2, fill=1, stroke=0)
+        c.setFillAlpha(1.0)
+        # Top header
+        c.setFillColor(colors.HexColor("#60a5fa"))
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(2 * cm, PAGE_H - 1.4 * cm, "VYNEX")
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 8.5)
+        c.drawString(3.2 * cm, PAGE_H - 1.4 * cm, "· La visita commerciale perfetta in 20 punti")
+        c.drawRightString(PAGE_W - 2 * cm, PAGE_H - 1.4 * cm, "vynex.it")
+        # Footer with slogan
+        c.setStrokeColor(colors.HexColor("#e2e8f0"))
+        c.setLineWidth(0.5)
+        c.line(2 * cm, 1.8 * cm, PAGE_W - 2 * cm, 1.8 * cm)
+        c.setFillColor(colors.HexColor("#60a5fa"))
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(2 * cm, 1.2 * cm, "TU CHIUDI.  VYNEX SCRIVE.")
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 8)
+        c.drawRightString(PAGE_W - 2 * cm, 1.2 * cm, f"Pagina {doc.page}")
+        c.restoreState()
+
+    doc = BaseDocTemplate(
         buf, pagesize=A4,
         leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
+        topMargin=2.4 * cm, bottomMargin=2.4 * cm,
         title=_CHECKLIST_CONTENT["title"], author="VYNEX",
     )
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        "T", parent=styles["Heading1"], fontSize=22, leading=28,
-        textColor=colors.HexColor("#0f172a"), fontName="Helvetica-Bold", spaceAfter=6,
+    frame_body = Frame(
+        2 * cm, 2.4 * cm, PAGE_W - 4 * cm, PAGE_H - 4.8 * cm,
+        id="body", showBoundary=0,
     )
-    sub_style = ParagraphStyle(
-        "S", parent=styles["Normal"], fontSize=11,
-        textColor=colors.HexColor("#475569"), spaceAfter=20, leading=16,
-    )
+    doc.addPageTemplates([
+        PageTemplate(id="cover", frames=[frame_body], onPage=cover_page),
+        PageTemplate(id="body", frames=[frame_body], onPage=body_page),
+    ])
+
     section_style = ParagraphStyle(
-        "Sec", parent=styles["Heading2"], fontSize=13, leading=18,
-        textColor=colors.HexColor("#1e40af"), fontName="Helvetica-Bold",
-        spaceBefore=14, spaceAfter=10, letterSpacing=1,
+        "Sec", fontSize=16, leading=22, textColor=INK,
+        fontName="Helvetica-Bold", spaceBefore=6, spaceAfter=14,
     )
-    item_style = ParagraphStyle(
-        "It", parent=styles["Normal"], fontSize=10.5, leading=15.5,
-        textColor=colors.HexColor("#1e293b"), alignment=TA_LEFT,
-        leftIndent=18, firstLineIndent=-18, spaceAfter=6,
+    section_kicker_style = ParagraphStyle(
+        "SecK", fontSize=9, leading=12, textColor=BLUE,
+        fontName="Helvetica-Bold", spaceBefore=0, spaceAfter=4,
+        alignment=TA_LEFT,
     )
-    flow = [
-        Paragraph("VYNEX — Checklist per agenti commerciali", sub_style),
-        Paragraph(_CHECKLIST_CONTENT["title"], title_style),
-        Paragraph(_CHECKLIST_CONTENT["subtitle"], sub_style),
-    ]
+    item_text_style = ParagraphStyle(
+        "It", fontSize=11, leading=16.5, textColor=INK_SOFT,
+        alignment=TA_LEFT,
+    )
+
+    flow = []
+    # Page 1 cover is handled entirely by canvas; push a spacer + breaker
+    flow.append(Spacer(1, 1))
+    flow.append(PageBreak())
+    # Now body pages
+    doc.handle_nextPageTemplate("body")
+
     n = 0
-    for section in _CHECKLIST_CONTENT["sections"]:
+    for si, section in enumerate(_CHECKLIST_CONTENT["sections"]):
+        kicker = ["FASE 1 DI 3", "FASE 2 DI 3", "FASE 3 DI 3"][si] if si < 3 else f"FASE {si+1}"
+        flow.append(Paragraph(kicker, section_kicker_style))
         flow.append(Paragraph(section["heading"], section_style))
+        # Bar gradient under section title
+        bar_tbl = Table(
+            [[""]],
+            colWidths=[PAGE_W - 4 * cm],
+            rowHeights=[2],
+        )
+        bar_tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), BLUE),
+            ("BOX", (0, 0), (-1, -1), 0, colors.white),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        flow.append(bar_tbl)
+        flow.append(Spacer(1, 14))
         for item in section["items"]:
             n += 1
             safe = item.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            flow.append(Paragraph(
-                f'<b><font color="#1e40af">{n:02d}.</font></b>  {safe}', item_style,
-            ))
-    flow.append(Spacer(1, 24))
-    if lead_name:
-        flow.append(Paragraph(
-            f'<font color="#64748b" size="9">Preparata per {lead_name} · {datetime.utcnow().strftime("%d/%m/%Y")} · vynex.it</font>',
-            sub_style,
-        ))
-    else:
-        flow.append(Paragraph(
-            '<font color="#64748b" size="9">Generato da VYNEX · vynex.it</font>',
-            sub_style,
-        ))
+            num_para = Paragraph(
+                f'<font color="#60a5fa" size="13"><b>{n:02d}</b></font>',
+                ParagraphStyle("Num", alignment=TA_CENTER, fontSize=13, leading=15),
+            )
+            text_para = Paragraph(safe, item_text_style)
+            item_tbl = Table(
+                [[num_para, text_para]],
+                colWidths=[1.2 * cm, PAGE_W - 5.2 * cm],
+            )
+            item_tbl.setStyle(TableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#eff6ff")),
+                ("BOX", (0, 0), (0, 0), 0, colors.white),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("ROUNDEDCORNERS", [4, 4, 4, 4]),
+            ]))
+            flow.append(KeepTogether([item_tbl, Spacer(1, 6)]))
+        flow.append(Spacer(1, 20))
+
+    # CTA card finale
+    cta_title = Paragraph(
+        '<b><font color="#0f172a" size="14">Vuoi automatizzare tutto il punto "DOPO"?</font></b>',
+        item_text_style,
+    )
+    cta_body = Paragraph(
+        '<font color="#334155" size="11">Gli ultimi 5 punti della checklist — report, email di follow-up, offerta — '
+        'li scrive VYNEX in 30 secondi da 2 righe di testo. In italiano professionale.</font>',
+        item_text_style,
+    )
+    cta_link = Paragraph(
+        '<b><font color="#3b82f6" size="12">→ Prova la demo gratis su vynex.it/demo</font></b>',
+        item_text_style,
+    )
+    cta_tbl = Table(
+        [[cta_title], [Spacer(1, 6)], [cta_body], [Spacer(1, 10)], [cta_link]],
+        colWidths=[PAGE_W - 4 * cm],
+    )
+    cta_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#93c5fd")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 18),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 18),
+        ("TOPPADDING", (0, 0), (-1, -1), 14),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+    ]))
+    flow.append(KeepTogether([Spacer(1, 10), cta_tbl]))
+
     doc.build(flow)
     pdf = buf.getvalue()
     buf.close()
