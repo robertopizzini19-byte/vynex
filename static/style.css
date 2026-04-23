@@ -576,6 +576,7 @@ textarea {
   font-size: 15px;
   font-weight: 800;
   letter-spacing: .14em;
+  word-spacing: .25em;
   text-transform: uppercase;
   color: #ffffff;
   white-space: nowrap;
