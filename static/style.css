@@ -998,11 +998,22 @@ textarea {
 .app-main {
   flex: 1;
   margin-left: var(--sidebar-w);
-  padding: 40px 44px 80px;
+  padding: 48px clamp(24px, 4vw, 56px) 96px;
   max-width: calc(100vw - var(--sidebar-w));
   min-height: 100vh;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
+.app-main > * {
+  width: 100%;
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.app-main > * + * { margin-top: 32px; }
+.app-main .page-header + * { margin-top: 28px; }
 .app-main-inner {
   max-width: 1160px;
   margin: 0 auto;
