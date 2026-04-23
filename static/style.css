@@ -576,7 +576,7 @@ textarea {
   font-size: 15px;
   font-weight: 800;
   letter-spacing: .14em;
-  word-spacing: .25em;
+  word-spacing: .55em;
   text-transform: uppercase;
   color: #ffffff;
   white-space: nowrap;
@@ -586,7 +586,7 @@ textarea {
 }
 .mockup-title-slogan-accent {
   color: #60a5fa;
-  margin: 0 .08em;
+  margin: 0 .35em;
 }
 @media (max-width: 500px) {
   .mockup-title-slogan { font-size: 11px; letter-spacing: .1em; left: 54%; }
