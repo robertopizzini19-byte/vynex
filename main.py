@@ -156,7 +156,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
-_CSRF_EXEMPT_PATHS = ("/webhook/stripe", "/auth/google/verify", "/api/admin/")
+_CSRF_EXEMPT_PATHS = ("/webhook/stripe", "/webhook/resend", "/auth/google/verify", "/api/admin/")
 _CSRF_SAFE_METHODS = ("GET", "HEAD", "OPTIONS", "TRACE")
 
 
@@ -1241,6 +1241,26 @@ async def webhook_stripe(request: Request, db: AsyncSession = Depends(get_db)):
         logger.exception("webhook processing failed")
         raise HTTPException(500, "Webhook processing error")
     return {"status": "ok"}
+
+
+@app.post("/webhook/resend")
+async def webhook_resend(request: Request, db: AsyncSession = Depends(get_db)):
+    from resend_webhook import handle_webhook as handle_resend_webhook
+
+    body = await request.body()
+    svix_id = request.headers.get("svix-id", "")
+    svix_timestamp = request.headers.get("svix-timestamp", "")
+    svix_signature = request.headers.get("svix-signature", "")
+    try:
+        event_type = await handle_resend_webhook(
+            body, svix_id, svix_timestamp, svix_signature, db
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception:
+        logger.exception("resend webhook processing failed")
+        raise HTTPException(500, "Webhook processing error")
+    return {"status": "ok", "event": event_type}
 
 
 # ─── SEO & HEALTH ─────────────────────────────────────────────────────────────
