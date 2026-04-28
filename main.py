@@ -1,3 +1,5 @@
+import observability  # noqa: F401  (auto-init Sentry, no-op if SENTRY_DSN missing)
+
 from fastapi import FastAPI, Request, Depends, Form, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
